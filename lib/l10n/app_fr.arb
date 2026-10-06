@@ -1,0 +1,33 @@
+{
+  "@@locale": "fr",
+  "appName": "Wassaly",
+  "welcome": "Bienvenue",
+  "chooseLanguage": "Choisir la langue",
+  "continueWithGoogle": "Continuer avec Google",
+  "login": "Connexion",
+  "driversNearby": "Livreurs à proximité",
+  "signInError": "Connexion impossible. Vérifie ta connexion internet et réessaie.",
+  "completeProfile": "Complète ton profil",
+  "phoneLabel": "Numéro de téléphone",
+  "phoneHint": "0550 12 34 56",
+  "phoneInvalid": "Numéro invalide (exemple : 0550 12 34 56)",
+  "roleQuestion": "Quel est ton rôle ?",
+  "roleClient": "Client",
+  "roleClientDesc": "Je cherche un livreur",
+  "roleDriver": "Livreur",
+  "roleDriverDesc": "Je propose mes services de livraison",
+  "continueButton": "Continuer",
+  "saveError": "Enregistrement impossible. Réessaie.",
+  "signOut": "Se déconnecter",
+  "hello": "Bonjour {name} 👋",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "clientHomeSoon": "La liste des livreurs arrive à l'étape suivante.",
+  "driverHomeSoon": "Ton tableau de bord livreur arrive à l'étape suivante.",
+  "profileLoadError": "Impossible de charger ton profil. Réessaie plus tard."
+}
