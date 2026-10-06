@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1072750896345",
+    "project_id": "wassaly-c3f99",
+    "storage_bucket": "wassaly-c3f99.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1072750896345:android:09ee2aec5894a499ef4ac8",
+        "android_client_info": {
+          "package_name": "com.wassaly.wassaly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1072750896345-a73v2tqfa21vffkq33b35ri57ekdl5li.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wassaly.wassaly",
+            "certificate_hash": "c321be15512c15e6bf2224070b78a13dd23e0497"
+          }
+        },
+        {
+          "client_id": "1072750896345-muf560dk45rumk0dgtmqs7qr0cjr0322.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4QtcoWzuMrR7BSvEjet0s9lIgo643sb8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1072750896345-muf560dk45rumk0dgtmqs7qr0cjr0322.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
