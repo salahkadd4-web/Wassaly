@@ -10,43 +10,202 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
-    // Profil privé : visible uniquement par son propriétaire.
+    // Administrateur : document admins/{uid} cree a la main dans la console.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Livreur dont l'abonnement (essai ou paye) est en cours.
+    function isSubscribedDriver() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/drivers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.subscriptionEnd > request.time
+        && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.subscriptionStatus in ['trial', 'paid'];
+    }
+
+    // Participant d'une conversation dont l'id est "clientId_driverId".
+    function inConv(cid) {
+      return signedIn()
+        && (request.auth.uid == cid.split('_')[0]
+            || request.auth.uid == cid.split('_')[1]);
+    }
+
+    // Un admin peut en nommer d'autres (par l'application) et en retirer,
+    // sauf lui-meme. Le tout premier admin se cree a la main dans la console.
+    match /admins/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['email', 'addedBy', 'createdAt'])
+        && request.resource.data.addedBy == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin() && uid != request.auth.uid;
+    }
+
+    // Unicite des numeros : un document par numero (id = numero normalise).
+    // Creation seulement : si le numero existe deja, l'ecriture est refusee,
+    // donc l'inscription entiere (ecriture groupee) echoue.
+    match /phones/{phone} {
+      allow read: if false;
+      allow create: if signedIn()
+        && phone.matches('^0[5-7][0-9]{8}$')
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt']);
+      allow update, delete: if false;
+    }
+
+    // Profil prive : visible par son proprietaire et par l'administrateur.
     match /users/{uid} {
-      allow read: if isOwner(uid);
+      allow read: if isOwner(uid) || isAdmin();
 
       allow create: if isOwner(uid)
         && request.resource.data.keys().hasOnly(
              ['name', 'email', 'phone', 'role', 'photo', 'createdAt'])
-        && request.resource.data.role in ['client', 'driver'];
+        && request.resource.data.role in ['client', 'driver']
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches('^0[5-7][0-9]{8}$')
+        // Le numero doit etre reserve par ce meme compte dans phones/{numero}.
+        && getAfter(/databases/$(database)/documents/phones/$(request.resource.data.phone)).data.uid == uid;
 
-      // Le rôle (et l'email) ne sont jamais modifiables depuis l'app.
+      // Le role, l'email et le numero ne sont jamais modifiables depuis l'application.
       allow update: if isOwner(uid)
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['name', 'phone', 'photo']);
+             .hasOnly(['name', 'photo']);
 
       allow delete: if false;
     }
 
-    // Profil public du livreur : lisible par tout utilisateur connecté.
+    // Profil public du livreur : lisible par tout utilisateur connecte.
     match /drivers/{uid} {
       allow read: if signedIn();
 
       allow create: if isOwner(uid)
         && getAfter(/databases/$(database)/documents/users/$(uid)).data.role == 'driver'
+        && request.resource.data.phone
+             == getAfter(/databases/$(database)/documents/users/$(uid)).data.phone
         && request.resource.data.active == false
         && request.resource.data.subscriptionStatus == 'trial'
         && request.resource.data.subscriptionEnd > request.time
         && request.resource.data.subscriptionEnd
              < request.time + duration.value(62, 'd');
 
-      // Le livreur ne peut pas toucher à son abonnement
-      // et ne peut pas s'activer si son abonnement est expiré.
-      allow update: if isOwner(uid)
+      allow update: if
+        // Le livreur : disponibilite, position, ville, identite.
+        // Il ne peut pas toucher a son abonnement ni s'activer si celui-ci est invalide.
+        (isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['active', 'latitude', 'longitude', 'lastLocationUpdate',
+                         'city', 'name', 'photo'])
+          && (request.resource.data.active == false
+              || (resource.data.subscriptionEnd > request.time
+                  && resource.data.subscriptionStatus in ['trial', 'paid'])))
+        // L'administrateur : tout, y compris l'abonnement.
+        || isAdmin();
+
+      allow delete: if false;
+    }
+
+    // Conversations : id = clientId_driverId.
+    match /conversations/{cid} {
+      allow get: if inConv(cid);
+      allow list: if signedIn()
+        && (resource.data.clientId == request.auth.uid
+            || resource.data.driverId == request.auth.uid);
+
+      allow create: if inConv(cid)
+        && request.resource.data.clientId == cid.split('_')[0]
+        && request.resource.data.driverId == cid.split('_')[1];
+
+      allow update: if inConv(cid)
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['active', 'latitude', 'longitude', 'lastLocationUpdate',
-                       'city', 'name', 'phone', 'photo'])
-        && (request.resource.data.active == false
-            || resource.data.subscriptionEnd > request.time);
+             .hasOnly(['clientName', 'driverName', 'lastMessage', 'lastSenderId',
+                       'updatedAt', 'clientUnread', 'driverUnread']);
+
+      allow delete: if false;
+
+      match /messages/{mid} {
+        allow read: if inConv(cid);
+        allow create: if inConv(cid)
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+        allow update, delete: if false;
+      }
+    }
+
+    // Demandes de livraison.
+    match /deliveryRequests/{rid} {
+      allow read: if signedIn()
+        && (resource.data.clientId == request.auth.uid
+            || resource.data.driverId == request.auth.uid
+            || isAdmin());
+
+      allow create: if isOwner(request.resource.data.clientId)
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(
+             ['clientId', 'driverId', 'clientName', 'clientPhone', 'driverName',
+              'pickup', 'delivery', 'note', 'status', 'createdAt', 'updatedAt']);
+
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'updatedAt'])
+        && (
+          // Le livreur accepte/refuse puis termine.
+          (resource.data.driverId == request.auth.uid
+            && ((resource.data.status == 'pending'
+                  && request.resource.data.status in ['accepted', 'rejected'])
+                || (resource.data.status == 'accepted'
+                  && request.resource.data.status == 'completed')))
+          // Le client peut annuler tant que ce n'est pas termine.
+          || (resource.data.clientId == request.auth.uid
+            && resource.data.status in ['pending', 'accepted']
+            && request.resource.data.status == 'cancelled')
+        );
+
+      allow delete: if false;
+    }
+
+    // Demandes ouvertes : publiees par un client, lues par les livreurs abonnes.
+    match /openRequests/{rid} {
+      allow read: if signedIn()
+        && (resource.data.clientId == request.auth.uid
+            || isAdmin()
+            || (resource.data.status == 'open' && isSubscribedDriver()));
+
+      allow create: if isOwner(request.resource.data.clientId)
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'client'
+        && request.resource.data.status == 'open'
+        && request.resource.data.note is string
+        && request.resource.data.note.size() <= 300
+        && request.resource.data.keys().hasOnly(
+             ['clientId', 'clientName', 'clientPhone', 'pickup', 'delivery',
+              'note', 'status', 'createdAt', 'updatedAt']);
+
+      // Le client peut seulement la cloturer.
+      allow update: if signedIn()
+        && resource.data.clientId == request.auth.uid
+        && resource.data.status == 'open'
+        && request.resource.data.status == 'closed'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'updatedAt']);
+
+      allow delete: if false;
+    }
+
+    // Demandes de renouvellement d'abonnement (preuve de paiement).
+    match /subscriptionRequests/{sid} {
+      allow read: if signedIn()
+        && (resource.data.driverId == request.auth.uid || isAdmin());
+
+      allow create: if isOwner(request.resource.data.driverId)
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(
+             ['driverId', 'driverName', 'driverPhone', 'reference', 'status', 'createdAt']);
+
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'reviewedAt']);
 
       allow delete: if false;
     }

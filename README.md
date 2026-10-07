@@ -1,21 +1,24 @@
-# Wassaly — وصّلي
+# Wassaly
 
-Application mobile (Flutter + Firebase) de mise en relation entre clients et
-livreurs de proximité en Algérie.
+Application mobile Flutter + Firebase : mise en relation entre clients et livreurs de proximite (Algerie).
 
-Cahier des charges complet : [`docs/CAHIER_DES_CHARGES.md`](docs/CAHIER_DES_CHARGES.md)
+- Guide complet d'installation et d'utilisation : [GUIDE.md](GUIDE.md)
+- Cahier des charges : [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md)
 
-## Lancer le projet
+## Demarrage rapide
 
-```bash
+```
 flutter pub get
 flutter gen-l10n
 flutter run
 ```
 
-## État d'avancement
+Publiez ensuite `firestore.rules` dans la console Firebase (voir le guide, section 4).
 
-- [x] Étape 0 : environnement, Firebase, dépendances
-- [x] Étape 1 : thèmes clair/sombre, français/arabe (RTL), navigation
-- [x] Étape 2 : authentification Google, téléphone, choix du rôle, règles Firestore (`firestore.rules`)
-- [ ] Étape 3 : liste des livreurs, position GPS, distance
+## Etat d'avancement
+
+Toutes les etapes du cahier des charges sont implementees : authentification Google, profils client/livreur,
+liste des livreurs par distance GPS, appel / WhatsApp / messagerie, demandes de livraison, abonnement avec essai de 2 mois,
+panneau administrateur, francais / arabe, themes clair / sombre.
+
+Reste a faire : notifications push application fermee (Cloud Functions), publication Play Store.

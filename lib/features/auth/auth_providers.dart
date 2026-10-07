@@ -42,3 +42,15 @@ final userProfileProvider = StreamProvider<UserProfile?>((ref) {
       .where((s) => s.exists || !s.metadata.isFromCache)
       .map((s) => s.exists ? UserProfile.fromMap(s.id, s.data()!) : null);
 });
+
+/// Vrai si un document admins/{uid} existe pour l'utilisateur connecte.
+final isAdminProvider = StreamProvider<bool>((ref) {
+  final user = ref.watch(authStateProvider).value;
+  if (user == null) return Stream.value(false);
+  return ref
+      .watch(firestoreProvider)
+      .collection('admins')
+      .doc(user.uid)
+      .snapshots()
+      .map((s) => s.exists);
+});

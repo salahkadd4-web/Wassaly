@@ -1,26 +1,225 @@
 {
-  "@@locale": "ar",
-  "appName": "وصّلي",
-  "welcome": "مرحبًا",
-  "chooseLanguage": "اختر اللغة",
-  "continueWithGoogle": "المتابعة عبر Google",
-  "login": "تسجيل الدخول",
-  "driversNearby": "الناقلون القريبون",
-  "signInError": "تعذر تسجيل الدخول. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.",
-  "completeProfile": "أكمل ملفك الشخصي",
-  "phoneLabel": "رقم الهاتف",
-  "phoneHint": "0550 12 34 56",
-  "phoneInvalid": "رقم غير صالح (مثال: 0550 12 34 56)",
-  "roleQuestion": "ما هو دورك؟",
-  "roleClient": "زبون",
-  "roleClientDesc": "أبحث عن موصّل",
-  "roleDriver": "موصّل",
-  "roleDriverDesc": "أقدّم خدمات التوصيل",
-  "continueButton": "متابعة",
-  "saveError": "تعذر الحفظ. حاول مرة أخرى.",
-  "signOut": "تسجيل الخروج",
-  "hello": "مرحبًا {name} 👋",
-  "clientHomeSoon": "قائمة الموصّلين ستتوفر في المرحلة التالية.",
-  "driverHomeSoon": "لوحة تحكم الموصّل ستتوفر في المرحلة التالية.",
-  "profileLoadError": "تعذر تحميل ملفك الشخصي. حاول مرة أخرى لاحقًا."
+  "@@locale": "ar"
+  ,"appName": "وصّلي"
+  ,"welcome": "مرحبًا بك"
+  ,"chooseLanguage": "اختر اللغة"
+  ,"continueWithGoogle": "المتابعة عبر Google"
+  ,"login": "تسجيل الدخول"
+  ,"signInError": "تعذر تسجيل الدخول. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."
+  ,"completeProfile": "أكمل ملفك الشخصي"
+  ,"phoneLabel": "رقم الهاتف"
+  ,"phoneHint": "0550 12 34 56"
+  ,"phoneInvalid": "رقم غير صالح (مثال: 0550 12 34 56)"
+  ,"roleQuestion": "ما هو دورك؟"
+  ,"roleClient": "زبون"
+  ,"roleClientDesc": "أبحث عن موصّل"
+  ,"roleDriver": "موصّل"
+  ,"roleDriverDesc": "أقدّم خدمات التوصيل"
+  ,"continueButton": "متابعة"
+  ,"saveError": "تعذر الحفظ. حاول مرة أخرى."
+  ,"signOut": "تسجيل الخروج"
+  ,"profileLoadError": "تعذر تحميل ملفك الشخصي. حاول لاحقًا."
+  ,"hello": "مرحبًا {name}"
+  ,"@hello": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"genericError": "حدث خطأ. حاول مرة أخرى."
+  ,"retry": "إعادة المحاولة"
+  ,"cancel": "إلغاء"
+  ,"save": "حفظ"
+  ,"yes": "نعم"
+  ,"no": "لا"
+  ,"remove": "إزالة"
+  ,"language": "اللغة"
+  ,"cannotOpenLink": "تعذر فتح التطبيق المطلوب."
+  ,"tabDrivers": "الموصّلون"
+  ,"tabRequests": "الطلبات"
+  ,"messages": "الرسائل"
+  ,"dashboard": "لوحة التحكم"
+  ,"myRequests": "طلباتي"
+  ,"driversNearby": "الموصّلون القريبون"
+  ,"driversAvailableNearby": "أقرب الموصّلين المتاحين إليك"
+  ,"noDriversAvailable": "لا يوجد موصّلون متاحون حاليًا. اسحب للأسفل للتحديث."
+  ,"available": "متاح"
+  ,"unavailable": "غير متاح"
+  ,"call": "اتصال"
+  ,"whatsapp": "واتساب"
+  ,"message": "رسالة"
+  ,"openInMaps": "المسار"
+  ,"locationServiceOff": "خدمة الموقع معطلة. فعّلها لعرض الموصّلين القريبين."
+  ,"locationDenied": "تم رفض إذن الموقع. اسمح به لترتيب الموصّلين حسب المسافة."
+  ,"locationDeniedForever": "الموقع محظور. اسمح به من إعدادات التطبيق."
+  ,"locationUnknown": "تعذر تحديد الموقع. تحقق من GPS وحاول مرة أخرى."
+  ,"openSettings": "فتح الإعدادات"
+  ,"gpsPosition": "موقع GPS"
+  ,"gpsShared": "تمت مشاركة موقع GPS"
+  ,"driverProfile": "ملف الموصّل"
+  ,"driverNotFound": "الموصّل غير موجود."
+  ,"city": "المدينة"
+  ,"distance": "المسافة"
+  ,"positionUpdated": "آخر تحديث للموقع"
+  ,"sendRequest": "إرسال طلب توصيل"
+  ,"driverNotAvailableHint": "هذا الموصّل غير متاح حاليًا."
+  ,"newRequest": "طلب جديد"
+  ,"requestTo": "طلب موجّه إلى هذا الموصّل"
+  ,"pickup": "الاستلام"
+  ,"delivery": "التسليم"
+  ,"addressLabel": "العنوان"
+  ,"placeRequired": "أدخل عنوانًا أو شارك موقعك."
+  ,"shareMyPosition": "مشاركة موقعي الحالي"
+  ,"noteOptional": "ملاحظة (اختياري)"
+  ,"sendToDriver": "إرسال إلى الموصّل"
+  ,"requestSent": "تم إرسال الطلب إلى الموصّل."
+  ,"statusPending": "قيد الانتظار"
+  ,"statusAccepted": "مقبول"
+  ,"statusRejected": "مرفوض"
+  ,"statusCompleted": "مكتمل"
+  ,"statusCancelled": "ملغى"
+  ,"accept": "قبول"
+  ,"reject": "رفض"
+  ,"markCompleted": "تحديد كمكتمل"
+  ,"cancelRequest": "إلغاء الطلب"
+  ,"confirmCancelTitle": "إلغاء الطلب؟"
+  ,"confirmCancelBody": "سيتم إعلام الموصّل بالإلغاء."
+  ,"noRequestsClient": "لا توجد طلبات حاليًا."
+  ,"noRequestsDriver": "لم تصلك أي طلبات حتى الآن."
+  ,"notifNewRequest": "طلب جديد من {name}"
+  ,"@notifNewRequest": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"notifRequestCancelled": "ألغى {name} طلبه"
+  ,"@notifRequestCancelled": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"notifRequestAccepted": "قبل {name} طلبك"
+  ,"@notifRequestAccepted": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"notifRequestRejected": "رفض {name} طلبك"
+  ,"@notifRequestRejected": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"notifRequestCompleted": "تم إنهاء التوصيل"
+  ,"noConversations": "لا توجد محادثات حاليًا."
+  ,"startConversation": "أرسل الرسالة الأولى."
+  ,"typeMessage": "اكتب رسالة"
+  ,"send": "إرسال"
+  ,"sendError": "تعذر إرسال الرسالة. حاول مرة أخرى."
+  ,"yourAvailability": "حالة توفرك"
+  ,"statusActive": "نشط"
+  ,"statusInactive": "غير نشط"
+  ,"activeHint": "يمكن للزبائن القريبين منك رؤيتك والتواصل معك."
+  ,"inactiveHint": "أنت مخفي. فعّل حسابك لتلقي الطلبات."
+  ,"activate": "أنا متاح"
+  ,"deactivate": "إيقاف التوفر"
+  ,"updateMyPosition": "تحديث موقعي"
+  ,"positionUpdatedOk": "تم تحديث الموقع."
+  ,"cityNotSet": "المدينة غير محددة"
+  ,"editCity": "تعديل المدينة"
+  ,"subscriptionBlocked": "اشتراكك منتهٍ أو موقوف. جدّده لتصبح ظاهرًا للزبائن."
+  ,"subscription": "الاشتراك"
+  ,"subTrial": "فترة تجريبية"
+  ,"subPaid": "اشتراك فعّال"
+  ,"subExpired": "منتهٍ"
+  ,"subSuspended": "موقوف"
+  ,"expiresOn": "ينتهي في {date}"
+  ,"@expiresOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  }
+  ,"daysLeft": "المتبقي {count} يوم"
+  ,"@daysLeft": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  }
+  ,"subscriptionExpiredMsg": "اشتراكك لم يعد صالحًا: لن تظهر للزبائن."
+  ,"manageSubscription": "إدارة اشتراكي"
+  ,"renewSubscription": "تجديد اشتراكي"
+  ,"priceLine": "{price} دج شهريًا"
+  ,"@priceLine": {
+    "placeholders": {
+      "price": {"type": "String"}
+    }
+  }
+  ,"paymentSteps": "1. أجرِ الدفع عبر المعلومات أدناه.\n2. أدخل مرجع الدفع ثم أرسل.\n3. يؤكد المسؤول الدفع ويضيف 30 يومًا إلى اشتراكك."
+  ,"paymentReference": "مرجع الدفع"
+  ,"paymentReferenceRequired": "أدخل مرجع الدفع."
+  ,"iHavePaid": "لقد دفعت، إرسال"
+  ,"claimSent": "تم إرسال الطلب. سيراجعه المسؤول."
+  ,"claimAlreadyPending": "يوجد طلب قيد المراجعة بالفعل."
+  ,"claimsHistory": "سجل الطلبات"
+  ,"noClaims": "لا توجد طلبات تجديد."
+  ,"claimPending": "قيد المراجعة"
+  ,"claimApproved": "تمت الموافقة"
+  ,"claimRejected": "مرفوض"
+  ,"adminPanel": "الإدارة"
+  ,"accessDenied": "الدخول مخصص للمسؤول فقط."
+  ,"adminDrivers": "الموصّلون"
+  ,"adminPayments": "المدفوعات"
+  ,"adminClients": "الزبائن"
+  ,"adminRequests": "الطلبات"
+  ,"adminNoDrivers": "لا يوجد موصّلون مسجلون."
+  ,"adminNoClients": "لا يوجد زبائن مسجلون."
+  ,"adminNoClaims": "لا توجد مدفوعات قيد الانتظار."
+  ,"adminExtend": "تمديد 30 يومًا"
+  ,"adminExtended": "تم تمديد الاشتراك 30 يومًا."
+  ,"adminSuspend": "إيقاف"
+  ,"adminUnsuspend": "رفع الإيقاف"
+  ,"adminValidate": "تأكيد"
+  ,"themeToLight": "التبديل إلى الوضع الفاتح"
+  ,"themeToDark": "التبديل إلى الوضع الداكن"
+  ,"exitTitle": "الخروج من التطبيق؟"
+  ,"exitBody": "هل تريد فعلًا الخروج من التطبيق؟"
+  ,"exitConfirm": "خروج"
+  ,"openRequestsTab": "الزبائن"
+  ,"openRequestsTitle": "زبائن يبحثون عن موصّل"
+  ,"noOpenRequests": "لا يوجد زبائن يبحثون عن موصّل حاليًا."
+  ,"openRequestsLocked": "تحتاج إلى اشتراك ساري لرؤية الزبائن الذين يبحثون عن موصّل."
+  ,"notifNewOpenRequest": "زبون يبحث عن موصّل."
+  ,"publishOpenRequest": "نشر طلب مفتوح"
+  ,"publishOpenRequestHint": "سيراه الموصّلون المشتركون ويمكنهم التواصل معك."
+  ,"newOpenRequest": "طلب مفتوح"
+  ,"openRequestIntro": "صف توصيلتك: يمكن للموصّلين المشتركين الاتصال بك أو مراسلتك."
+  ,"publishAction": "نشر"
+  ,"openRequestPublished": "تم نشر الطلب. يمكن للموصّلين التواصل معك الآن."
+  ,"myOpenRequests": "طلباتي المفتوحة"
+  ,"sentRequests": "الطلبات المرسلة إلى موصّل"
+  ,"closeOpenRequest": "إغلاق"
+  ,"closeOpenRequestTitle": "إغلاق الطلب؟"
+  ,"closeOpenRequestBody": "لن يراه الموصّلون بعد الآن."
+  ,"openRequestOpenLabel": "مفتوح"
+  ,"openRequestClosedLabel": "مغلق"
+  ,"adminAdmins": "المسؤولون"
+  ,"adminAddTitle": "إضافة مسؤول"
+  ,"adminAddHint": "يجب أن يكون الشخص مسجّلًا في التطبيق."
+  ,"adminEmailLabel": "البريد الإلكتروني لحساب Google"
+  ,"adminEmailInvalid": "بريد إلكتروني غير صالح."
+  ,"adminAddButton": "إضافة"
+  ,"adminAdded": "تمت إضافة المسؤول."
+  ,"adminUserNotFound": "لا يوجد حساب بهذا البريد. يجب أن يسجّل الشخص أولًا."
+  ,"adminAlready": "هذا الشخص مسؤول بالفعل."
+  ,"adminCurrent": "المسؤولون الحاليون"
+  ,"adminRemoveTitle": "إزالة هذا المسؤول؟"
+  ,"adminRemoveBody": "سيفقد الوصول إلى لوحة الإدارة."
+  ,"adminYou": "أنت"
+  ,"welcomeGreeting": "مرحبًا!"
+  ,"welcomeTagline": "جد موصّلًا بسرعة بالقرب منك."
+  ,"roleClientShort": "أنا زبون"
+  ,"roleClientShortDesc": "أحتاج إلى موصّل"
+  ,"roleDriverShort": "أنا موصّل"
+  ,"roleDriverShortDesc": "أوصّل الطرود"
+  ,"welcomeGoogleHint": "اختر ملفك للمتابعة عبر Google"
+  ,"phoneTaken": "هذا الرقم مستخدم من حساب آخر. استخدم رقمًا آخر."
 }

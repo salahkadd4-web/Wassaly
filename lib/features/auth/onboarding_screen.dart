@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/utils/formatters.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/exit_confirm_scope.dart';
 import 'auth_providers.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -23,12 +26,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
-  String _normalize(String raw) => raw.replaceAll(RegExp(r'[\s.\-]'), '');
-
   String? _validatePhone(String? value, AppLocalizations t) {
     // Mobiles algériens : 05 / 06 / 07 + 8 chiffres.
-    final ok = RegExp(r'^0[5-7]\d{8}$').hasMatch(_normalize(value ?? ''));
-    return ok ? null : t.phoneInvalid;
+    return isValidAlgerianMobile(value ?? '') ? null : t.phoneInvalid;
   }
 
   Future<void> _submit() async {
@@ -39,17 +39,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     setState(() => _saving = true);
     try {
-      await ref.read(profileRepositoryProvider).createProfile(
+      await ref
+          .read(profileRepositoryProvider)
+          .createProfile(
             user: user,
-            phone: _normalize(_phoneController.text),
+            phone: normalizePhone(_phoneController.text),
             role: _role!,
           );
       // Le routeur redirige automatiquement dès que le profil existe.
     } catch (e) {
       debugPrint('Erreur création du profil : $e');
       if (mounted) {
+        final t = AppLocalizations.of(context)!;
+        // Numero deja reserve par un autre compte (regles Firestore).
+        final taken = e is FirebaseException && e.code == 'permission-denied';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.saveError)),
+          SnackBar(content: Text(taken ? t.phoneTaken : t.saveError)),
         );
         setState(() => _saving = false);
       }
@@ -60,71 +65,78 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.completeProfile),
-        actions: [
-          TextButton(
-            onPressed:
-                _saving ? null : () => ref.read(authServiceProvider).signOut(),
-            child: Text(
-              t.signOut,
-              style: const TextStyle(color: Colors.white),
+    return ExitConfirmScope(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(t.completeProfile),
+          actions: [
+            TextButton(
+              onPressed: _saving
+                  ? null
+                  : () => ref.read(authServiceProvider).signOut(),
+              child: Text(
+                t.signOut,
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                textDirection: TextDirection.ltr,
-                decoration: InputDecoration(
-                  labelText: t.phoneLabel,
-                  hintText: t.phoneHint,
-                  prefixIcon: const Icon(Icons.phone),
-                  border: const OutlineInputBorder(),
+          ],
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  textDirection: TextDirection.ltr,
+                  decoration: InputDecoration(
+                    labelText: t.phoneLabel,
+                    hintText: t.phoneHint,
+                    prefixIcon: const Icon(Icons.phone),
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (v) => _validatePhone(v, t),
                 ),
-                validator: (v) => _validatePhone(v, t),
-              ),
-              const SizedBox(height: 32),
-              Text(
-                t.roleQuestion,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              _RoleCard(
-                icon: Icons.person,
-                title: t.roleClient,
-                subtitle: t.roleClientDesc,
-                selected: _role == 'client',
-                onTap: _saving ? null : () => setState(() => _role = 'client'),
-              ),
-              const SizedBox(height: 12),
-              _RoleCard(
-                icon: Icons.two_wheeler,
-                title: t.roleDriver,
-                subtitle: t.roleDriverDesc,
-                selected: _role == 'driver',
-                onTap: _saving ? null : () => setState(() => _role = 'driver'),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: (_role == null || _saving) ? null : _submit,
-                child: _saving
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(t.continueButton),
-              ),
-            ],
+                const SizedBox(height: 32),
+                Text(
+                  t.roleQuestion,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                _RoleCard(
+                  icon: Icons.person,
+                  title: t.roleClient,
+                  subtitle: t.roleClientDesc,
+                  selected: _role == 'client',
+                  onTap: _saving
+                      ? null
+                      : () => setState(() => _role = 'client'),
+                ),
+                const SizedBox(height: 12),
+                _RoleCard(
+                  icon: Icons.two_wheeler,
+                  title: t.roleDriver,
+                  subtitle: t.roleDriverDesc,
+                  selected: _role == 'driver',
+                  onTap: _saving
+                      ? null
+                      : () => setState(() => _role = 'driver'),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: (_role == null || _saving) ? null : _submit,
+                  child: _saving
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(t.continueButton),
+                ),
+              ],
+            ),
           ),
         ),
       ),

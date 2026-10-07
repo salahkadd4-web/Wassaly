@@ -8,8 +8,10 @@ class ProfileRepository {
 
   final FirebaseFirestore _db;
 
-  /// Crée users/{uid} (privé) et, pour un livreur, drivers/{uid} (public)
-  /// dans une seule écriture groupée.
+  /// Crée phones/{numéro} (unicité), users/{uid} (privé) et, pour un livreur,
+  /// drivers/{uid} (public) dans une seule écriture groupée.
+  /// [phone] doit être normalisé (10 chiffres). Si le numéro est déjà pris,
+  /// l'écriture échoue avec le code `permission-denied`.
   Future<void> createProfile({
     required User user,
     required String phone,
@@ -20,6 +22,12 @@ class ProfileRepository {
     final name = displayName.isNotEmpty ? displayName : email.split('@').first;
 
     final batch = _db.batch();
+
+    // Reserve le numero : refuse par les regles s'il est deja pris.
+    batch.set(_db.collection('phones').doc(phone), {
+      'uid': user.uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
 
     batch.set(_db.collection('users').doc(user.uid), {
       'name': name,

@@ -1,33 +1,225 @@
 {
-  "@@locale": "fr",
-  "appName": "Wassaly",
-  "welcome": "Bienvenue",
-  "chooseLanguage": "Choisir la langue",
-  "continueWithGoogle": "Continuer avec Google",
-  "login": "Connexion",
-  "driversNearby": "Livreurs à proximité",
-  "signInError": "Connexion impossible. Vérifie ta connexion internet et réessaie.",
-  "completeProfile": "Complète ton profil",
-  "phoneLabel": "Numéro de téléphone",
-  "phoneHint": "0550 12 34 56",
-  "phoneInvalid": "Numéro invalide (exemple : 0550 12 34 56)",
-  "roleQuestion": "Quel est ton rôle ?",
-  "roleClient": "Client",
-  "roleClientDesc": "Je cherche un livreur",
-  "roleDriver": "Livreur",
-  "roleDriverDesc": "Je propose mes services de livraison",
-  "continueButton": "Continuer",
-  "saveError": "Enregistrement impossible. Réessaie.",
-  "signOut": "Se déconnecter",
-  "hello": "Bonjour {name} 👋",
-  "@hello": {
+  "@@locale": "fr"
+  ,"appName": "Wassaly"
+  ,"welcome": "Bienvenue"
+  ,"chooseLanguage": "Choisir la langue"
+  ,"continueWithGoogle": "Continuer avec Google"
+  ,"login": "Connexion"
+  ,"signInError": "Connexion impossible. Vérifiez votre connexion internet et réessayez."
+  ,"completeProfile": "Complétez votre profil"
+  ,"phoneLabel": "Numéro de téléphone"
+  ,"phoneHint": "0550 12 34 56"
+  ,"phoneInvalid": "Numéro invalide (exemple : 0550 12 34 56)"
+  ,"roleQuestion": "Quel est votre rôle ?"
+  ,"roleClient": "Client"
+  ,"roleClientDesc": "Je cherche un livreur"
+  ,"roleDriver": "Livreur"
+  ,"roleDriverDesc": "Je propose mes services de livraison"
+  ,"continueButton": "Continuer"
+  ,"saveError": "Enregistrement impossible. Réessayez."
+  ,"signOut": "Se déconnecter"
+  ,"profileLoadError": "Impossible de charger votre profil. Réessayez plus tard."
+  ,"hello": "Bonjour {name}"
+  ,"@hello": {
     "placeholders": {
-      "name": {
-        "type": "String"
-      }
+      "name": {"type": "String"}
     }
-  },
-  "clientHomeSoon": "La liste des livreurs arrive à l'étape suivante.",
-  "driverHomeSoon": "Ton tableau de bord livreur arrive à l'étape suivante.",
-  "profileLoadError": "Impossible de charger ton profil. Réessaie plus tard."
+  }
+  ,"genericError": "Une erreur est survenue. Réessayez."
+  ,"retry": "Réessayer"
+  ,"cancel": "Annuler"
+  ,"save": "Enregistrer"
+  ,"yes": "Oui"
+  ,"no": "Non"
+  ,"remove": "Retirer"
+  ,"language": "Langue"
+  ,"cannotOpenLink": "Impossible d'ouvrir l'application correspondante."
+  ,"tabDrivers": "Livreurs"
+  ,"tabRequests": "Demandes"
+  ,"messages": "Messages"
+  ,"dashboard": "Tableau de bord"
+  ,"myRequests": "Mes demandes"
+  ,"driversNearby": "Livreurs à proximité"
+  ,"driversAvailableNearby": "Les livreurs disponibles les plus proches de vous"
+  ,"noDriversAvailable": "Aucun livreur disponible pour le moment. Tirez vers le bas pour actualiser."
+  ,"available": "Disponible"
+  ,"unavailable": "Indisponible"
+  ,"call": "Appeler"
+  ,"whatsapp": "WhatsApp"
+  ,"message": "Message"
+  ,"openInMaps": "Itinéraire"
+  ,"locationServiceOff": "Le GPS est désactivé. Activez la localisation pour voir les livreurs proches."
+  ,"locationDenied": "Permission de localisation refusée. Autorisez-la pour trier les livreurs par distance."
+  ,"locationDeniedForever": "La localisation est bloquée. Autorisez-la dans les paramètres de l'application."
+  ,"locationUnknown": "Position introuvable. Vérifiez le GPS et réessayez."
+  ,"openSettings": "Ouvrir les paramètres"
+  ,"gpsPosition": "Position GPS"
+  ,"gpsShared": "Position GPS partagée"
+  ,"driverProfile": "Profil du livreur"
+  ,"driverNotFound": "Livreur introuvable."
+  ,"city": "Ville"
+  ,"distance": "Distance"
+  ,"positionUpdated": "Position mise à jour"
+  ,"sendRequest": "Envoyer une demande de livraison"
+  ,"driverNotAvailableHint": "Ce livreur n'est pas disponible pour le moment."
+  ,"newRequest": "Nouvelle demande"
+  ,"requestTo": "Demande adressée à ce livreur"
+  ,"pickup": "Récupération"
+  ,"delivery": "Livraison"
+  ,"addressLabel": "Adresse"
+  ,"placeRequired": "Saisissez une adresse ou partagez votre position."
+  ,"shareMyPosition": "Partager ma position actuelle"
+  ,"noteOptional": "Note (facultatif)"
+  ,"sendToDriver": "Envoyer au livreur"
+  ,"requestSent": "Demande envoyée au livreur."
+  ,"statusPending": "En attente"
+  ,"statusAccepted": "Acceptée"
+  ,"statusRejected": "Refusée"
+  ,"statusCompleted": "Terminée"
+  ,"statusCancelled": "Annulée"
+  ,"accept": "Accepter"
+  ,"reject": "Refuser"
+  ,"markCompleted": "Marquer comme terminée"
+  ,"cancelRequest": "Annuler la demande"
+  ,"confirmCancelTitle": "Annuler la demande ?"
+  ,"confirmCancelBody": "Le livreur sera informé de l'annulation."
+  ,"noRequestsClient": "Aucune demande pour le moment."
+  ,"noRequestsDriver": "Aucune demande reçue pour le moment."
+  ,"notifNewRequest": "Nouvelle demande de {name}"
+  ,"@notifNewRequest": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"notifRequestCancelled": "{name} a annulé sa demande"
+  ,"@notifRequestCancelled": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"notifRequestAccepted": "{name} a accepté votre demande"
+  ,"@notifRequestAccepted": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"notifRequestRejected": "{name} a refusé votre demande"
+  ,"@notifRequestRejected": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  }
+  ,"notifRequestCompleted": "Votre livraison est terminée"
+  ,"noConversations": "Aucune conversation pour le moment."
+  ,"startConversation": "Envoyez le premier message."
+  ,"typeMessage": "Écrire un message"
+  ,"send": "Envoyer"
+  ,"sendError": "Message non envoyé. Réessayez."
+  ,"yourAvailability": "Votre disponibilité"
+  ,"statusActive": "Actif"
+  ,"statusInactive": "Inactif"
+  ,"activeHint": "Les clients proches de vous peuvent vous voir et vous contacter."
+  ,"inactiveHint": "Vous êtes masqué. Activez-vous pour recevoir des demandes."
+  ,"activate": "Je suis disponible"
+  ,"deactivate": "Me rendre indisponible"
+  ,"updateMyPosition": "Mettre à jour ma position"
+  ,"positionUpdatedOk": "Position mise à jour."
+  ,"cityNotSet": "Ville non renseignée"
+  ,"editCity": "Modifier la ville"
+  ,"subscriptionBlocked": "Votre abonnement est expiré ou suspendu. Renouvelez-le pour être visible."
+  ,"subscription": "Abonnement"
+  ,"subTrial": "Essai gratuit"
+  ,"subPaid": "Abonnement actif"
+  ,"subExpired": "Expiré"
+  ,"subSuspended": "Suspendu"
+  ,"expiresOn": "Expire le {date}"
+  ,"@expiresOn": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  }
+  ,"daysLeft": "{count} jour(s) restant(s)"
+  ,"@daysLeft": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  }
+  ,"subscriptionExpiredMsg": "Votre abonnement n'est plus valide : vous n'apparaissez plus aux clients."
+  ,"manageSubscription": "Gérer mon abonnement"
+  ,"renewSubscription": "Renouveler mon abonnement"
+  ,"priceLine": "{price} DA par mois"
+  ,"@priceLine": {
+    "placeholders": {
+      "price": {"type": "String"}
+    }
+  }
+  ,"paymentSteps": "1. Effectuez le paiement avec les coordonnées ci-dessous.\n2. Saisissez la référence du paiement et envoyez.\n3. L'administrateur valide et ajoute 30 jours à votre abonnement."
+  ,"paymentReference": "Référence du paiement"
+  ,"paymentReferenceRequired": "Saisissez la référence du paiement."
+  ,"iHavePaid": "J'ai payé, envoyer"
+  ,"claimSent": "Demande envoyée. L'administrateur va la valider."
+  ,"claimAlreadyPending": "Une demande est déjà en cours de validation."
+  ,"claimsHistory": "Historique des demandes"
+  ,"noClaims": "Aucune demande de renouvellement."
+  ,"claimPending": "En validation"
+  ,"claimApproved": "Validée"
+  ,"claimRejected": "Refusée"
+  ,"adminPanel": "Administration"
+  ,"accessDenied": "Accès réservé à l'administrateur."
+  ,"adminDrivers": "Livreurs"
+  ,"adminPayments": "Paiements"
+  ,"adminClients": "Clients"
+  ,"adminRequests": "Demandes"
+  ,"adminNoDrivers": "Aucun livreur inscrit."
+  ,"adminNoClients": "Aucun client inscrit."
+  ,"adminNoClaims": "Aucun paiement en attente."
+  ,"adminExtend": "Prolonger de 30 jours"
+  ,"adminExtended": "Abonnement prolongé de 30 jours."
+  ,"adminSuspend": "Suspendre"
+  ,"adminUnsuspend": "Lever la suspension"
+  ,"adminValidate": "Valider"
+  ,"themeToLight": "Passer en mode clair"
+  ,"themeToDark": "Passer en mode sombre"
+  ,"exitTitle": "Quitter l'application ?"
+  ,"exitBody": "Voulez-vous vraiment quitter l'application ?"
+  ,"exitConfirm": "Quitter"
+  ,"openRequestsTab": "Clients"
+  ,"openRequestsTitle": "Clients qui cherchent un livreur"
+  ,"noOpenRequests": "Aucun client ne cherche de livreur pour le moment."
+  ,"openRequestsLocked": "Un abonnement valide est nécessaire pour voir les clients qui cherchent un livreur."
+  ,"notifNewOpenRequest": "Un client cherche un livreur."
+  ,"publishOpenRequest": "Publier une demande ouverte"
+  ,"publishOpenRequestHint": "Les livreurs abonnés la verront et pourront vous contacter."
+  ,"newOpenRequest": "Demande ouverte"
+  ,"openRequestIntro": "Décrivez votre livraison : les livreurs abonnés pourront vous appeler ou vous écrire."
+  ,"publishAction": "Publier"
+  ,"openRequestPublished": "Demande publiée. Les livreurs peuvent maintenant vous contacter."
+  ,"myOpenRequests": "Mes demandes ouvertes"
+  ,"sentRequests": "Demandes envoyées à un livreur"
+  ,"closeOpenRequest": "Clôturer"
+  ,"closeOpenRequestTitle": "Clôturer la demande ?"
+  ,"closeOpenRequestBody": "Les livreurs ne la verront plus."
+  ,"openRequestOpenLabel": "Ouverte"
+  ,"openRequestClosedLabel": "Clôturée"
+  ,"adminAdmins": "Admins"
+  ,"adminAddTitle": "Ajouter un administrateur"
+  ,"adminAddHint": "La personne doit déjà être inscrite dans l'application."
+  ,"adminEmailLabel": "Email du compte Google"
+  ,"adminEmailInvalid": "Email invalide."
+  ,"adminAddButton": "Ajouter"
+  ,"adminAdded": "Administrateur ajouté."
+  ,"adminUserNotFound": "Aucun compte avec cet email. La personne doit d'abord s'inscrire."
+  ,"adminAlready": "Cette personne est déjà administrateur."
+  ,"adminCurrent": "Administrateurs actuels"
+  ,"adminRemoveTitle": "Retirer cet administrateur ?"
+  ,"adminRemoveBody": "Il perdra l'accès au panneau d'administration."
+  ,"adminYou": "Vous"
+  ,"welcomeGreeting": "Bonjour !"
+  ,"welcomeTagline": "Trouvez rapidement un livreur près de chez vous."
+  ,"roleClientShort": "Je suis client"
+  ,"roleClientShortDesc": "J'ai besoin d'un livreur"
+  ,"roleDriverShort": "Je suis livreur"
+  ,"roleDriverShortDesc": "Je livre des colis"
+  ,"welcomeGoogleHint": "Touchez votre profil pour continuer avec Google"
+  ,"phoneTaken": "Ce numéro est déjà utilisé par un autre compte. Utilisez un autre numéro."
 }
