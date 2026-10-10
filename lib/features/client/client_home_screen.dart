@@ -24,10 +24,8 @@ class ClientHomeScreen extends ConsumerWidget {
     final unread = ref.watch(unreadMessagesCountProvider);
 
     // Notification dans l'application quand un livreur repond a une demande.
-    ref.listen<AsyncValue<List<DeliveryRequest>>>(clientRequestsProvider, (
-      prev,
-      next,
-    ) {
+    ref.listen<AsyncValue<List<DeliveryRequest>>>(clientRequestsProvider,
+        (prev, next) {
       final before = prev?.value;
       final after = next.value;
       if (before == null || after == null) return;
@@ -56,52 +54,51 @@ class ClientHomeScreen extends ConsumerWidget {
         return false;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: BrandTitle(
-            title: titles[index],
-            logo: const LogoMark(size: 34),
-          ),
-          actions: buildAppBarActions(context, ref),
+      appBar: AppBar(
+        title: BrandTitle(
+          title: titles[index],
+          logo: const LogoMark(size: 34),
         ),
-        body: IndexedStack(
-          index: index,
-          children: const [
-            DriversTab(),
-            ClientRequestsTab(),
-            ConversationsTab(),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: (i) =>
-              ref.read(homeTabProvider.notifier).select(i),
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.two_wheeler_outlined),
-              selectedIcon: const Icon(Icons.two_wheeler),
-              label: t.tabDrivers,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.inventory_2_outlined),
-              selectedIcon: const Icon(Icons.inventory_2),
-              label: t.tabRequests,
-            ),
-            NavigationDestination(
-              icon: Badge(
-                label: Text('$unread'),
-                isLabelVisible: unread > 0,
-                child: const Icon(Icons.chat_bubble_outline),
-              ),
-              selectedIcon: Badge(
-                label: Text('$unread'),
-                isLabelVisible: unread > 0,
-                child: const Icon(Icons.chat_bubble),
-              ),
-              label: t.messages,
-            ),
-          ],
-        ),
+        actions: buildAppBarActions(context, ref),
       ),
-    );
+      body: IndexedStack(
+        index: index,
+        children: const [
+          DriversTab(),
+          ClientRequestsTab(),
+          ConversationsTab(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        onDestinationSelected: (i) =>
+            ref.read(homeTabProvider.notifier).select(i),
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.two_wheeler_outlined),
+            selectedIcon: const Icon(Icons.two_wheeler),
+            label: t.tabDrivers,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.inventory_2_outlined),
+            selectedIcon: const Icon(Icons.inventory_2),
+            label: t.tabRequests,
+          ),
+          NavigationDestination(
+            icon: Badge(
+              label: Text('$unread'),
+              isLabelVisible: unread > 0,
+              child: const Icon(Icons.chat_bubble_outline),
+            ),
+            selectedIcon: Badge(
+              label: Text('$unread'),
+              isLabelVisible: unread > 0,
+              child: const Icon(Icons.chat_bubble),
+            ),
+            label: t.messages,
+          ),
+        ],
+      ),
+    ));
   }
 }

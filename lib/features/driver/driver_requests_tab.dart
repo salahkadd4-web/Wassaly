@@ -27,8 +27,7 @@ class DriverRequestsTab extends ConsumerWidget {
         }
         // Les demandes en attente d'abord, puis les acceptees, puis le reste.
         int rank(String s) => s == 'pending' ? 0 : (s == 'accepted' ? 1 : 2);
-        final sorted = [...list]
-          ..sort((a, b) {
+        final sorted = [...list]..sort((a, b) {
             final r = rank(a.status).compareTo(rank(b.status));
             return r != 0 ? r : b.createdAt.compareTo(a.createdAt);
           });
@@ -36,8 +35,7 @@ class DriverRequestsTab extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           itemCount: sorted.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (_, i) =>
-              RequestCard(request: sorted[i], asDriver: true),
+          itemBuilder: (_, i) => RequestCard(request: sorted[i], asDriver: true),
         );
       },
     );

@@ -14,14 +14,9 @@ class DriverAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor: scheme.primary.withValues(alpha: 0.12),
-      foregroundImage: (url != null && url.isNotEmpty)
-          ? NetworkImage(url)
-          : null,
-      child: Icon(
-        icon ?? Icons.two_wheeler,
-        color: scheme.primary,
-        size: radius,
-      ),
+      foregroundImage:
+          (url != null && url.isNotEmpty) ? NetworkImage(url) : null,
+      child: Icon(icon ?? Icons.two_wheeler, color: scheme.primary, size: radius),
     );
   }
 }

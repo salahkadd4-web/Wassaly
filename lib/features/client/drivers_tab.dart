@@ -140,8 +140,9 @@ class _LocationBanner extends StatelessWidget {
                     spacing: 8,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: () =>
-                            ref.read(clientLocationProvider.notifier).refresh(),
+                        onPressed: () => ref
+                            .read(clientLocationProvider.notifier)
+                            .refresh(),
                         icon: const Icon(Icons.refresh),
                         label: Text(t.retry),
                       ),
@@ -219,9 +220,8 @@ class _DriverCard extends ConsumerWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     formatDistance(km, comma: comma),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: muted,
-                                    ),
+                                    style: theme.textTheme.bodySmall
+                                        ?.copyWith(color: muted),
                                   ),
                                 ],
                               ),
@@ -229,17 +229,13 @@ class _DriverCard extends ConsumerWidget {
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.location_city,
-                                    size: 15,
-                                    color: muted,
-                                  ),
+                                  Icon(Icons.location_city,
+                                      size: 15, color: muted),
                                   const SizedBox(width: 4),
                                   Text(
                                     d.city!,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: muted,
-                                    ),
+                                    style: theme.textTheme.bodySmall
+                                        ?.copyWith(color: muted),
                                   ),
                                 ],
                               ),

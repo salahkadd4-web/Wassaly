@@ -27,16 +27,20 @@ class ChatRepository {
     final unreadField = fromClient ? 'driverUnread' : 'clientUnread';
 
     final batch = _db.batch();
-    batch.set(convRef, {
-      'clientId': clientId,
-      'driverId': driverId,
-      'clientName': clientName,
-      'driverName': driverName,
-      'lastMessage': text,
-      'lastSenderId': senderId,
-      'updatedAt': FieldValue.serverTimestamp(),
-      unreadField: FieldValue.increment(1),
-    }, SetOptions(merge: true));
+    batch.set(
+      convRef,
+      {
+        'clientId': clientId,
+        'driverId': driverId,
+        'clientName': clientName,
+        'driverName': driverName,
+        'lastMessage': text,
+        'lastSenderId': senderId,
+        'updatedAt': FieldValue.serverTimestamp(),
+        unreadField: FieldValue.increment(1),
+      },
+      SetOptions(merge: true),
+    );
     batch.set(msgRef, {
       'senderId': senderId,
       'text': text,

@@ -11,6 +11,7 @@ import '../../widgets/snack.dart';
 import '../chat/chat_providers.dart';
 import '../chat/conversations_tab.dart';
 import '../common/home_tab_provider.dart';
+import '../notifications/push_providers.dart';
 import '../open_requests/driver_open_requests_tab.dart';
 import '../open_requests/open_request_providers.dart';
 import '../requests/request_providers.dart';
@@ -28,11 +29,12 @@ class DriverHomeScreen extends ConsumerWidget {
     final pending = ref.watch(pendingRequestsCountProvider);
     final openCount = ref.watch(openRequestsCountProvider);
 
+    // Notifications push (application fermee ou en arriere-plan).
+    ref.watch(driverPushProvider);
+
     // Notification dans l'application : nouvelle demande ou annulation.
-    ref.listen<AsyncValue<List<DeliveryRequest>>>(driverRequestsProvider, (
-      prev,
-      next,
-    ) {
+    ref.listen<AsyncValue<List<DeliveryRequest>>>(driverRequestsProvider,
+        (prev, next) {
       final before = prev?.value;
       final after = next.value;
       if (before == null || after == null) return;
@@ -50,10 +52,8 @@ class DriverHomeScreen extends ConsumerWidget {
     });
 
     // Notification dans l'application : un client publie une demande ouverte.
-    ref.listen<AsyncValue<List<OpenRequest>>>(driverOpenRequestsProvider, (
-      prev,
-      next,
-    ) {
+    ref.listen<AsyncValue<List<OpenRequest>>>(driverOpenRequestsProvider,
+        (prev, next) {
       final before = prev?.value;
       final after = next.value;
       if (before == null || after == null) return;
@@ -65,12 +65,7 @@ class DriverHomeScreen extends ConsumerWidget {
       if (fresh.isNotEmpty) showSnack(context, t.notifNewOpenRequest);
     });
 
-    final titles = [
-      t.dashboard,
-      t.tabRequests,
-      t.openRequestsTitle,
-      t.messages,
-    ];
+    final titles = [t.dashboard, t.tabRequests, t.openRequestsTitle, t.messages];
 
     return ExitConfirmScope(
       onBack: () {
@@ -81,74 +76,73 @@ class DriverHomeScreen extends ConsumerWidget {
         return false;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: BrandTitle(
-            title: titles[index],
-            logo: const LogoMark(size: 34),
-          ),
-          actions: buildAppBarActions(context, ref),
+      appBar: AppBar(
+        title: BrandTitle(
+          title: titles[index],
+          logo: const LogoMark(size: 34),
         ),
-        body: IndexedStack(
-          index: index,
-          children: const [
-            DriverDashboardTab(),
-            DriverRequestsTab(),
-            DriverOpenRequestsTab(),
-            ConversationsTab(),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: (i) =>
-              ref.read(homeTabProvider.notifier).select(i),
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.dashboard_outlined),
-              selectedIcon: const Icon(Icons.dashboard),
-              label: t.dashboard,
-            ),
-            NavigationDestination(
-              icon: Badge(
-                label: Text('$pending'),
-                isLabelVisible: pending > 0,
-                child: const Icon(Icons.inventory_2_outlined),
-              ),
-              selectedIcon: Badge(
-                label: Text('$pending'),
-                isLabelVisible: pending > 0,
-                child: const Icon(Icons.inventory_2),
-              ),
-              label: t.tabRequests,
-            ),
-            NavigationDestination(
-              icon: Badge(
-                label: Text('$openCount'),
-                isLabelVisible: openCount > 0,
-                child: const Icon(Icons.person_search_outlined),
-              ),
-              selectedIcon: Badge(
-                label: Text('$openCount'),
-                isLabelVisible: openCount > 0,
-                child: const Icon(Icons.person_search),
-              ),
-              label: t.openRequestsTab,
-            ),
-            NavigationDestination(
-              icon: Badge(
-                label: Text('$unread'),
-                isLabelVisible: unread > 0,
-                child: const Icon(Icons.chat_bubble_outline),
-              ),
-              selectedIcon: Badge(
-                label: Text('$unread'),
-                isLabelVisible: unread > 0,
-                child: const Icon(Icons.chat_bubble),
-              ),
-              label: t.messages,
-            ),
-          ],
-        ),
+        actions: buildAppBarActions(context, ref),
       ),
-    );
+      body: IndexedStack(
+        index: index,
+        children: const [
+          DriverDashboardTab(),
+          DriverRequestsTab(),
+          DriverOpenRequestsTab(),
+          ConversationsTab(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        onDestinationSelected: (i) =>
+            ref.read(homeTabProvider.notifier).select(i),
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.dashboard_outlined),
+            selectedIcon: const Icon(Icons.dashboard),
+            label: t.dashboard,
+          ),
+          NavigationDestination(
+            icon: Badge(
+              label: Text('$pending'),
+              isLabelVisible: pending > 0,
+              child: const Icon(Icons.inventory_2_outlined),
+            ),
+            selectedIcon: Badge(
+              label: Text('$pending'),
+              isLabelVisible: pending > 0,
+              child: const Icon(Icons.inventory_2),
+            ),
+            label: t.tabRequests,
+          ),
+          NavigationDestination(
+            icon: Badge(
+              label: Text('$openCount'),
+              isLabelVisible: openCount > 0,
+              child: const Icon(Icons.person_search_outlined),
+            ),
+            selectedIcon: Badge(
+              label: Text('$openCount'),
+              isLabelVisible: openCount > 0,
+              child: const Icon(Icons.person_search),
+            ),
+            label: t.openRequestsTab,
+          ),
+          NavigationDestination(
+            icon: Badge(
+              label: Text('$unread'),
+              isLabelVisible: unread > 0,
+              child: const Icon(Icons.chat_bubble_outline),
+            ),
+            selectedIcon: Badge(
+              label: Text('$unread'),
+              isLabelVisible: unread > 0,
+              child: const Icon(Icons.chat_bubble),
+            ),
+            label: t.messages,
+          ),
+        ],
+      ),
+    ));
   }
 }

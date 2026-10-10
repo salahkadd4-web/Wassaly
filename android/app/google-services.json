@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "1072750896345-cagsdpu8co3qksn32ohdjk5dgubbar8f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wassaly.wassaly",
+            "certificate_hash": "088e845b193f31b6e2fd96584db6fa98581c167e"
+          }
+        },
+        {
           "client_id": "1072750896345-muf560dk45rumk0dgtmqs7qr0cjr0322.apps.googleusercontent.com",
           "client_type": 3
         }

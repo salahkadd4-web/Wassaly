@@ -47,9 +47,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         widget.args?.driverName ?? conv?.driverName ?? (isClient ? '' : myName);
 
     try {
-      await ref
-          .read(chatRepositoryProvider)
-          .send(
+      await ref.read(chatRepositoryProvider).send(
             conversationId: widget.conversationId,
             clientId: _clientId,
             driverId: _driverId,
@@ -70,9 +68,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _marking = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
-        await ref
-            .read(chatRepositoryProvider)
-            .markRead(
+        await ref.read(chatRepositoryProvider).markRead(
               conversationId: widget.conversationId,
               clientId: _clientId,
               myUid: myUid,
@@ -165,9 +161,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                   fontSize: 10,
                                   color: mine
                                       ? Colors.white70
-                                      : theme.colorScheme.onSurface.withValues(
-                                          alpha: 0.5,
-                                        ),
+                                      : theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.5),
                                 ),
                               ),
                             ],

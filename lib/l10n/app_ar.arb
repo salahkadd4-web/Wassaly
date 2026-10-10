@@ -222,4 +222,74 @@
   ,"roleDriverShortDesc": "أوصّل الطرود"
   ,"welcomeGoogleHint": "اختر ملفك للمتابعة عبر Google"
   ,"phoneTaken": "هذا الرقم مستخدم من حساب آخر. استخدم رقمًا آخر."
+  ,"idTitle": "بطاقة الهوية"
+  ,"idIntro": "للتحقق من حسابك، أضف صورة واضحة لوثيقة هويتك (بطاقة التعريف الوطنية أو رخصة السياقة أو جواز السفر). سيبقى حسابك مقفلاً إلى أن يوافق عليه المسؤول."
+  ,"idFromGallery": "المعرض"
+  ,"idFromCamera": "الكاميرا"
+  ,"idChangePhoto": "تغيير الصورة"
+  ,"idRequired": "أضف صورة بطاقة هويتك."
+  ,"idUploadError": "تعذر إرسال الصورة. تحقق من اتصالك وحاول مجددًا."
+  ,"idPickError": "تعذر فتح الصورة. تحقق من أذونات التطبيق."
+  ,"idImageUnavailable": "الصورة غير متاحة."
+  ,"verifTitle": "التحقق من الحساب"
+  ,"verifPendingTitle": "الحساب قيد التحقق"
+  ,"verifPendingBody": "يقوم المسؤول بالتحقق من بطاقة هويتك. ستتمكن من استخدام التطبيق فور الموافقة عليها."
+  ,"verifRejectedTitle": "تم رفض بطاقة الهوية"
+  ,"verifRejectedBody": "لم تُقبل بطاقتك. أرسل صورة جديدة واضحة لإعادة التحقق."
+  ,"verifReason": "السبب: {reason}"
+  ,"@verifReason": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
+  }
+  ,"verifResend": "إرسال صورة جديدة"
+  ,"verifResent": "تم إرسال الصورة الجديدة. سيقوم المسؤول بمراجعتها."
+  ,"verifChipVerified": "موثّق"
+  ,"verifChipPending": "قيد التحقق"
+  ,"verifChipRejected": "مرفوض"
+  ,"adminVerifications": "التحقق"
+  ,"adminNoVerifications": "لا توجد طلبات تحقق قيد الانتظار."
+  ,"adminViewId": "عرض بطاقة الهوية"
+  ,"adminIdMissing": "لم يتم العثور على بطاقة هوية."
+  ,"adminRejectIdTitle": "رفض بطاقة الهوية"
+  ,"adminRejectIdHint": "السبب (يظهر للموصّل)"
+  ,"adminIdApproved": "تم توثيق الموصّل."
+  ,"adminIdRejected": "تم رفض البطاقة."
+  ,"revenueTitle": "رقم المعاملات"
+  ,"revenueToday": "اليوم"
+  ,"revenueWeek": "آخر 7 أيام"
+  ,"revenueMonth": "هذا الشهر"
+  ,"revenueTotal": "المجموع"
+  ,"revenueDeliveries": "{count} توصيلة مكتملة"
+  ,"@revenueDeliveries": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  }
+  ,"revenueNoAmount": "{count} توصيلة قديمة بدون مبلغ (غير محتسبة)"
+  ,"@revenueNoAmount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  }
+  ,"amountDa": "{amount} دج"
+  ,"@amountDa": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  }
+  ,"completeDialogTitle": "مبلغ التوصيلة"
+  ,"completeDialogHint": "أدخل سعر التوصيلة الذي حصّلته من الزبون."
+  ,"amountLabel": "المبلغ (دج)"
+  ,"amountInvalid": "مبلغ غير صالح"
+  ,"completeConfirm": "إنهاء"
+  ,"requestAmount": "المبلغ: {amount}"
+  ,"@requestAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  }
+  ,"adminRevenue": "رقم المعاملات"
+  ,"adminRevenueAll": "كل الموصّلين"
+  ,"adminNoRevenue": "لا توجد توصيلات مكتملة."
 }

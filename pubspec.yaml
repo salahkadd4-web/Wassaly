@@ -2,7 +2,7 @@ name: wassaly
 description: "Wassaly - mise en relation clients et livreurs de proximite en Algerie."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.13.5
@@ -16,6 +16,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_core: ^4.15.0
   firebase_auth: ^6.7.0
+  firebase_messaging: any # notifications push (version compatible choisie par pub)
   cloud_firestore: ^6.10.0
   google_sign_in: ^7.2.0
   flutter_riverpod: ^3.4.3
@@ -24,6 +25,8 @@ dependencies:
   url_launcher: ^6.3.3
   intl: ^0.20.3
   shared_preferences: ^2.5.3
+  image_picker: ^1.1.2
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:

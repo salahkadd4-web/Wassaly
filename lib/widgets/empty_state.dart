@@ -14,8 +14,7 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).colorScheme.onSurface
-        .withValues(alpha: 0.55);
+    final muted = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -27,10 +26,15 @@ class EmptyState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge
                   ?.copyWith(color: muted),
             ),
-            if (action != null) ...[const SizedBox(height: 16), action!],
+            if (action != null) ...[
+              const SizedBox(height: 16),
+              action!,
+            ],
           ],
         ),
       ),

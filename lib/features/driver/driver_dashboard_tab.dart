@@ -16,6 +16,7 @@ import '../chat/chat_providers.dart';
 import '../common/home_tab_provider.dart';
 import '../drivers/driver_providers.dart';
 import '../requests/request_providers.dart';
+import 'revenue_card.dart';
 
 class DriverDashboardTab extends ConsumerStatefulWidget {
   const DriverDashboardTab({super.key});
@@ -132,10 +133,9 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
         if (d.active && !d.subscriptionValid && !_autoDeactivated) {
           _autoDeactivated = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref
-                .read(driverRepositoryProvider)
-                .setActive(d.uid, false)
-                .catchError((_) {});
+            ref.read(driverRepositoryProvider).setActive(d.uid, false).catchError(
+                  (_) {},
+                );
           });
         }
 
@@ -158,10 +158,7 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    Text(
-                      t.yourAvailability,
-                      style: theme.textTheme.titleMedium,
-                    ),
+                    Text(t.yourAvailability, style: theme.textTheme.titleMedium),
                     const SizedBox(height: 16),
                     Container(
                       width: 84,
@@ -195,9 +192,7 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                       width: double.infinity,
                       child: active
                           ? OutlinedButton.icon(
-                              onPressed: _busy
-                                  ? null
-                                  : () => _setActive(d, false),
+                              onPressed: _busy ? null : () => _setActive(d, false),
                               icon: const Icon(Icons.power_settings_new),
                               label: Text(t.deactivate),
                             )
@@ -205,9 +200,7 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppTheme.success,
                               ),
-                              onPressed: _busy
-                                  ? null
-                                  : () => _setActive(d, true),
+                              onPressed: _busy ? null : () => _setActive(d, true),
                               icon: _busy
                                   ? const SizedBox(
                                       height: 18,
@@ -236,10 +229,7 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.place_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
+                        Icon(Icons.place_outlined, color: theme.colorScheme.primary),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -259,9 +249,7 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
                           '${t.positionUpdated} : ${formatDateTime(d.lastLocationUpdate!)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: muted,
-                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(color: muted),
                         ),
                       ),
                     OutlinedButton.icon(
@@ -299,6 +287,10 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
             ),
             const SizedBox(height: 12),
 
+            // --- Chiffre d'affaires ---
+            const RevenueCard(),
+            const SizedBox(height: 12),
+
             // --- Abonnement ---
             Card(
               child: Padding(
@@ -308,16 +300,12 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.workspace_premium_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
+                        Icon(Icons.workspace_premium_outlined,
+                            color: theme.colorScheme.primary),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(
-                            t.subscription,
-                            style: theme.textTheme.titleMedium,
-                          ),
+                          child: Text(t.subscription,
+                              style: theme.textTheme.titleMedium),
                         ),
                         SubscriptionChip(status: d.effectiveStatus),
                       ],
@@ -331,18 +319,15 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                     if (d.subscriptionValid)
                       Text(
                         t.daysLeft('${d.daysLeft}'),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: muted,
-                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(color: muted),
                       )
                     else
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           t.subscriptionExpiredMsg,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.danger,
-                          ),
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: AppTheme.danger),
                         ),
                       ),
                     const SizedBox(height: 12),
@@ -350,14 +335,12 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                       width: double.infinity,
                       child: d.subscriptionValid && d.daysLeft > 7
                           ? OutlinedButton.icon(
-                              onPressed: () =>
-                                  context.push('/driver/subscription'),
+                              onPressed: () => context.push('/driver/subscription'),
                               icon: const Icon(Icons.payments_outlined),
                               label: Text(t.manageSubscription),
                             )
                           : FilledButton.icon(
-                              onPressed: () =>
-                                  context.push('/driver/subscription'),
+                              onPressed: () => context.push('/driver/subscription'),
                               icon: const Icon(Icons.autorenew),
                               label: Text(t.renewSubscription),
                             ),

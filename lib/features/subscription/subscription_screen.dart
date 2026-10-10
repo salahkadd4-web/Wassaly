@@ -40,9 +40,10 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
 
     setState(() => _sending = true);
     try {
-      await ref
-          .read(subscriptionRepositoryProvider)
-          .submitClaim(driver: driver, reference: _refCtrl.text);
+      await ref.read(subscriptionRepositoryProvider).submitClaim(
+            driver: driver,
+            reference: _refCtrl.text,
+          );
       _refCtrl.clear();
       if (mounted) showSnack(context, t.claimSent);
     } catch (_) {
@@ -79,9 +80,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                           SubscriptionChip(status: driver.effectiveStatus),
                           const SizedBox(height: 8),
                           if (driver.subscriptionEnd != null)
-                            Text(
-                              t.expiresOn(formatDate(driver.subscriptionEnd!)),
-                            ),
+                            Text(t.expiresOn(formatDate(driver.subscriptionEnd!))),
                         ],
                       ),
                     ),
@@ -98,10 +97,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(
-                        Icons.payments_outlined,
-                        color: AppTheme.orange,
-                      ),
+                      const Icon(Icons.payments_outlined, color: AppTheme.orange),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -140,9 +136,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     labelText: t.paymentReference,
                     prefixIcon: const Icon(Icons.receipt_long_outlined),
                   ),
-                  validator: (v) => (v ?? '').trim().length < 3
-                      ? t.paymentReferenceRequired
-                      : null,
+                  validator: (v) =>
+                      (v ?? '').trim().length < 3 ? t.paymentReferenceRequired : null,
                 ),
                 const SizedBox(height: 8),
                 FilledButton.icon(

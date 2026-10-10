@@ -20,4 +20,16 @@ class AppConfig {
   /// A MODIFIER avec vos vraies coordonnees (CCP, BaridiMob, ...).
   static const String paymentDetails =
       'BaridiMob / CCP : a renseigner dans lib/core/constants/app_config.dart';
+
+  /// Cloudinary : stockage des pieces d'identite des livreurs.
+  /// Le nom du "cloud" est la partie apres le @ de votre CLOUDINARY_URL
+  /// (cloudinary://API_KEY:API_SECRET@NOM_DU_CLOUD).
+  /// Ne mettez JAMAIS la cle API ni le secret dans l'application.
+  static const String cloudinaryCloudName = 'vycmfbsf';
+
+  /// Nom d'un "upload preset" de type Unsigned (voir GUIDE.md, section 6 quater).
+  static const String cloudinaryUploadPreset = 'Wassaly';
+
+  /// Dossier Cloudinary des pieces d'identite.
+  static const String cloudinaryIdFolder = 'wassaly/driver_ids';
 }

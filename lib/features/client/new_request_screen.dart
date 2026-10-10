@@ -98,9 +98,7 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
 
     setState(() => _sending = true);
     try {
-      await ref
-          .read(requestRepositoryProvider)
-          .create(
+      await ref.read(requestRepositoryProvider).create(
             clientId: user.uid,
             clientName: profile.name,
             clientPhone: profile.phone,

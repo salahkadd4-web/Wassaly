@@ -16,10 +16,7 @@ class AdminRepository {
 
   /// Prolonge l'abonnement de [days] jours a partir de la fin actuelle
   /// (ou de maintenant si deja expire) et le marque comme paye.
-  Future<void> extend(
-    String uid, {
-    int days = AppConfig.subscriptionDays,
-  }) async {
+  Future<void> extend(String uid, {int days = AppConfig.subscriptionDays}) async {
     final snap = await _driver(uid).get();
     final data = snap.data();
     final current = data?['subscriptionEnd'];
@@ -35,16 +32,47 @@ class AdminRepository {
   }
 
   Future<void> suspend(String uid) {
-    return _driver(uid)
-        .update({'subscriptionStatus': 'suspended', 'active': false});
+    return _driver(uid).update({
+      'subscriptionStatus': 'suspended',
+      'active': false,
+    });
   }
 
   /// Leve la suspension : "paid" si la date de fin n'est pas depassee, sinon "expired".
   Future<void> unsuspend(DriverProfile d) {
     final end = d.subscriptionEnd;
     final stillValid = end != null && end.isAfter(DateTime.now());
-    return _driver(d.uid)
-        .update({'subscriptionStatus': stillValid ? 'paid' : 'expired'});
+    return _driver(d.uid).update({
+      'subscriptionStatus': stillValid ? 'paid' : 'expired',
+    });
+  }
+
+  /// Valide la piece d'identite : le livreur est debloque.
+  Future<void> approveIdentity(String uid) async {
+    final batch = _db.batch();
+    batch.update(_driver(uid), {
+      'verificationStatus': 'approved',
+      'verifiedAt': FieldValue.serverTimestamp(),
+    });
+    batch.update(_db.collection('driverIdentity').doc(uid), {
+      'rejectReason': FieldValue.delete(),
+    });
+    await batch.commit();
+  }
+
+  /// Refuse la piece d'identite : le livreur reste bloque et peut renvoyer
+  /// une nouvelle photo. [reason] est affiche au livreur.
+  Future<void> rejectIdentity(String uid, {String? reason}) async {
+    final clean = reason?.trim() ?? '';
+    final batch = _db.batch();
+    batch.update(_driver(uid), {
+      'verificationStatus': 'rejected',
+      'active': false,
+    });
+    batch.update(_db.collection('driverIdentity').doc(uid), {
+      'rejectReason': clean.isEmpty ? FieldValue.delete() : clean,
+    });
+    await batch.commit();
   }
 
   Future<void> deactivate(String uid) => _driver(uid).update({'active': false});

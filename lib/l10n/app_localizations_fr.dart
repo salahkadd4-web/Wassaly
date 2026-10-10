@@ -598,4 +598,156 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get phoneTaken =>
       'Ce numéro est déjà utilisé par un autre compte. Utilisez un autre numéro.';
+
+  @override
+  String get idTitle => 'Pièce d\'identité';
+
+  @override
+  String get idIntro =>
+      'Pour vérifier votre compte, ajoutez une photo lisible de votre pièce d\'identité (carte nationale, permis de conduire ou passeport). Votre compte restera bloqué jusqu\'à sa validation par l\'administrateur.';
+
+  @override
+  String get idFromGallery => 'Galerie';
+
+  @override
+  String get idFromCamera => 'Appareil photo';
+
+  @override
+  String get idChangePhoto => 'Changer la photo';
+
+  @override
+  String get idRequired => 'Ajoutez la photo de votre pièce d\'identité.';
+
+  @override
+  String get idUploadError =>
+      'Envoi de la photo impossible. Vérifiez votre connexion et réessayez.';
+
+  @override
+  String get idPickError =>
+      'Impossible d\'ouvrir la photo. Vérifiez les autorisations de l\'application.';
+
+  @override
+  String get idImageUnavailable => 'Image indisponible.';
+
+  @override
+  String get verifTitle => 'Vérification du compte';
+
+  @override
+  String get verifPendingTitle => 'Compte en cours de vérification';
+
+  @override
+  String get verifPendingBody =>
+      'L\'administrateur vérifie votre pièce d\'identité. Vous aurez accès à l\'application dès qu\'elle sera validée.';
+
+  @override
+  String get verifRejectedTitle => 'Pièce d\'identité refusée';
+
+  @override
+  String get verifRejectedBody =>
+      'Votre pièce n\'a pas été acceptée. Envoyez une nouvelle photo lisible pour relancer la vérification.';
+
+  @override
+  String verifReason(String reason) {
+    return 'Motif : $reason';
+  }
+
+  @override
+  String get verifResend => 'Envoyer une nouvelle photo';
+
+  @override
+  String get verifResent =>
+      'Nouvelle photo envoyée. L\'administrateur va la vérifier.';
+
+  @override
+  String get verifChipVerified => 'Vérifié';
+
+  @override
+  String get verifChipPending => 'À vérifier';
+
+  @override
+  String get verifChipRejected => 'Refusé';
+
+  @override
+  String get adminVerifications => 'Vérifications';
+
+  @override
+  String get adminNoVerifications => 'Aucune vérification en attente.';
+
+  @override
+  String get adminViewId => 'Voir la pièce d\'identité';
+
+  @override
+  String get adminIdMissing => 'Aucune pièce d\'identité trouvée.';
+
+  @override
+  String get adminRejectIdTitle => 'Refuser la pièce d\'identité';
+
+  @override
+  String get adminRejectIdHint => 'Motif (affiché au livreur)';
+
+  @override
+  String get adminIdApproved => 'Livreur vérifié.';
+
+  @override
+  String get adminIdRejected => 'Pièce refusée.';
+
+  @override
+  String get revenueTitle => 'Chiffre d\'affaires';
+
+  @override
+  String get revenueToday => 'Aujourd\'hui';
+
+  @override
+  String get revenueWeek => '7 derniers jours';
+
+  @override
+  String get revenueMonth => 'Ce mois';
+
+  @override
+  String get revenueTotal => 'Total';
+
+  @override
+  String revenueDeliveries(String count) {
+    return '$count livraison(s) terminée(s)';
+  }
+
+  @override
+  String revenueNoAmount(String count) {
+    return '$count ancienne(s) livraison(s) sans montant (non comptées)';
+  }
+
+  @override
+  String amountDa(String amount) {
+    return '$amount DA';
+  }
+
+  @override
+  String get completeDialogTitle => 'Montant de la livraison';
+
+  @override
+  String get completeDialogHint =>
+      'Saisissez le prix de la course encaissé auprès du client.';
+
+  @override
+  String get amountLabel => 'Montant (DA)';
+
+  @override
+  String get amountInvalid => 'Montant invalide';
+
+  @override
+  String get completeConfirm => 'Terminer';
+
+  @override
+  String requestAmount(String amount) {
+    return 'Montant : $amount';
+  }
+
+  @override
+  String get adminRevenue => 'Chiffre d\'affaires';
+
+  @override
+  String get adminRevenueAll => 'Tous les livreurs';
+
+  @override
+  String get adminNoRevenue => 'Aucune livraison terminée.';
 }

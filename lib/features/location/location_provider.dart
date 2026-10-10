@@ -35,5 +35,5 @@ class ClientLocationNotifier extends Notifier<ClientLocationState> {
 
 final clientLocationProvider =
     NotifierProvider<ClientLocationNotifier, ClientLocationState>(
-      ClientLocationNotifier.new,
-    );
+  ClientLocationNotifier.new,
+);

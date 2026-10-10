@@ -584,4 +584,152 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get phoneTaken => 'هذا الرقم مستخدم من حساب آخر. استخدم رقمًا آخر.';
+
+  @override
+  String get idTitle => 'بطاقة الهوية';
+
+  @override
+  String get idIntro =>
+      'للتحقق من حسابك، أضف صورة واضحة لوثيقة هويتك (بطاقة التعريف الوطنية أو رخصة السياقة أو جواز السفر). سيبقى حسابك مقفلاً إلى أن يوافق عليه المسؤول.';
+
+  @override
+  String get idFromGallery => 'المعرض';
+
+  @override
+  String get idFromCamera => 'الكاميرا';
+
+  @override
+  String get idChangePhoto => 'تغيير الصورة';
+
+  @override
+  String get idRequired => 'أضف صورة بطاقة هويتك.';
+
+  @override
+  String get idUploadError => 'تعذر إرسال الصورة. تحقق من اتصالك وحاول مجددًا.';
+
+  @override
+  String get idPickError => 'تعذر فتح الصورة. تحقق من أذونات التطبيق.';
+
+  @override
+  String get idImageUnavailable => 'الصورة غير متاحة.';
+
+  @override
+  String get verifTitle => 'التحقق من الحساب';
+
+  @override
+  String get verifPendingTitle => 'الحساب قيد التحقق';
+
+  @override
+  String get verifPendingBody =>
+      'يقوم المسؤول بالتحقق من بطاقة هويتك. ستتمكن من استخدام التطبيق فور الموافقة عليها.';
+
+  @override
+  String get verifRejectedTitle => 'تم رفض بطاقة الهوية';
+
+  @override
+  String get verifRejectedBody =>
+      'لم تُقبل بطاقتك. أرسل صورة جديدة واضحة لإعادة التحقق.';
+
+  @override
+  String verifReason(String reason) {
+    return 'السبب: $reason';
+  }
+
+  @override
+  String get verifResend => 'إرسال صورة جديدة';
+
+  @override
+  String get verifResent => 'تم إرسال الصورة الجديدة. سيقوم المسؤول بمراجعتها.';
+
+  @override
+  String get verifChipVerified => 'موثّق';
+
+  @override
+  String get verifChipPending => 'قيد التحقق';
+
+  @override
+  String get verifChipRejected => 'مرفوض';
+
+  @override
+  String get adminVerifications => 'التحقق';
+
+  @override
+  String get adminNoVerifications => 'لا توجد طلبات تحقق قيد الانتظار.';
+
+  @override
+  String get adminViewId => 'عرض بطاقة الهوية';
+
+  @override
+  String get adminIdMissing => 'لم يتم العثور على بطاقة هوية.';
+
+  @override
+  String get adminRejectIdTitle => 'رفض بطاقة الهوية';
+
+  @override
+  String get adminRejectIdHint => 'السبب (يظهر للموصّل)';
+
+  @override
+  String get adminIdApproved => 'تم توثيق الموصّل.';
+
+  @override
+  String get adminIdRejected => 'تم رفض البطاقة.';
+
+  @override
+  String get revenueTitle => 'رقم المعاملات';
+
+  @override
+  String get revenueToday => 'اليوم';
+
+  @override
+  String get revenueWeek => 'آخر 7 أيام';
+
+  @override
+  String get revenueMonth => 'هذا الشهر';
+
+  @override
+  String get revenueTotal => 'المجموع';
+
+  @override
+  String revenueDeliveries(String count) {
+    return '$count توصيلة مكتملة';
+  }
+
+  @override
+  String revenueNoAmount(String count) {
+    return '$count توصيلة قديمة بدون مبلغ (غير محتسبة)';
+  }
+
+  @override
+  String amountDa(String amount) {
+    return '$amount دج';
+  }
+
+  @override
+  String get completeDialogTitle => 'مبلغ التوصيلة';
+
+  @override
+  String get completeDialogHint => 'أدخل سعر التوصيلة الذي حصّلته من الزبون.';
+
+  @override
+  String get amountLabel => 'المبلغ (دج)';
+
+  @override
+  String get amountInvalid => 'مبلغ غير صالح';
+
+  @override
+  String get completeConfirm => 'إنهاء';
+
+  @override
+  String requestAmount(String amount) {
+    return 'المبلغ: $amount';
+  }
+
+  @override
+  String get adminRevenue => 'رقم المعاملات';
+
+  @override
+  String get adminRevenueAll => 'كل الموصّلين';
+
+  @override
+  String get adminNoRevenue => 'لا توجد توصيلات مكتملة.';
 }

@@ -21,7 +21,9 @@ service cloud.firestore {
       return signedIn()
         && exists(/databases/$(database)/documents/drivers/$(request.auth.uid))
         && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.subscriptionEnd > request.time
-        && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.subscriptionStatus in ['trial', 'paid'];
+        && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.subscriptionStatus in ['trial', 'paid']
+        // Piece d'identite validee (les anciens livreurs sans champ sont consideres valides).
+        && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.get('verificationStatus', 'approved') == 'approved';
     }
 
     // Participant d'une conversation dont l'id est "clientId_driverId".
@@ -84,6 +86,9 @@ service cloud.firestore {
         && request.resource.data.phone
              == getAfter(/databases/$(database)/documents/users/$(uid)).data.phone
         && request.resource.data.active == false
+        // Compte bloque jusqu'a la validation de la piece d'identite par l'admin.
+        && request.resource.data.verificationStatus == 'pending'
+        && getAfter(/databases/$(database)/documents/driverIdentity/$(uid)).data.idUrl is string
         && request.resource.data.subscriptionStatus == 'trial'
         && request.resource.data.subscriptionEnd > request.time
         && request.resource.data.subscriptionEnd
@@ -98,9 +103,44 @@ service cloud.firestore {
                          'city', 'name', 'photo'])
           && (request.resource.data.active == false
               || (resource.data.subscriptionEnd > request.time
-                  && resource.data.subscriptionStatus in ['trial', 'paid'])))
+                  && resource.data.subscriptionStatus in ['trial', 'paid']
+                  && resource.data.get('verificationStatus', 'approved') == 'approved')))
+        // Le livreur dont la piece a ete refusee peut la renvoyer (rejected -> pending).
+        || (isOwner(uid)
+          && resource.data.get('verificationStatus', 'approved') == 'rejected'
+          && request.resource.data.verificationStatus == 'pending'
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['verificationStatus']))
         // L'administrateur : tout, y compris l'abonnement.
         || isAdmin();
+
+      allow delete: if false;
+    }
+
+    // Piece d'identite du livreur (URL Cloudinary) : privee, visible par le
+    // livreur et l'administrateur uniquement.
+    match /driverIdentity/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['uid', 'idUrl', 'submittedAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.idUrl is string
+        && request.resource.data.idUrl.matches('^https://res\\.cloudinary\\.com/.+')
+        && getAfter(/databases/$(database)/documents/users/$(uid)).data.role == 'driver'
+        && getAfter(/databases/$(database)/documents/drivers/$(uid)).data.verificationStatus == 'pending';
+
+      allow update:
+        // Le livreur renvoie une photo apres un refus.
+        if (isOwner(uid)
+            && get(/databases/$(database)/documents/drivers/$(uid)).data.verificationStatus == 'rejected'
+            && request.resource.data.idUrl.matches('^https://res\\.cloudinary\\.com/.+')
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['idUrl', 'submittedAt', 'rejectReason']))
+        // L'administrateur : motif de refus uniquement.
+        || (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['rejectReason']));
 
       allow delete: if false;
     }
@@ -149,18 +189,28 @@ service cloud.firestore {
 
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['status', 'updatedAt'])
+             .hasOnly(['status', 'updatedAt', 'amount', 'completedAt'])
         && (
-          // Le livreur accepte/refuse puis termine.
+          // Le livreur accepte/refuse (sans toucher au montant)...
           (resource.data.driverId == request.auth.uid
-            && ((resource.data.status == 'pending'
-                  && request.resource.data.status in ['accepted', 'rejected'])
-                || (resource.data.status == 'accepted'
-                  && request.resource.data.status == 'completed')))
+            && resource.data.status == 'pending'
+            && request.resource.data.status in ['accepted', 'rejected']
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                  .hasAny(['amount', 'completedAt']))
+          // ... puis termine la livraison en saisissant son montant (DA).
+          || (resource.data.driverId == request.auth.uid
+            && resource.data.status == 'accepted'
+            && request.resource.data.status == 'completed'
+            && request.resource.data.amount is int
+            && request.resource.data.amount >= 0
+            && request.resource.data.amount <= 1000000
+            && request.resource.data.completedAt == request.time)
           // Le client peut annuler tant que ce n'est pas termine.
           || (resource.data.clientId == request.auth.uid
             && resource.data.status in ['pending', 'accepted']
-            && request.resource.data.status == 'cancelled')
+            && request.resource.data.status == 'cancelled'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                  .hasAny(['amount', 'completedAt']))
         );
 
       allow delete: if false;
@@ -191,6 +241,19 @@ service cloud.firestore {
              .hasOnly(['status', 'updatedAt']);
 
       allow delete: if false;
+    }
+
+    // Jetons de notification push (FCM) des appareils d'un livreur.
+    // Ecrits par l'application, lus et utilises par les Cloud Functions
+    // (qui contournent ces regles).
+    match /deviceTokens/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['tokens', 'lang', 'updatedAt'])
+        && request.resource.data.tokens is list
+        && request.resource.data.tokens.size() <= 20
+        && request.resource.data.lang in ['fr', 'ar'];
+      allow delete: if isOwner(uid);
     }
 
     // Demandes de renouvellement d'abonnement (preuve de paiement).

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/locale/locale_provider.dart';
 import '../features/auth/auth_providers.dart';
+import '../features/notifications/push_providers.dart';
 import '../l10n/app_localizations.dart';
 import 'theme_toggle_button.dart';
 
@@ -33,7 +34,7 @@ List<Widget> buildAppBarActions(BuildContext context, WidgetRef ref) {
     IconButton(
       tooltip: t.signOut,
       icon: const Icon(Icons.logout),
-      onPressed: () => ref.read(authServiceProvider).signOut(),
+      onPressed: () => signOutAndUnregisterPush(ref),
     ),
   ];
 }

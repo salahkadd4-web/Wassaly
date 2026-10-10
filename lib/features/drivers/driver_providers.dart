@@ -11,10 +11,7 @@ final driverRepositoryProvider = Provider<DriverRepository>(
 );
 
 /// Profil public d'un livreur (drivers/{uid}).
-final driverProvider = StreamProvider.family<DriverProfile?, String>((
-  ref,
-  uid,
-) {
+final driverProvider = StreamProvider.family<DriverProfile?, String>((ref, uid) {
   return ref
       .watch(firestoreProvider)
       .collection('drivers')
@@ -31,15 +28,13 @@ final activeDriversProvider = StreamProvider<List<DriverProfile>>((ref) {
       .where('active', isEqualTo: true)
       .snapshots()
       .map(
-        (s) =>
-            s.docs.map((d) => DriverProfile.fromMap(d.id, d.data())).toList(),
+        (s) => s.docs.map((d) => DriverProfile.fromMap(d.id, d.data())).toList(),
       );
 });
 
 /// Livreurs disponibles tries par distance (sans distance si GPS refuse).
-final nearbyDriversProvider = Provider<AsyncValue<List<DriverWithDistance>>>((
-  ref,
-) {
+final nearbyDriversProvider =
+    Provider<AsyncValue<List<DriverWithDistance>>>((ref) {
   final drivers = ref.watch(activeDriversProvider);
   final position = ref.watch(clientLocationProvider).position;
 
@@ -61,8 +56,7 @@ final nearbyDriversProvider = Provider<AsyncValue<List<DriverWithDistance>>>((
     result.sort((a, b) {
       final da = a.distanceKm;
       final db = b.distanceKm;
-      if (da == null && db == null)
-        return a.driver.name.compareTo(b.driver.name);
+      if (da == null && db == null) return a.driver.name.compareTo(b.driver.name);
       if (da == null) return 1;
       if (db == null) return -1;
       return da.compareTo(db);

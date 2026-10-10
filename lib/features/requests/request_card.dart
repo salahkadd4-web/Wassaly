@@ -15,6 +15,7 @@ import '../../widgets/status_chip.dart';
 import '../auth/auth_providers.dart';
 import '../chat/chat_repository.dart';
 import '../drivers/driver_providers.dart';
+import 'complete_dialog.dart';
 import 'request_providers.dart';
 
 /// Carte d'une demande de livraison, vue par le client ou par le livreur.
@@ -53,6 +54,19 @@ class RequestCard extends ConsumerWidget {
     }
     try {
       await ref.read(requestRepositoryProvider).setStatus(request.id, status);
+    } catch (_) {
+      if (context.mounted) showSnack(context, t.genericError);
+    }
+  }
+
+  /// Le livreur termine la course : il saisit le montant, qui alimente son
+  /// chiffre d'affaires.
+  Future<void> _complete(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context)!;
+    final amount = await askDeliveryAmount(context);
+    if (amount == null) return;
+    try {
+      await ref.read(requestRepositoryProvider).complete(request.id, amount);
     } catch (_) {
       if (context.mounted) showSnack(context, t.genericError);
     }
@@ -104,9 +118,7 @@ class RequestCard extends ConsumerWidget {
                       Text(name, style: theme.textTheme.titleMedium),
                       Text(
                         formatDateTime(request.createdAt),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: muted,
-                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(color: muted),
                       ),
                     ],
                   ),
@@ -138,6 +150,21 @@ class RequestCard extends ConsumerWidget {
                   Icon(Icons.sticky_note_2_outlined, size: 18, color: muted),
                   const SizedBox(width: 8),
                   Expanded(child: Text(request.note)),
+                ],
+              ),
+            ],
+            if (request.isCompleted && request.amount != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.payments_outlined, size: 18, color: muted),
+                  const SizedBox(width: 8),
+                  Text(
+                    t.requestAmount(
+                      t.amountDa(formatAmount(request.amount!)),
+                    ),
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ],
               ),
             ],
@@ -181,8 +208,7 @@ class RequestCard extends ConsumerWidget {
             if (asDriver && request.isAccepted) ...[
               const SizedBox(height: 10),
               FilledButton.icon(
-                onPressed: () =>
-                    _setStatus(context, ref, RequestStatus.completed),
+                onPressed: () => _complete(context, ref),
                 icon: const Icon(Icons.done_all),
                 label: Text(t.markCompleted),
               ),
@@ -190,9 +216,7 @@ class RequestCard extends ConsumerWidget {
             if (!asDriver && request.isOpen) ...[
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.danger,
-                ),
+                style: OutlinedButton.styleFrom(foregroundColor: AppTheme.danger),
                 onPressed: () => _setStatus(
                   context,
                   ref,

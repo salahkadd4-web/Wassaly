@@ -42,4 +42,15 @@ class RequestRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
+
+  /// Termine une livraison acceptee et enregistre son montant (DA).
+  /// Ce montant alimente le chiffre d'affaires du livreur.
+  Future<void> complete(String id, int amount) {
+    return _col.doc(id).update({
+      'status': RequestStatus.completed,
+      'amount': amount,
+      'completedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 }

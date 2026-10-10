@@ -34,10 +34,7 @@ class PlaceRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(color: muted),
-              ),
+              Text(label, style: theme.textTheme.bodySmall?.copyWith(color: muted)),
               Text(
                 place.address.isEmpty ? t.gpsPosition : place.address,
                 style: theme.textTheme.bodyMedium,

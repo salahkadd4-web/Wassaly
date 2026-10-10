@@ -21,12 +21,11 @@ final myConversationsProvider = StreamProvider<List<Conversation>>((ref) {
       .where(field, isEqualTo: user.uid)
       .snapshots()
       .map((s) {
-        final list = s.docs
-            .map((d) => Conversation.fromMap(d.id, d.data()))
-            .toList();
-        list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-        return list;
-      });
+    final list =
+        s.docs.map((d) => Conversation.fromMap(d.id, d.data())).toList();
+    list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return list;
+  });
 });
 
 /// Total des messages non lus (badge de l'onglet Messages).
@@ -37,10 +36,8 @@ final unreadMessagesCountProvider = Provider<int>((ref) {
   return list.fold<int>(0, (sum, c) => sum + c.unreadFor(user.uid));
 });
 
-final conversationProvider = StreamProvider.family<Conversation?, String>((
-  ref,
-  id,
-) {
+final conversationProvider =
+    StreamProvider.family<Conversation?, String>((ref, id) {
   return ref
       .watch(firestoreProvider)
       .collection('conversations')
@@ -49,10 +46,8 @@ final conversationProvider = StreamProvider.family<Conversation?, String>((
       .map((s) => s.exists ? Conversation.fromMap(s.id, s.data()!) : null);
 });
 
-final messagesProvider = StreamProvider.family<List<ChatMessage>, String>((
-  ref,
-  id,
-) {
+final messagesProvider =
+    StreamProvider.family<List<ChatMessage>, String>((ref, id) {
   return ref
       .watch(firestoreProvider)
       .collection('conversations')

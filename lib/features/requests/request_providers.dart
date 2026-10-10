@@ -15,12 +15,11 @@ Stream<List<DeliveryRequest>> _watch(Ref ref, String field, String uid) {
       .where(field, isEqualTo: uid)
       .snapshots()
       .map((s) {
-        final list = s.docs
-            .map((d) => DeliveryRequest.fromMap(d.id, d.data()))
-            .toList();
-        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return list;
-      });
+    final list =
+        s.docs.map((d) => DeliveryRequest.fromMap(d.id, d.data())).toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  });
 }
 
 /// Demandes envoyees par le client connecte (les plus recentes d'abord).

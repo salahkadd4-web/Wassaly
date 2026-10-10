@@ -15,8 +15,10 @@ import '../../widgets/state_views.dart';
 import '../../widgets/status_chip.dart';
 import '../auth/auth_providers.dart';
 import '../auth/models/user_profile.dart';
+import 'admin_identity.dart';
 import 'admin_providers.dart';
 import 'admin_repository.dart';
+import 'admin_revenue_tab.dart';
 
 class AdminScreen extends ConsumerWidget {
   const AdminScreen({super.key});
@@ -40,9 +42,15 @@ class AdminScreen extends ConsumerWidget {
           );
         }
         final claimsCount = ref.watch(adminClaimsProvider).value?.length ?? 0;
+        final verifCount = ref
+                .watch(adminDriversProvider)
+                .value
+                ?.where((d) => d.isVerificationPending)
+                .length ??
+            0;
 
         return DefaultTabController(
-          length: 5,
+          length: 7,
           child: Scaffold(
             appBar: AppBar(
               title: Text(t.adminPanel),
@@ -54,6 +62,15 @@ class AdminScreen extends ConsumerWidget {
                 indicatorColor: AppTheme.orange,
                 tabs: [
                   Tab(text: t.adminDrivers),
+                  Tab(text: t.adminRevenue),
+                  Tab(
+                    child: Badge(
+                      label: Text('$verifCount'),
+                      isLabelVisible: verifCount > 0,
+                      offset: const Offset(10, -6),
+                      child: Text(t.adminVerifications),
+                    ),
+                  ),
                   Tab(
                     child: Badge(
                       label: Text('$claimsCount'),
@@ -71,6 +88,8 @@ class AdminScreen extends ConsumerWidget {
             body: const TabBarView(
               children: [
                 _DriversAdminTab(),
+                AdminRevenueTab(),
+                AdminVerificationsTab(),
                 _ClaimsAdminTab(),
                 _ClientsAdminTab(),
                 _RequestsAdminTab(),
@@ -86,7 +105,7 @@ class AdminScreen extends ConsumerWidget {
 
 // ---------------------------------------------------------------- Livreurs
 
-enum _DriverAction { extend, suspend, unsuspend, deactivate, call }
+enum _DriverAction { extend, suspend, unsuspend, deactivate, viewId, call }
 
 class _DriversAdminTab extends ConsumerWidget {
   const _DriversAdminTab();
@@ -110,6 +129,8 @@ class _DriversAdminTab extends ConsumerWidget {
           await repo.unsuspend(d);
         case _DriverAction.deactivate:
           await repo.deactivate(d.uid);
+        case _DriverAction.viewId:
+          if (context.mounted) showIdViewer(context, d);
         case _DriverAction.call:
           if (context.mounted) {
             await launchWithFeedback(context, callPhone(d.phone));
@@ -160,15 +181,12 @@ class _DriversAdminTab extends ConsumerWidget {
                             runSpacing: 4,
                             children: [
                               StatusChip(
-                                label: d.active
-                                    ? t.statusActive
-                                    : t.statusInactive,
-                                color: d.active
-                                    ? AppTheme.success
-                                    : AppTheme.neutral,
+                                label: d.active ? t.statusActive : t.statusInactive,
+                                color: d.active ? AppTheme.success : AppTheme.neutral,
                                 icon: Icons.circle,
                               ),
                               SubscriptionChip(status: d.effectiveStatus),
+                              VerificationChip(status: d.verificationStatus),
                             ],
                           ),
                           if (d.subscriptionEnd != null)
@@ -187,35 +205,27 @@ class _DriversAdminTab extends ConsumerWidget {
                       itemBuilder: (_) => [
                         PopupMenuItem(
                           value: _DriverAction.extend,
-                          child: _MenuRow(
-                            Icons.add_circle_outline,
-                            t.adminExtend,
-                          ),
+                          child: _MenuRow(Icons.add_circle_outline, t.adminExtend),
                         ),
                         if (d.isSuspended)
                           PopupMenuItem(
                             value: _DriverAction.unsuspend,
-                            child: _MenuRow(
-                              Icons.play_circle_outline,
-                              t.adminUnsuspend,
-                            ),
+                            child: _MenuRow(Icons.play_circle_outline, t.adminUnsuspend),
                           )
                         else
                           PopupMenuItem(
                             value: _DriverAction.suspend,
-                            child: _MenuRow(
-                              Icons.pause_circle_outline,
-                              t.adminSuspend,
-                            ),
+                            child: _MenuRow(Icons.pause_circle_outline, t.adminSuspend),
                           ),
                         if (d.active)
                           PopupMenuItem(
                             value: _DriverAction.deactivate,
-                            child: _MenuRow(
-                              Icons.power_settings_new,
-                              t.deactivate,
-                            ),
+                            child: _MenuRow(Icons.power_settings_new, t.deactivate),
                           ),
+                        PopupMenuItem(
+                          value: _DriverAction.viewId,
+                          child: _MenuRow(Icons.badge_outlined, t.adminViewId),
+                        ),
                         PopupMenuItem(
                           value: _DriverAction.call,
                           child: _MenuRow(Icons.call, t.call),
@@ -286,10 +296,7 @@ class _ClaimsAdminTab extends ConsumerWidget {
       error: (_, __) => const ErrorState(),
       data: (list) {
         if (list.isEmpty) {
-          return EmptyState(
-            icon: Icons.payments_outlined,
-            message: t.adminNoClaims,
-          );
+          return EmptyState(icon: Icons.payments_outlined, message: t.adminNoClaims);
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -303,10 +310,8 @@ class _ClaimsAdminTab extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      c.driverName,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text(c.driverName,
+                        style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 2),
                     Text(prettyPhone(c.driverPhone)),
                     const SizedBox(height: 8),
@@ -376,10 +381,7 @@ class _ClientsAdminTab extends ConsumerWidget {
       error: (_, __) => const ErrorState(),
       data: (list) {
         if (list.isEmpty) {
-          return EmptyState(
-            icon: Icons.people_outline,
-            message: t.adminNoClients,
-          );
+          return EmptyState(icon: Icons.people_outline, message: t.adminNoClients);
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -392,19 +394,14 @@ class _ClientsAdminTab extends ConsumerWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                leading: DriverAvatar(
-                  photo: u.photo,
-                  radius: 20,
-                  icon: Icons.person,
-                ),
+                leading: DriverAvatar(photo: u.photo, radius: 20, icon: Icons.person),
                 title: Text(u.name),
                 subtitle: Text('${prettyPhone(u.phone)}\n${u.email}'),
                 isThreeLine: true,
                 trailing: IconButton(
                   tooltip: t.call,
                   icon: const Icon(Icons.call),
-                  onPressed: () =>
-                      launchWithFeedback(context, callPhone(u.phone)),
+                  onPressed: () => launchWithFeedback(context, callPhone(u.phone)),
                 ),
               ),
             );
@@ -453,6 +450,7 @@ class _AdminRequestTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     String addr(String a) => a.isEmpty ? '-' : a;
     return Card(
@@ -488,11 +486,15 @@ class _AdminRequestTile extends StatelessWidget {
                 Expanded(child: Text(addr(request.delivery.address))),
               ],
             ),
+            if (request.isCompleted && request.amount != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                t.requestAmount(t.amountDa(formatAmount(request.amount!))),
+                style: theme.textTheme.titleSmall,
+              ),
+            ],
             const SizedBox(height: 4),
-            Text(
-              formatDateTime(request.createdAt),
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(formatDateTime(request.createdAt), style: theme.textTheme.bodySmall),
           ],
         ),
       ),
@@ -531,9 +533,8 @@ class _AdminsAdminTabState extends ConsumerState<_AdminsAdminTab> {
 
     setState(() => _busy = true);
     try {
-      final result = await ref
-          .read(adminRepositoryProvider)
-          .addAdminByEmail(email, me.uid);
+      final result =
+          await ref.read(adminRepositoryProvider).addAdminByEmail(email, me.uid);
       if (!mounted) return;
       switch (result) {
         case AddAdminResult.added:
@@ -631,10 +632,14 @@ class _AdminsAdminTabState extends ConsumerState<_AdminsAdminTab> {
         Text(t.adminCurrent, style: theme.textTheme.titleMedium),
         const SizedBox(height: 10),
         async.when(
-          loading: () =>
-              const Padding(padding: EdgeInsets.all(24), child: LoadingState()),
-          error: (_, __) =>
-              const Padding(padding: EdgeInsets.all(24), child: ErrorState()),
+          loading: () => const Padding(
+            padding: EdgeInsets.all(24),
+            child: LoadingState(),
+          ),
+          error: (_, __) => const Padding(
+            padding: EdgeInsets.all(24),
+            child: ErrorState(),
+          ),
           data: (list) => Column(
             children: [
               for (final a in list) ...[
@@ -668,12 +673,8 @@ class _AdminTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context)!;
     final profile = ref.watch(adminUserProvider(entry.uid)).value;
-    final name = (profile?.name.isNotEmpty ?? false)
-        ? profile!.name
-        : entry.uid;
-    final email = (profile?.email.isNotEmpty ?? false)
-        ? profile!.email
-        : entry.email;
+    final name = (profile?.name.isNotEmpty ?? false) ? profile!.name : entry.uid;
+    final email = (profile?.email.isNotEmpty ?? false) ? profile!.email : entry.email;
 
     return Card(
       child: ListTile(

@@ -19,7 +19,8 @@ Langues : francais et arabe (avec affichage de droite a gauche). Theme clair par
 | Demandes ouvertes : le client publie, les livreurs abonnes les consultent et le contactent | Fait |
 | Bouton retour Android : confirmation avant de quitter (connexion et tableaux de bord) | Fait |
 | Notifications dans l'application (bandeaux + pastilles de compteur) | Fait |
-| Notifications push quand l'application est fermee | Non inclus (voir section 9) |
+| Notifications push livreur (nouveau message, nouvelle demande) application fermee | Fait (Cloud Functions, voir section 6 quinquies) |
+| Chiffre d'affaires du livreur (tableau de bord) et de tous les livreurs (admin) | Fait (voir section 6 sexies) |
 | iOS | Non inclus (Android uniquement) |
 
 Le logo Wassaly (pin + colis) est l'icone de l'application sur le telephone et l'ecran de demarrage.
@@ -98,6 +99,85 @@ Chaque numero ne peut etre utilise que par un compte : a l'inscription, l'applic
 `tools/backfill_phones.js` (voir l'en-tete du fichier) pour les reserver et lister les doublons existants.
 Limite : le numero n'est pas verifie par SMS, il empeche les doublons simples mais pas l'usage du numero d'un tiers.
 
+## 6 ter. Diffusion par code QR
+
+Publier une nouvelle version : voir `PUBLIER_UNE_VERSION.md`.
+Premiere diffusion : voir `DISTRIBUTION.md` (signature de l'APK, declaration de la cle a Firebase, hebergement gratuit sur GitHub Releases,
+creation du QR (`tools/make_qr.py`) et consignes d'installation pour les utilisateurs).
+
+## 6 quater. Verification de la piece d'identite des livreurs (Cloudinary)
+
+A l'inscription, un livreur doit ajouter une photo de sa piece d'identite (galerie ou appareil photo). Son compte est
+**bloque** (ecran « Compte en cours de verification ») jusqu'a la validation par un administrateur.
+
+- Photo envoyee sur Cloudinary ; l'URL est stockee dans Firestore `driverIdentity/{uid}` (lisible par le livreur et les admins seulement).
+- `drivers/{uid}.verificationStatus` : `pending` (en attente) -> `approved` (valide) ou `rejected` (refuse, avec motif).
+- Admin > onglet **Verifications** : voir la piece (zoom), **Valider** ou **Refuser** (motif affiche au livreur, qui peut renvoyer une photo).
+- Les livreurs inscrits **avant** cette fonction n'ont pas le champ : ils sont consideres comme valides.
+- Un administrateur n'est jamais bloque par cet ecran.
+
+### Configurer Cloudinary
+1. Dans le Dashboard Cloudinary, notez le **Cloud name** (c'est la partie apres le `@` de votre `CLOUDINARY_URL`).
+2. Settings > Upload > **Upload presets** > Add upload preset :
+   - Signing mode : **Unsigned**
+   - Folder : `wassaly/driver_ids`
+   - Allowed formats : `jpg, jpeg, png, webp` ; limitez la taille max du fichier (ex. 5 Mo)
+3. Copiez le nom du preset, puis dans `lib/core/constants/app_config.dart` :
+   ```dart
+   static const String cloudinaryCloudName = 'votre_cloud_name';
+   static const String cloudinaryUploadPreset = 'votre_preset';
+   ```
+4. **Ne mettez jamais** `API_KEY` / `API_SECRET` (ni la `CLOUDINARY_URL` complete) dans l'application ou dans Git.
+5. `flutter pub get`, puis republiez `firestore.rules`.
+
+## 6 quinquies. Notifications push (livreurs)
+
+Un livreur recoit une notification, meme application fermee, quand :
+- un client lui envoie un **message** ;
+- un client publie une **demande ouverte** (tous les livreurs abonnes et verifies) ;
+- un client lui envoie une **demande de livraison** directe.
+
+Un appui sur la notification ouvre l'onglet correspondant. Application ouverte, les bandeaux et pastilles habituels restent utilises.
+
+**Fonctionnement** : l'application enregistre le jeton de l'appareil du livreur dans Firestore (`deviceTokens/{uid}`) ; trois Cloud Functions
+(`functions/index.js`) envoient la notification a chaque nouveau message / nouvelle demande. Seuls les livreurs enregistrent un jeton.
+
+**Mise en place (une seule fois)** :
+1. Passer le projet Firebase au forfait **Blaze** (obligatoire pour les Cloud Functions ; carte bancaire demandee). Les quotas gratuits
+   (2 millions d'appels par mois) couvrent largement l'usage prevu : le cout attendu est nul. Creez une **alerte de budget** dans la console.
+2. Installer Node.js 22 puis la CLI : `npm install -g firebase-tools` et `firebase login`.
+3. Ouvrir `functions/index.js` et regler `REGION` sur la region de votre Firestore (console Firebase > Firestore Database > Donnees > « Emplacement » ;
+   `europe-west1` pour « eur3 » / Belgique, `us-central1` pour « nam5 »).
+4. Deployer :
+   ```
+   cd functions
+   npm install
+   cd ..
+   firebase deploy --only functions,firestore:rules
+   ```
+   Acceptez l'activation des API proposees. La commande publie aussi les nouvelles `firestore.rules`.
+5. `flutter pub get`, reconstruire l'APK (voir `PUBLIER_UNE_VERSION.md`). Au premier lancement, le livreur doit **autoriser les notifications**.
+
+**Test** : connectez-vous en livreur sur un telephone, fermez l'application, puis envoyez-lui un message depuis un compte client.
+Si rien n'arrive : `firebase functions:log`, et verifiez que le document `deviceTokens/<uid du livreur>` existe dans Firestore.
+
+**Limites** : sur certains telephones (Xiaomi, Huawei, Oppo...), l'economiseur de batterie bloque les notifications des applications fermees ;
+le livreur doit autoriser Wassaly a s'executer en arriere-plan. Les clients ne recoivent pas de notification push (livreurs uniquement).
+
+## 6 sexies. Chiffre d'affaires
+
+**Livreur** : quand il appuie sur **Marquer comme terminee**, l'application lui demande le **montant de la livraison (DA)**.
+Ce montant est enregistre avec la date de fin. Le tableau de bord affiche le chiffre d'affaires : **aujourd'hui**, **7 derniers jours**,
+**ce mois**, **total**, et le nombre de livraisons terminees.
+
+**Administrateur** : onglet **Chiffre d'affaires** du panneau d'administration : total de tous les livreurs et classement par livreur,
+filtrable par periode (aujourd'hui, 7 jours, mois, total). Le montant apparait aussi sur chaque demande terminee.
+
+**Regles de calcul** : seules les livraisons au statut « terminee » comptent ; le montant est celui saisi par le livreur (declaratif).
+Les livraisons terminees **avant** cette mise a jour n'ont pas de montant : elles ne sont pas comptees dans le chiffre d'affaires
+(le tableau de bord indique combien). Le calcul est dans `lib/core/utils/revenue.dart` (teste dans `test/revenue_test.dart`).
+Republiez `firestore.rules` : elles autorisent la saisie du montant a la fin de la livraison.
+
 ## 7. Utilisation
 
 ### Client
@@ -118,7 +198,7 @@ Le client peut la **Clôturer** ; elle disparait aussi pour les livreurs apres 7
 1. Connexion Google, telephone, role **Livreur**. L'essai gratuit de 2 mois demarre automatiquement.
 2. **Tableau de bord** : renseignez votre ville, puis appuyez sur **Je suis disponible** (la position GPS est enregistree).
    Utilisez **Mettre a jour ma position** quand vous changez de quartier.
-3. Onglet **Demandes** : **Accepter** ou **Refuser**, puis **Marquer comme terminee**. Les boutons Appeler, WhatsApp et
+3. Onglet **Demandes** : **Accepter** ou **Refuser**, puis **Marquer comme terminee** (saisir le montant de la livraison). Les boutons Appeler, WhatsApp et
    l'icone d'itineraire ouvrent le telephone, WhatsApp et Google Maps.
 4. **Abonnement** : quand l'essai se termine, payez 1 000 DA, saisissez la reference du paiement et envoyez.
    Sans abonnement valide, le livreur est automatiquement retire de la liste des clients.
@@ -128,8 +208,10 @@ Sur l'ecran de connexion et sur les tableaux de bord, le bouton retour demande c
 
 ### Administrateur
 Icone **Administration** dans la barre du haut :
+- **Verifications** : pieces d'identite en attente (voir, valider, refuser).
 - **Livreurs** : statut, date de fin d'abonnement, menu pour prolonger de 30 jours, suspendre / lever la suspension, desactiver, appeler.
 - **Paiements** : liste des declarations de paiement ; **Valider** ajoute 30 jours, **Refuser** rejette.
+- **Chiffre d'affaires** : total et classement des livreurs par periode.
 - **Clients** et **Demandes** : consultation.
 
 ## 8. Generer l'APK
@@ -146,9 +228,7 @@ Utilisez alors `flutter build appbundle --release`.
 
 ## 9. Limites connues et suite possible
 
-- **Notifications push** : les alertes actuelles apparaissent quand l'application est ouverte (bandeau + pastilles).
-  Recevoir une alerte application fermee demande Firebase Cloud Messaging et une Cloud Function pour envoyer les messages,
-  ce qui impose le forfait Firebase Blaze (paiement a l'usage).
+- **Notifications push** : reservees aux livreurs et necessitent le forfait Firebase Blaze (voir section 6 quinquies).
 - **Paiement** : la validation est manuelle (l'admin verifie le paiement puis valide). Une integration de paiement en ligne n'est pas incluse.
 - **Position du livreur** : elle est enregistree a l'activation et lors de la mise a jour manuelle (pas de suivi en temps reel).
 - **Distance** : calculee en ligne droite (pas la distance routiere).
@@ -178,4 +258,6 @@ lib/
   l10n/        traductions francais / arabe (fichiers .arb)
 assets/branding/   logo et identite visuelle
 firestore.rules    regles de securite a publier
+functions/         Cloud Functions (notifications push)
+PUBLIER_UNE_VERSION.md   tutoriel de publication d'une nouvelle version
 ```

@@ -7,6 +7,7 @@ DriverProfile _driver({
   Duration? endsIn,
   bool active = true,
   bool withLocation = true,
+  String? verification,
 }) {
   return DriverProfile.fromMap('d1', {
     'name': 'Karim',
@@ -15,6 +16,7 @@ DriverProfile _driver({
     'latitude': withLocation ? 35.69 : null,
     'longitude': withLocation ? -0.63 : null,
     'subscriptionStatus': status,
+    if (verification != null) 'verificationStatus': verification,
     'subscriptionEnd': endsIn == null
         ? null
         : Timestamp.fromDate(DateTime.now().add(endsIn)),
@@ -52,5 +54,29 @@ void main() {
   test('sans position : invisible', () {
     final d = _driver(endsIn: const Duration(days: 5), withLocation: false);
     expect(d.isAvailable, isFalse);
+  });
+
+  test('piece d\'identite en attente : bloque et invisible', () {
+    final d = _driver(endsIn: const Duration(days: 10), verification: 'pending');
+    expect(d.isVerified, isFalse);
+    expect(d.isVerificationPending, isTrue);
+    expect(d.isAvailable, isFalse);
+  });
+
+  test('piece refusee : bloque et invisible', () {
+    final d = _driver(endsIn: const Duration(days: 10), verification: 'rejected');
+    expect(d.isVerificationRejected, isTrue);
+    expect(d.isAvailable, isFalse);
+  });
+
+  test('piece validee : disponible', () {
+    final d = _driver(endsIn: const Duration(days: 10), verification: 'approved');
+    expect(d.isVerified, isTrue);
+    expect(d.isAvailable, isTrue);
+  });
+
+  test('ancien livreur sans champ de verification : considere verifie', () {
+    final d = _driver(endsIn: const Duration(days: 10));
+    expect(d.isVerified, isTrue);
   });
 }

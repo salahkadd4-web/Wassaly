@@ -18,10 +18,9 @@ final myClaimsProvider = StreamProvider<List<SubscriptionClaim>>((ref) {
       .where('driverId', isEqualTo: user.uid)
       .snapshots()
       .map((s) {
-        final list = s.docs
-            .map((d) => SubscriptionClaim.fromMap(d.id, d.data()))
-            .toList();
-        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return list;
-      });
+    final list =
+        s.docs.map((d) => SubscriptionClaim.fromMap(d.id, d.data())).toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  });
 });

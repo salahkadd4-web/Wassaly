@@ -109,9 +109,8 @@ class DriverDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: available
-                    ? () => context.push('/client/request/${d.uid}')
-                    : null,
+                onPressed:
+                    available ? () => context.push('/client/request/${d.uid}') : null,
                 icon: const Icon(Icons.local_shipping_outlined),
                 label: Text(t.sendRequest),
               ),
@@ -132,11 +131,7 @@ class DriverDetailScreen extends ConsumerWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+  const _InfoRow({required this.icon, required this.label, required this.value});
 
   final IconData icon;
   final String label;
@@ -157,9 +152,8 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],

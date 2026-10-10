@@ -12,12 +12,8 @@ final adminRepositoryProvider = Provider<AdminRepository>(
 );
 
 final adminDriversProvider = StreamProvider<List<DriverProfile>>((ref) {
-  return ref.watch(firestoreProvider).collection('drivers').snapshots().map((
-    s,
-  ) {
-    final list = s.docs
-        .map((d) => DriverProfile.fromMap(d.id, d.data()))
-        .toList();
+  return ref.watch(firestoreProvider).collection('drivers').snapshots().map((s) {
+    final list = s.docs.map((d) => DriverProfile.fromMap(d.id, d.data())).toList();
     list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return list;
   });
@@ -30,14 +26,10 @@ final adminClientsProvider = StreamProvider<List<UserProfile>>((ref) {
       .where('role', isEqualTo: 'client')
       .snapshots()
       .map((s) {
-        final list = s.docs
-            .map((d) => UserProfile.fromMap(d.id, d.data()))
-            .toList();
-        list.sort(
-          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-        );
-        return list;
-      });
+    final list = s.docs.map((d) => UserProfile.fromMap(d.id, d.data())).toList();
+    list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return list;
+  });
 });
 
 final adminClaimsProvider = StreamProvider<List<SubscriptionClaim>>((ref) {
@@ -47,12 +39,11 @@ final adminClaimsProvider = StreamProvider<List<SubscriptionClaim>>((ref) {
       .where('status', isEqualTo: 'pending')
       .snapshots()
       .map((s) {
-        final list = s.docs
-            .map((d) => SubscriptionClaim.fromMap(d.id, d.data()))
-            .toList();
-        list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-        return list;
-      });
+    final list =
+        s.docs.map((d) => SubscriptionClaim.fromMap(d.id, d.data())).toList();
+    list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return list;
+  });
 });
 
 final adminRequestsProvider = StreamProvider<List<DeliveryRequest>>((ref) {
@@ -61,6 +52,20 @@ final adminRequestsProvider = StreamProvider<List<DeliveryRequest>>((ref) {
       .collection('deliveryRequests')
       .orderBy('createdAt', descending: true)
       .limit(100)
+      .snapshots()
+      .map(
+        (s) =>
+            s.docs.map((d) => DeliveryRequest.fromMap(d.id, d.data())).toList(),
+      );
+});
+
+/// Toutes les livraisons terminees (base du chiffre d'affaires par livreur).
+final adminCompletedRequestsProvider =
+    StreamProvider<List<DeliveryRequest>>((ref) {
+  return ref
+      .watch(firestoreProvider)
+      .collection('deliveryRequests')
+      .where('status', isEqualTo: 'completed')
       .snapshots()
       .map(
         (s) =>
@@ -77,32 +82,20 @@ class AdminEntry {
 }
 
 final adminListProvider = StreamProvider<List<AdminEntry>>((ref) {
-  return ref
-      .watch(firestoreProvider)
-      .collection('admins')
-      .snapshots()
-      .map(
+  return ref.watch(firestoreProvider).collection('admins').snapshots().map(
         (s) => s.docs
-            .map(
-              (d) => AdminEntry(
-                uid: d.id,
-                email: (d.data()['email'] as String?) ?? '',
-              ),
-            )
+            .map((d) => AdminEntry(
+                  uid: d.id,
+                  email: (d.data()['email'] as String?) ?? '',
+                ))
             .toList(),
       );
 });
 
 /// Profil (users/{uid}) d'un compte, pour afficher le nom d'un admin.
-final adminUserProvider = FutureProvider.family<UserProfile?, String>((
-  ref,
-  uid,
-) async {
-  final snap = await ref
-      .watch(firestoreProvider)
-      .collection('users')
-      .doc(uid)
-      .get();
+final adminUserProvider =
+    FutureProvider.family<UserProfile?, String>((ref, uid) async {
+  final snap = await ref.watch(firestoreProvider).collection('users').doc(uid).get();
   final data = snap.data();
   return data == null ? null : UserProfile.fromMap(uid, data);
 });

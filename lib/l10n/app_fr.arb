@@ -222,4 +222,74 @@
   ,"roleDriverShortDesc": "Je livre des colis"
   ,"welcomeGoogleHint": "Touchez votre profil pour continuer avec Google"
   ,"phoneTaken": "Ce numéro est déjà utilisé par un autre compte. Utilisez un autre numéro."
+  ,"idTitle": "Pièce d'identité"
+  ,"idIntro": "Pour vérifier votre compte, ajoutez une photo lisible de votre pièce d'identité (carte nationale, permis de conduire ou passeport). Votre compte restera bloqué jusqu'à sa validation par l'administrateur."
+  ,"idFromGallery": "Galerie"
+  ,"idFromCamera": "Appareil photo"
+  ,"idChangePhoto": "Changer la photo"
+  ,"idRequired": "Ajoutez la photo de votre pièce d'identité."
+  ,"idUploadError": "Envoi de la photo impossible. Vérifiez votre connexion et réessayez."
+  ,"idPickError": "Impossible d'ouvrir la photo. Vérifiez les autorisations de l'application."
+  ,"idImageUnavailable": "Image indisponible."
+  ,"verifTitle": "Vérification du compte"
+  ,"verifPendingTitle": "Compte en cours de vérification"
+  ,"verifPendingBody": "L'administrateur vérifie votre pièce d'identité. Vous aurez accès à l'application dès qu'elle sera validée."
+  ,"verifRejectedTitle": "Pièce d'identité refusée"
+  ,"verifRejectedBody": "Votre pièce n'a pas été acceptée. Envoyez une nouvelle photo lisible pour relancer la vérification."
+  ,"verifReason": "Motif : {reason}"
+  ,"@verifReason": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
+  }
+  ,"verifResend": "Envoyer une nouvelle photo"
+  ,"verifResent": "Nouvelle photo envoyée. L'administrateur va la vérifier."
+  ,"verifChipVerified": "Vérifié"
+  ,"verifChipPending": "À vérifier"
+  ,"verifChipRejected": "Refusé"
+  ,"adminVerifications": "Vérifications"
+  ,"adminNoVerifications": "Aucune vérification en attente."
+  ,"adminViewId": "Voir la pièce d'identité"
+  ,"adminIdMissing": "Aucune pièce d'identité trouvée."
+  ,"adminRejectIdTitle": "Refuser la pièce d'identité"
+  ,"adminRejectIdHint": "Motif (affiché au livreur)"
+  ,"adminIdApproved": "Livreur vérifié."
+  ,"adminIdRejected": "Pièce refusée."
+  ,"revenueTitle": "Chiffre d'affaires"
+  ,"revenueToday": "Aujourd'hui"
+  ,"revenueWeek": "7 derniers jours"
+  ,"revenueMonth": "Ce mois"
+  ,"revenueTotal": "Total"
+  ,"revenueDeliveries": "{count} livraison(s) terminée(s)"
+  ,"@revenueDeliveries": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  }
+  ,"revenueNoAmount": "{count} ancienne(s) livraison(s) sans montant (non comptées)"
+  ,"@revenueNoAmount": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  }
+  ,"amountDa": "{amount} DA"
+  ,"@amountDa": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  }
+  ,"completeDialogTitle": "Montant de la livraison"
+  ,"completeDialogHint": "Saisissez le prix de la course encaissé auprès du client."
+  ,"amountLabel": "Montant (DA)"
+  ,"amountInvalid": "Montant invalide"
+  ,"completeConfirm": "Terminer"
+  ,"requestAmount": "Montant : {amount}"
+  ,"@requestAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  }
+  ,"adminRevenue": "Chiffre d'affaires"
+  ,"adminRevenueAll": "Tous les livreurs"
+  ,"adminNoRevenue": "Aucune livraison terminée."
 }

@@ -16,6 +16,7 @@ class DriverProfile {
     this.lastLocationUpdate,
     this.trialStart,
     this.subscriptionEnd,
+    this.verificationStatus = 'approved',
   });
 
   final String uid;
@@ -33,6 +34,15 @@ class DriverProfile {
   final String subscriptionStatus;
   final DateTime? subscriptionEnd;
 
+  /// Verification de la piece d'identite : pending | approved | rejected.
+  /// Les livreurs inscrits avant cette fonction n'ont pas le champ : ils
+  /// sont consideres comme verifies ("approved" par defaut).
+  final String verificationStatus;
+
+  bool get isVerified => verificationStatus == 'approved';
+  bool get isVerificationPending => verificationStatus == 'pending';
+  bool get isVerificationRejected => verificationStatus == 'rejected';
+
   bool get hasLocation => latitude != null && longitude != null;
 
   bool get isSuspended => subscriptionStatus == 'suspended';
@@ -41,8 +51,7 @@ class DriverProfile {
   bool get subscriptionValid {
     final end = subscriptionEnd;
     if (end == null) return false;
-    final okStatus =
-        subscriptionStatus == 'trial' || subscriptionStatus == 'paid';
+    final okStatus = subscriptionStatus == 'trial' || subscriptionStatus == 'paid';
     return okStatus && end.isAfter(DateTime.now());
   }
 
@@ -64,7 +73,8 @@ class DriverProfile {
   }
 
   /// Visible par les clients : actif, abonnement valide, position connue.
-  bool get isAvailable => active && subscriptionValid && hasLocation;
+  bool get isAvailable =>
+      active && isVerified && subscriptionValid && hasLocation;
 
   factory DriverProfile.fromMap(String uid, Map<String, dynamic> map) {
     return DriverProfile(
@@ -80,6 +90,7 @@ class DriverProfile {
       trialStart: _date(map['trialStart']),
       subscriptionStatus: (map['subscriptionStatus'] as String?) ?? 'expired',
       subscriptionEnd: _date(map['subscriptionEnd']),
+      verificationStatus: (map['verificationStatus'] as String?) ?? 'approved',
     );
   }
 }

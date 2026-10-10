@@ -40,3 +40,14 @@ String formatDate(DateTime d) => DateFormat('dd/MM/yyyy').format(d);
 String formatTime(DateTime d) => DateFormat('HH:mm').format(d);
 
 String formatDateTime(DateTime d) => DateFormat('dd/MM/yyyy HH:mm').format(d);
+
+/// 12500 -> "12 500" (separateur de milliers = espace).
+String formatAmount(int n) {
+  final digits = n.abs().toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buf.write(' ');
+    buf.write(digits[i]);
+  }
+  return n < 0 ? '-$buf' : buf.toString();
+}

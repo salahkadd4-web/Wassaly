@@ -24,6 +24,8 @@ class DeliveryRequest {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    this.amount,
+    this.completedAt,
   });
 
   final String id;
@@ -39,8 +41,16 @@ class DeliveryRequest {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  /// Montant de la livraison en DA, saisi par le livreur a la fin de la course.
+  /// Null pour une livraison terminee avant l'ajout du chiffre d'affaires.
+  final int? amount;
+
+  /// Date de fin de la livraison (serveur). Null pour les anciennes livraisons.
+  final DateTime? completedAt;
+
   bool get isPending => status == RequestStatus.pending;
   bool get isAccepted => status == RequestStatus.accepted;
+  bool get isCompleted => status == RequestStatus.completed;
   bool get isOpen => isPending || isAccepted;
 
   factory DeliveryRequest.fromMap(String id, Map<String, dynamic> map) {
@@ -58,6 +68,9 @@ class DeliveryRequest {
       status: (map['status'] as String?) ?? RequestStatus.pending,
       createdAt: ts(map['createdAt']),
       updatedAt: ts(map['updatedAt']),
+      amount: (map['amount'] as num?)?.toInt(),
+      completedAt:
+          map['completedAt'] is Timestamp ? (map['completedAt'] as Timestamp).toDate() : null,
     );
   }
 }

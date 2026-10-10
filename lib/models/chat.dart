@@ -35,8 +35,7 @@ class Conversation {
 
   String otherName(String myUid) => myUid == clientId ? driverName : clientName;
 
-  int unreadFor(String myUid) =>
-      myUid == clientId ? clientUnread : driverUnread;
+  int unreadFor(String myUid) => myUid == clientId ? clientUnread : driverUnread;
 
   ChatArgs get args => ChatArgs(clientName: clientName, driverName: driverName);
 

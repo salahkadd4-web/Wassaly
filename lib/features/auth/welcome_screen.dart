@@ -29,9 +29,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       debugPrint('Erreur Google Sign-In : $e');
       if (mounted) {
         final msg = AppLocalizations.of(context)!.signInError;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(kDebugMode ? '$msg\n$e' : msg)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(kDebugMode ? '$msg\n$e' : msg)),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -97,9 +97,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           const SizedBox(height: 8),
                           Text(
                             t.welcomeTagline,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: muted,
-                            ),
+                            style: theme.textTheme.bodyLarge
+                                ?.copyWith(color: muted),
                           ),
                         ],
                       ),
@@ -112,16 +111,17 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.login),
                         label: Text(t.continueWithGoogle),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const SizedBox(height: 260, child: CityIllustration()),
+                    const SizedBox(
+                      height: 260,
+                      child: CityIllustration(),
+                    ),
                   ],
                 ),
               ),

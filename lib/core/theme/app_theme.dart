@@ -20,14 +20,16 @@ class AppTheme {
     required Color border,
     required Color appBar,
   }) {
-    final scheme = ColorScheme.fromSeed(seedColor: blue, brightness: brightness)
-        .copyWith(
-          primary: primary,
-          secondary: orange,
-          error: danger,
-          surface: surface,
-          onSurface: onSurface,
-        );
+    final scheme = ColorScheme.fromSeed(
+      seedColor: blue,
+      brightness: brightness,
+    ).copyWith(
+      primary: primary,
+      secondary: orange,
+      error: danger,
+      surface: surface,
+      onSurface: onSurface,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -81,22 +83,22 @@ class AppTheme {
   }
 
   static ThemeData get light => _base(
-    brightness: Brightness.light,
-    background: const Color(0xFFF8FAFC),
-    surface: Colors.white,
-    onSurface: const Color(0xFF0F172A),
-    primary: blue,
-    border: const Color(0xFFE2E8F0),
-    appBar: blue,
-  );
+        brightness: Brightness.light,
+        background: const Color(0xFFF8FAFC),
+        surface: Colors.white,
+        onSurface: const Color(0xFF0F172A),
+        primary: blue,
+        border: const Color(0xFFE2E8F0),
+        appBar: blue,
+      );
 
   static ThemeData get dark => _base(
-    brightness: Brightness.dark,
-    background: const Color(0xFF0F172A),
-    surface: const Color(0xFF1E293B),
-    onSurface: const Color(0xFFF8FAFC),
-    primary: const Color(0xFF3B82F6),
-    border: const Color(0xFF334155),
-    appBar: const Color(0xFF1E293B),
-  );
+        brightness: Brightness.dark,
+        background: const Color(0xFF0F172A),
+        surface: const Color(0xFF1E293B),
+        onSurface: const Color(0xFFF8FAFC),
+        primary: const Color(0xFF3B82F6),
+        border: const Color(0xFF334155),
+        appBar: const Color(0xFF1E293B),
+      );
 }

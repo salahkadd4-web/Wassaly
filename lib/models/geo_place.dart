@@ -9,10 +9,10 @@ class GeoPlace {
   bool get hasCoordinates => latitude != null && longitude != null;
 
   Map<String, dynamic> toMap() => {
-    'address': address,
-    'latitude': latitude,
-    'longitude': longitude,
-  };
+        'address': address,
+        'latitude': latitude,
+        'longitude': longitude,
+      };
 
   factory GeoPlace.fromMap(Map<String, dynamic>? map) {
     return GeoPlace(

@@ -91,9 +91,7 @@ class OpenRequestCard extends ConsumerWidget {
                       ),
                       Text(
                         formatDateTime(request.createdAt),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: muted,
-                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(color: muted),
                       ),
                     ],
                   ),
@@ -144,9 +142,7 @@ class OpenRequestCard extends ConsumerWidget {
             ] else if (request.isOpen) ...[
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.danger,
-                ),
+                style: OutlinedButton.styleFrom(foregroundColor: AppTheme.danger),
                 onPressed: () => _close(context, ref),
                 icon: const Icon(Icons.cancel_outlined),
                 label: Text(t.closeOpenRequest),

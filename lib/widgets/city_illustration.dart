@@ -84,7 +84,11 @@ class _CityPainter extends CustomPainter {
         Rect.fromLTWH(cx - 2, ground - r * 1.2, 4, r * 1.2),
         Paint()..color = tree,
       );
-      canvas.drawCircle(Offset(cx, ground - r * 1.9), r, Paint()..color = tree);
+      canvas.drawCircle(
+        Offset(cx, ground - r * 1.9),
+        r,
+        Paint()..color = tree,
+      );
     }
 
     treeAt(0.10, h * 0.12);
@@ -105,14 +109,7 @@ class _CityPainter extends CustomPainter {
     final pinY = h * 0.30;
     final route = Path()
       ..moveTo(w * 0.40, ground - 4)
-      ..cubicTo(
-        w * 0.62,
-        ground - h * 0.10,
-        w * 0.32,
-        h * 0.52,
-        pinX,
-        pinY + h * 0.18,
-      );
+      ..cubicTo(w * 0.62, ground - h * 0.10, w * 0.32, h * 0.52, pinX, pinY + h * 0.18);
     final routePaint = Paint()
       ..color = dark ? AppTheme.orange : const Color(0xFF3B82F6)
       ..style = PaintingStyle.stroke
@@ -121,10 +118,7 @@ class _CityPainter extends CustomPainter {
     for (final m in route.computeMetrics()) {
       var d = 0.0;
       while (d < m.length) {
-        canvas.drawPath(
-          m.extractPath(d, math.min(d + 7, m.length)),
-          routePaint,
-        );
+        canvas.drawPath(m.extractPath(d, math.min(d + 7, m.length)), routePaint);
         d += 13;
       }
     }
@@ -141,11 +135,7 @@ class _CityPainter extends CustomPainter {
       orange,
     );
     canvas.drawCircle(Offset(pinX, pinY), r, orange);
-    canvas.drawCircle(
-      Offset(pinX, pinY),
-      r * 0.42,
-      Paint()..color = Colors.white,
-    );
+    canvas.drawCircle(Offset(pinX, pinY), r * 0.42, Paint()..color = Colors.white);
   }
 
   @override

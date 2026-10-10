@@ -12,10 +12,7 @@ final openRequestRepositoryProvider = Provider<OpenRequestRepository>(
   (ref) => OpenRequestRepository(ref.watch(firestoreProvider)),
 );
 
-List<OpenRequest> _parse(
-  Iterable<Map<String, dynamic>> docs,
-  List<String> ids,
-) {
+List<OpenRequest> _parse(Iterable<Map<String, dynamic>> docs, List<String> ids) {
   final list = <OpenRequest>[];
   for (var i = 0; i < ids.length; i++) {
     list.add(OpenRequest.fromMap(ids[i], docs.elementAt(i)));
@@ -33,13 +30,13 @@ final clientOpenRequestsProvider = StreamProvider<List<OpenRequest>>((ref) {
       .where('clientId', isEqualTo: user.uid)
       .snapshots()
       .map((s) {
-        final list = _parse(
-          s.docs.map((d) => d.data()),
-          s.docs.map((d) => d.id).toList(),
-        );
-        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return list;
-      });
+    final list = _parse(
+      s.docs.map((d) => d.data()),
+      s.docs.map((d) => d.id).toList(),
+    );
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  });
 });
 
 /// Demandes ouvertes visibles par le livreur connecte.
@@ -61,14 +58,14 @@ final driverOpenRequestsProvider = StreamProvider<List<OpenRequest>>((ref) {
       .limit(100)
       .snapshots()
       .map((s) {
-        final limit = DateTime.now().subtract(openRequestMaxAge);
-        final list = _parse(
-          s.docs.map((d) => d.data()),
-          s.docs.map((d) => d.id).toList(),
-        ).where((r) => r.createdAt.isAfter(limit)).toList();
-        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return list;
-      });
+    final limit = DateTime.now().subtract(openRequestMaxAge);
+    final list = _parse(
+      s.docs.map((d) => d.data()),
+      s.docs.map((d) => d.id).toList(),
+    ).where((r) => r.createdAt.isAfter(limit)).toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  });
 });
 
 /// Nombre de demandes ouvertes visibles par le livreur (pastille de l'onglet).

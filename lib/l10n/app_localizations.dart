@@ -1189,6 +1189,276 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ce numéro est déjà utilisé par un autre compte. Utilisez un autre numéro.'**
   String get phoneTaken;
+
+  /// No description provided for @idTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pièce d\'identité'**
+  String get idTitle;
+
+  /// No description provided for @idIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour vérifier votre compte, ajoutez une photo lisible de votre pièce d\'identité (carte nationale, permis de conduire ou passeport). Votre compte restera bloqué jusqu\'à sa validation par l\'administrateur.'**
+  String get idIntro;
+
+  /// No description provided for @idFromGallery.
+  ///
+  /// In fr, this message translates to:
+  /// **'Galerie'**
+  String get idFromGallery;
+
+  /// No description provided for @idFromCamera.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appareil photo'**
+  String get idFromCamera;
+
+  /// No description provided for @idChangePhoto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer la photo'**
+  String get idChangePhoto;
+
+  /// No description provided for @idRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoutez la photo de votre pièce d\'identité.'**
+  String get idRequired;
+
+  /// No description provided for @idUploadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoi de la photo impossible. Vérifiez votre connexion et réessayez.'**
+  String get idUploadError;
+
+  /// No description provided for @idPickError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'ouvrir la photo. Vérifiez les autorisations de l\'application.'**
+  String get idPickError;
+
+  /// No description provided for @idImageUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Image indisponible.'**
+  String get idImageUnavailable;
+
+  /// No description provided for @verifTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérification du compte'**
+  String get verifTitle;
+
+  /// No description provided for @verifPendingTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte en cours de vérification'**
+  String get verifPendingTitle;
+
+  /// No description provided for @verifPendingBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'administrateur vérifie votre pièce d\'identité. Vous aurez accès à l\'application dès qu\'elle sera validée.'**
+  String get verifPendingBody;
+
+  /// No description provided for @verifRejectedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pièce d\'identité refusée'**
+  String get verifRejectedTitle;
+
+  /// No description provided for @verifRejectedBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre pièce n\'a pas été acceptée. Envoyez une nouvelle photo lisible pour relancer la vérification.'**
+  String get verifRejectedBody;
+
+  /// No description provided for @verifReason.
+  ///
+  /// In fr, this message translates to:
+  /// **'Motif : {reason}'**
+  String verifReason(String reason);
+
+  /// No description provided for @verifResend.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer une nouvelle photo'**
+  String get verifResend;
+
+  /// No description provided for @verifResent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle photo envoyée. L\'administrateur va la vérifier.'**
+  String get verifResent;
+
+  /// No description provided for @verifChipVerified.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifié'**
+  String get verifChipVerified;
+
+  /// No description provided for @verifChipPending.
+  ///
+  /// In fr, this message translates to:
+  /// **'À vérifier'**
+  String get verifChipPending;
+
+  /// No description provided for @verifChipRejected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Refusé'**
+  String get verifChipRejected;
+
+  /// No description provided for @adminVerifications.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifications'**
+  String get adminVerifications;
+
+  /// No description provided for @adminNoVerifications.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune vérification en attente.'**
+  String get adminNoVerifications;
+
+  /// No description provided for @adminViewId.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir la pièce d\'identité'**
+  String get adminViewId;
+
+  /// No description provided for @adminIdMissing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune pièce d\'identité trouvée.'**
+  String get adminIdMissing;
+
+  /// No description provided for @adminRejectIdTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Refuser la pièce d\'identité'**
+  String get adminRejectIdTitle;
+
+  /// No description provided for @adminRejectIdHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Motif (affiché au livreur)'**
+  String get adminRejectIdHint;
+
+  /// No description provided for @adminIdApproved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Livreur vérifié.'**
+  String get adminIdApproved;
+
+  /// No description provided for @adminIdRejected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pièce refusée.'**
+  String get adminIdRejected;
+
+  /// No description provided for @revenueTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chiffre d\'affaires'**
+  String get revenueTitle;
+
+  /// No description provided for @revenueToday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aujourd\'hui'**
+  String get revenueToday;
+
+  /// No description provided for @revenueWeek.
+  ///
+  /// In fr, this message translates to:
+  /// **'7 derniers jours'**
+  String get revenueWeek;
+
+  /// No description provided for @revenueMonth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce mois'**
+  String get revenueMonth;
+
+  /// No description provided for @revenueTotal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Total'**
+  String get revenueTotal;
+
+  /// No description provided for @revenueDeliveries.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} livraison(s) terminée(s)'**
+  String revenueDeliveries(String count);
+
+  /// No description provided for @revenueNoAmount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} ancienne(s) livraison(s) sans montant (non comptées)'**
+  String revenueNoAmount(String count);
+
+  /// No description provided for @amountDa.
+  ///
+  /// In fr, this message translates to:
+  /// **'{amount} DA'**
+  String amountDa(String amount);
+
+  /// No description provided for @completeDialogTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant de la livraison'**
+  String get completeDialogTitle;
+
+  /// No description provided for @completeDialogHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez le prix de la course encaissé auprès du client.'**
+  String get completeDialogHint;
+
+  /// No description provided for @amountLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant (DA)'**
+  String get amountLabel;
+
+  /// No description provided for @amountInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant invalide'**
+  String get amountInvalid;
+
+  /// No description provided for @completeConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminer'**
+  String get completeConfirm;
+
+  /// No description provided for @requestAmount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant : {amount}'**
+  String requestAmount(String amount);
+
+  /// No description provided for @adminRevenue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chiffre d\'affaires'**
+  String get adminRevenue;
+
+  /// No description provided for @adminRevenueAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous les livreurs'**
+  String get adminRevenueAll;
+
+  /// No description provided for @adminNoRevenue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune livraison terminée.'**
+  String get adminNoRevenue;
 }
 
 class _AppLocalizationsDelegate
