@@ -67,8 +67,9 @@ class RequestCard extends ConsumerWidget {
     if (amount == null) return;
     try {
       await ref.read(requestRepositoryProvider).complete(request.id, amount);
-    } catch (_) {
-      if (context.mounted) showSnack(context, t.genericError);
+    } catch (e) {
+      debugPrint('complete() error: $e');
+      if (context.mounted) showSnack(context, '${t.genericError}\n$e');
     }
   }
 
