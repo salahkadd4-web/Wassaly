@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/driver_billing.dart';
 import '../../models/driver_profile.dart';
 import '../../services/location_service.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/info_banner.dart';
 import '../../widgets/snack.dart';
+import '../../widgets/speed_lines.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_chip.dart';
 import '../auth/auth_providers.dart';
+import '../billing/billing_providers.dart';
 import '../chat/chat_providers.dart';
 import '../common/home_tab_provider.dart';
 import '../drivers/driver_providers.dart';
@@ -80,10 +85,7 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            labelText: t.city,
-            prefixIcon: const Icon(Icons.location_city),
-          ),
+          decoration: InputDecoration(labelText: t.city),
         ),
         actions: [
           TextButton(
@@ -109,18 +111,19 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
     final me = ref.watch(authStateProvider).value;
     final profile = ref.watch(userProfileProvider).value;
     if (me == null) return const SizedBox.shrink();
 
     final async = ref.watch(driverProvider(me.uid));
+    final billing =
+        ref.watch(myBillingProvider).value ?? DriverBilling.empty(me.uid);
     final pending = ref.watch(pendingRequestsCountProvider);
     final unread = ref.watch(unreadMessagesCountProvider);
 
     return async.when(
       loading: () => const LoadingState(),
-      error: (_, __) => const ErrorState(),
+      error: (_, _) => const ErrorState(),
       data: (d) {
         if (d == null) {
           return EmptyState(
@@ -129,224 +132,106 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
           );
         }
 
-        // Un abonnement expire ou suspendu retire automatiquement le livreur de la liste.
+        // Un abonnement expire, suspendu ou bloque retire le livreur de la liste.
         if (d.active && !d.subscriptionValid && !_autoDeactivated) {
           _autoDeactivated = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(driverRepositoryProvider).setActive(d.uid, false).catchError(
-                  (_) {},
-                );
+            ref
+                .read(driverRepositoryProvider)
+                .setActive(d.uid, false)
+                .catchError((_) {});
           });
         }
 
-        final active = d.active && d.subscriptionValid;
-        final statusColor = active ? AppTheme.success : AppTheme.neutral;
-        final muted = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+        final online = d.active && d.subscriptionValid;
+        final banner = _billingBanner(t, d, billing);
+        final firstName = (profile?.name ?? d.name).split(' ').first;
 
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
-            Text(
-              t.hello(profile?.name ?? d.name),
-              style: theme.textTheme.headlineSmall,
-            ),
+            Text(t.hello(firstName), style: context.text.headlineMedium),
             const SizedBox(height: 16),
-
-            // --- Disponibilite ---
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Text(t.yourAvailability, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 16),
-                    Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.14),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        active ? Icons.two_wheeler : Icons.pause,
-                        size: 42,
-                        color: statusColor,
-                      ),
+            if (banner != null) ...[banner, const SizedBox(height: 12)],
+            _AvailabilityPanel(
+              online: online,
+              busy: _busy,
+              onChanged: (v) => _setActive(d, v),
+            ),
+            const SizedBox(height: 12),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _CounterTile(
+                      icon: Icons.inventory_2_outlined,
+                      label: t.pendingRequestsLabel,
+                      count: pending,
+                      onTap: () => ref.read(homeTabProvider.notifier).select(1),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      active ? t.statusActive : t.statusInactive,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _CounterTile(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      label: t.unreadMessagesLabel,
+                      count: unread,
+                      onTap: () => ref.read(homeTabProvider.notifier).select(3),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      active ? t.activeHint : t.inactiveHint,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: active
-                          ? OutlinedButton.icon(
-                              onPressed: _busy ? null : () => _setActive(d, false),
-                              icon: const Icon(Icons.power_settings_new),
-                              label: Text(t.deactivate),
-                            )
-                          : FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppTheme.success,
-                              ),
-                              onPressed: _busy ? null : () => _setActive(d, true),
-                              icon: _busy
-                                  ? const SizedBox(
-                                      height: 18,
-                                      width: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Icon(Icons.power_settings_new),
-                              label: Text(t.activate),
-                            ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
-
-            // --- Position ---
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.place_outlined, color: theme.colorScheme.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            (d.city ?? '').isEmpty ? t.cityNotSet : d.city!,
-                            style: theme.textTheme.titleMedium,
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: t.editCity,
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => _editCity(d),
-                        ),
-                      ],
-                    ),
-                    if (d.lastLocationUpdate != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          '${t.positionUpdated} : ${formatDateTime(d.lastLocationUpdate!)}',
-                          style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                        ),
-                      ),
-                    OutlinedButton.icon(
-                      onPressed: _busy ? null : () => _updatePosition(d),
-                      icon: const Icon(Icons.my_location),
-                      label: Text(t.updateMyPosition),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _PlanCard(driver: d, billing: billing),
             const SizedBox(height: 12),
-
-            // --- Compteurs ---
-            Row(
-              children: [
-                Expanded(
-                  child: _CounterCard(
-                    icon: Icons.inventory_2_outlined,
-                    label: t.tabRequests,
-                    count: pending,
-                    onTap: () => ref.read(homeTabProvider.notifier).select(1),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _CounterCard(
-                    icon: Icons.chat_bubble_outline,
-                    label: t.messages,
-                    count: unread,
-                    onTap: () => ref.read(homeTabProvider.notifier).select(3),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // --- Chiffre d'affaires ---
             const RevenueCard(),
             const SizedBox(height: 12),
-
-            // --- Abonnement ---
             Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.workspace_premium_outlined,
-                            color: theme.colorScheme.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(t.subscription,
-                              style: theme.textTheme.titleMedium),
-                        ),
-                        SubscriptionChip(status: d.effectiveStatus),
-                      ],
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: const EdgeInsetsDirectional.fromSTEB(
+                      16,
+                      4,
+                      8,
+                      4,
                     ),
-                    const SizedBox(height: 12),
-                    if (d.subscriptionEnd != null)
-                      Text(
-                        t.expiresOn(formatDate(d.subscriptionEnd!)),
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    if (d.subscriptionValid)
-                      Text(
-                        t.daysLeft('${d.daysLeft}'),
-                        style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                      )
-                    else
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          t.subscriptionExpiredMsg,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: AppTheme.danger),
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: d.subscriptionValid && d.daysLeft > 7
-                          ? OutlinedButton.icon(
-                              onPressed: () => context.push('/driver/subscription'),
-                              icon: const Icon(Icons.payments_outlined),
-                              label: Text(t.manageSubscription),
-                            )
-                          : FilledButton.icon(
-                              onPressed: () => context.push('/driver/subscription'),
-                              icon: const Icon(Icons.autorenew),
-                              label: Text(t.renewSubscription),
-                            ),
+                    leading: const Icon(Icons.location_city_outlined),
+                    title: Text(t.city),
+                    subtitle: Text(
+                      (d.city ?? '').isEmpty ? t.cityNotSet : d.city!,
+                      style: context.text.bodyMedium,
                     ),
-                  ],
-                ),
+                    trailing: IconButton(
+                      tooltip: t.editCity,
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: () => _editCity(d),
+                    ),
+                  ),
+                  const Divider(indent: 16, endIndent: 16),
+                  ListTile(
+                    contentPadding: const EdgeInsetsDirectional.fromSTEB(
+                      16,
+                      4,
+                      8,
+                      4,
+                    ),
+                    leading: const Icon(Icons.my_location_rounded),
+                    title: Text(t.myPosition),
+                    subtitle: Text(
+                      d.lastLocationUpdate == null
+                          ? t.positionNeverShared
+                          : '${t.positionUpdated} : ${formatDateTime(d.lastLocationUpdate!)}',
+                    ),
+                    trailing: IconButton(
+                      tooltip: t.updateMyPosition,
+                      icon: const Icon(Icons.refresh_rounded),
+                      onPressed: _busy ? null : () => _updatePosition(d),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -354,10 +239,160 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
       },
     );
   }
+
+  /// Alerte de facturation la plus importante, ou null.
+  Widget? _billingBanner(AppLocalizations t, DriverProfile d, DriverBilling b) {
+    void open() => context.push('/driver/subscription');
+    Widget button(String label) => OutlinedButton(
+      style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40)),
+      onPressed: open,
+      child: Text(label),
+    );
+
+    switch (d.effectiveStatus) {
+      case 'suspended':
+        return InfoBanner(
+          tone: BannerTone.danger,
+          title: t.subSuspended,
+          message: t.suspendedMsg,
+        );
+      case 'blocked':
+        return InfoBanner(
+          tone: BannerTone.danger,
+          title: t.debtBlockedTitle,
+          message: t.debtBlockedMsg(formatAmount(b.debt)),
+          action: button(t.payDebt),
+        );
+      case 'expired':
+        return InfoBanner(
+          tone: BannerTone.danger,
+          title: t.subExpired,
+          message: t.subscriptionExpiredMsg,
+          action: button(t.choosePlan),
+        );
+      case 'per_delivery':
+        if (b.nearLimit) {
+          return InfoBanner(
+            tone: BannerTone.warning,
+            title: t.debtWarnTitle(formatAmount(b.debt)),
+            message: t.debtWarnMsg('${b.deliveriesLeft}'),
+            action: button(t.payDebt),
+          );
+        }
+      case 'trial':
+        if (d.daysLeft <= 7 && d.plan == null) {
+          return InfoBanner(
+            title: t.trialEndingTitle('${d.daysLeft}'),
+            message: t.trialEndingMsg,
+            action: button(t.choosePlan),
+          );
+        }
+    }
+    return null;
+  }
 }
 
-class _CounterCard extends StatelessWidget {
-  const _CounterCard({
+/// Disponibilite : le moment fort du tableau de bord.
+class _AvailabilityPanel extends StatelessWidget {
+  const _AvailabilityPanel({
+    required this.online,
+    required this.busy,
+    required this.onChanged,
+  });
+
+  final bool online;
+  final bool busy;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final bg = online
+        ? (context.isDark ? const Color(0xFF12305F) : AppTheme.blue)
+        : Theme.of(context).colorScheme.surface;
+    final fg = online ? Colors.white : context.colors.onSurface;
+    final sub = online ? Colors.white.withValues(alpha: 0.8) : context.muted;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppTheme.radiusHero),
+        border: online
+            ? null
+            : Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (online) ...[
+                const SpeedLines(width: 26),
+                const SizedBox(width: 10),
+              ] else ...[
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: context.muted,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Text(
+                  online ? t.statusActive : t.statusInactive,
+                  style: context.text.headlineSmall?.copyWith(color: fg),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            online ? t.activeHint : t.inactiveHint,
+            style: context.text.bodyMedium?.copyWith(color: sub),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: online
+                ? OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white54, width: 1.5),
+                    ),
+                    onPressed: busy ? null : () => onChanged(false),
+                    icon: const Icon(Icons.power_settings_new_rounded),
+                    label: Text(t.deactivate),
+                  )
+                : FilledButton.icon(
+                    style: AppTheme.confirmButton,
+                    onPressed: busy ? null : () => onChanged(true),
+                    icon: busy
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.power_settings_new_rounded),
+                    label: Text(t.activate),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CounterTile extends StatelessWidget {
+  const _CounterTile({
     required this.icon,
     required this.label,
     required this.count,
@@ -371,29 +406,134 @@ class _CounterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final highlight = count > 0;
     return Card(
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('$count', style: context.text.headlineMedium),
+                    const SizedBox(height: 2),
+                    Text(label, style: context.text.bodySmall),
+                  ],
+                ),
+              ),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: highlight
+                      ? AppTheme.orange.withValues(alpha: 0.16)
+                      : context.surfaceAlt,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: highlight
+                      ? context.ink(AppTheme.orange)
+                      : context.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Formule en cours : essai, mensuel ou a la livraison (avec la dette).
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({required this.driver, required this.billing});
+
+  final DriverProfile driver;
+  final DriverBilling billing;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final status = driver.effectiveStatus;
+    final perDelivery = status == 'per_delivery' || status == 'blocked';
+
+    final String detail;
+    switch (status) {
+      case 'trial':
+        detail = t.daysLeft('${driver.daysLeft}');
+      case 'paid':
+        detail = t.expiresOn(formatDate(driver.subscriptionEnd!));
+      case 'per_delivery':
+      case 'blocked':
+        detail = t.debtOfLimit(
+          formatAmount(billing.debt),
+          formatAmount(AppConfig.debtLimitDa),
+        );
+      default:
+        detail = t.subscriptionExpiredMsg;
+    }
+
+    return Card(
+      child: InkWell(
+        onTap: () => context.push('/driver/subscription'),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: theme.colorScheme.primary),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(t.myPlan, style: context.text.titleMedium),
+                  ),
+                  SubscriptionChip(status: status),
+                ],
+              ),
               const SizedBox(height: 8),
-              Text(
-                '$count',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: count > 0 ? AppTheme.orange : null,
-                  fontWeight: FontWeight.bold,
+              Text(detail, style: context.text.bodyMedium),
+              if (perDelivery) ...[
+                const SizedBox(height: 12),
+                DebtMeter(billing: billing),
+              ],
+              const SizedBox(height: 4),
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TextButton.icon(
+                  onPressed: () => context.push('/driver/subscription'),
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: Text(t.manageSubscription),
                 ),
               ),
-              Text(label, style: theme.textTheme.bodySmall),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Jauge de dette (formule a la livraison) : orange, rouge a l'approche du plafond.
+class DebtMeter extends StatelessWidget {
+  const DebtMeter({super.key, required this.billing, this.height = 10});
+
+  final DriverBilling billing;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = billing.nearLimit ? AppTheme.danger : AppTheme.orange;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(height),
+      child: LinearProgressIndicator(
+        value: billing.debtRatio,
+        minHeight: height,
+        color: color,
+        backgroundColor: context.surfaceAlt,
       ),
     );
   }

@@ -7,7 +7,6 @@ void main() {
     final r = OpenRequest.fromMap('r1', {
       'clientId': 'c1',
       'clientName': 'Sara',
-      'clientPhone': '0550123456',
       'pickup': {'address': 'Place 1er Novembre'},
       'delivery': {'address': 'Hai Sabah', 'latitude': 35.7, 'longitude': -0.6},
       'note': 'Colis fragile',

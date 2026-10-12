@@ -14,7 +14,6 @@ class RequestRepository {
   Future<void> create({
     required String clientId,
     required String clientName,
-    required String clientPhone,
     required String driverId,
     required String driverName,
     required GeoPlace pickup,
@@ -25,7 +24,6 @@ class RequestRepository {
       'clientId': clientId,
       'driverId': driverId,
       'clientName': clientName,
-      'clientPhone': clientPhone,
       'driverName': driverName,
       'pickup': pickup.toMap(),
       'delivery': delivery.toMap(),
@@ -36,6 +34,8 @@ class RequestRepository {
     });
   }
 
+  /// Refus (livreur) ou annulation (client). L'acceptation passe par
+  /// BillingFunctions.acceptDelivery (serveur).
   Future<void> setStatus(String id, String status) {
     return _col.doc(id).update({
       'status': status,

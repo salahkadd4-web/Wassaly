@@ -21,7 +21,7 @@ class ErrorScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.error_outline, size: 64),
+              Icon(Icons.cloud_off_rounded, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(height: 16),
               Text(
                 t.profileLoadError,
@@ -38,7 +38,7 @@ class ErrorScreen extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 24),
-              ElevatedButton(
+              FilledButton(
                 onPressed: () => ref.read(authServiceProvider).signOut(),
                 child: Text(t.signOut),
               ),

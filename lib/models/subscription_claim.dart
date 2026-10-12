@@ -1,6 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Demande de renouvellement d'abonnement envoyee par un livreur.
+/// Types de paiement declares par un livreur.
+class ClaimKind {
+  /// Un mois de formule mensuelle (+ la dette eventuelle).
+  static const monthly = 'monthly';
+
+  /// Reglement de la dette de la formule a la livraison.
+  static const debt = 'debt';
+}
+
+/// Paiement declare par un livreur (reference BaridiMob / CCP), valide par l'admin.
 class SubscriptionClaim {
   const SubscriptionClaim({
     required this.id,
@@ -10,6 +19,8 @@ class SubscriptionClaim {
     required this.reference,
     required this.status,
     required this.createdAt,
+    this.kind = ClaimKind.monthly,
+    this.amount = 0,
   });
 
   final String id;
@@ -21,6 +32,14 @@ class SubscriptionClaim {
   /// pending | approved | rejected
   final String status;
   final DateTime createdAt;
+
+  /// monthly | debt (les anciennes demandes sans type sont mensuelles).
+  final String kind;
+
+  /// Montant declare en DA (0 pour les anciennes demandes).
+  final int amount;
+
+  bool get isDebt => kind == ClaimKind.debt;
 
   bool get isPending => status == 'pending';
 
@@ -35,6 +54,8 @@ class SubscriptionClaim {
       createdAt: map['createdAt'] is Timestamp
           ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
+      kind: (map['kind'] as String?) ?? ClaimKind.monthly,
+      amount: (map['amount'] as num?)?.toInt() ?? 0,
     );
   }
 }

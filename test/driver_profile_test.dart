@@ -8,15 +8,18 @@ DriverProfile _driver({
   bool active = true,
   bool withLocation = true,
   String? verification,
+  String? plan,
+  bool blocked = false,
 }) {
   return DriverProfile.fromMap('d1', {
     'name': 'Karim',
-    'phone': '0550123456',
     'active': active,
     'latitude': withLocation ? 35.69 : null,
     'longitude': withLocation ? -0.63 : null,
     'subscriptionStatus': status,
-    if (verification != null) 'verificationStatus': verification,
+    'verificationStatus': ?verification,
+    'plan': ?plan,
+    'billingBlocked': blocked,
     'subscriptionEnd': endsIn == null
         ? null
         : Timestamp.fromDate(DateTime.now().add(endsIn)),
@@ -78,5 +81,48 @@ void main() {
   test('ancien livreur sans champ de verification : considere verifie', () {
     final d = _driver(endsIn: const Duration(days: 10));
     expect(d.isVerified, isTrue);
+  });
+
+  group('formule a la livraison', () {
+    test('active et sous le plafond : disponible, facturee', () {
+      final d = _driver(status: 'per_delivery', endsIn: const Duration(days: -40));
+      expect(d.subscriptionValid, isTrue);
+      expect(d.isPerDeliveryMode, isTrue);
+      expect(d.effectiveStatus, 'per_delivery');
+      expect(d.isAvailable, isTrue);
+    });
+
+    test('dette de 1 000 DA atteinte : bloque et invisible', () {
+      final d = _driver(status: 'per_delivery', blocked: true);
+      expect(d.subscriptionValid, isFalse);
+      expect(d.effectiveStatus, 'blocked');
+      expect(d.isAvailable, isFalse);
+    });
+
+    test('essai fini avec "a la livraison" choisi : bascule avant le job serveur', () {
+      final d = _driver(endsIn: const Duration(days: -1), plan: 'per_delivery');
+      expect(d.subscriptionValid, isTrue);
+      expect(d.isPerDeliveryMode, isTrue);
+      expect(d.effectiveStatus, 'per_delivery');
+    });
+
+    test('essai en cours avec "a la livraison" choisi : pas encore facture', () {
+      final d = _driver(endsIn: const Duration(days: 5), plan: 'per_delivery');
+      expect(d.isPerDeliveryMode, isFalse);
+      expect(d.effectiveStatus, 'trial');
+      expect(d.hasPendingPlanChange, isTrue);
+    });
+
+    test('essai fini avec "mensuel" choisi mais non paye : expire', () {
+      final d = _driver(endsIn: const Duration(days: -1), plan: 'monthly');
+      expect(d.subscriptionValid, isFalse);
+      expect(d.effectiveStatus, 'expired');
+    });
+
+    test('suspendu reste suspendu', () {
+      final d = _driver(status: 'suspended', plan: 'per_delivery');
+      expect(d.subscriptionValid, isFalse);
+      expect(d.effectiveStatus, 'suspended');
+    });
   });
 }

@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/delivery_request.dart';
+import '../../models/driver_billing.dart';
 import '../../models/driver_profile.dart';
 import '../../models/subscription_claim.dart';
 import '../auth/auth_providers.dart';
@@ -71,6 +73,56 @@ final adminCompletedRequestsProvider =
         (s) =>
             s.docs.map((d) => DeliveryRequest.fromMap(d.id, d.data())).toList(),
       );
+});
+
+/// Facturation de tous les livreurs (cle = uid) : dette et compteurs anti-fraude.
+final adminBillingProvider = StreamProvider<Map<String, DriverBilling>>((ref) {
+  return ref.watch(firestoreProvider).collection('driverBilling').snapshots().map(
+        (s) => {
+          for (final d in s.docs) d.id: DriverBilling.fromMap(d.id, d.data()),
+        },
+      );
+});
+
+/// Signalement d'un livreur par un client.
+class DriverReport {
+  const DriverReport({
+    required this.clientId,
+    required this.driverId,
+    required this.reason,
+    required this.note,
+    required this.createdAt,
+  });
+
+  final String clientId;
+  final String driverId;
+  final String reason;
+  final String note;
+  final DateTime createdAt;
+}
+
+/// Signalements, groupes par livreur (les plus recents d'abord).
+final adminReportsProvider =
+    StreamProvider<Map<String, List<DriverReport>>>((ref) {
+  return ref.watch(firestoreProvider).collection('reports').snapshots().map((s) {
+    final byDriver = <String, List<DriverReport>>{};
+    for (final d in s.docs) {
+      final m = d.data();
+      final created = m['createdAt'];
+      final report = DriverReport(
+        clientId: (m['clientId'] as String?) ?? '',
+        driverId: (m['driverId'] as String?) ?? '',
+        reason: (m['reason'] as String?) ?? 'other',
+        note: (m['note'] as String?) ?? '',
+        createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
+      );
+      byDriver.putIfAbsent(report.driverId, () => []).add(report);
+    }
+    for (final list in byDriver.values) {
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return byDriver;
+  });
 });
 
 /// Un administrateur (document admins/{uid}).

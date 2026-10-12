@@ -299,22 +299,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get yourAvailability => 'حالة توفرك';
 
   @override
-  String get statusActive => 'نشط';
+  String get statusActive => 'متصل';
 
   @override
-  String get statusInactive => 'غير نشط';
+  String get statusInactive => 'غير متصل';
 
   @override
-  String get activeHint => 'يمكن للزبائن القريبين منك رؤيتك والتواصل معك.';
+  String get activeHint => 'يراك الزبائن القريبون ويمكنهم إرسال طلبات إليك.';
 
   @override
-  String get inactiveHint => 'أنت مخفي. فعّل حسابك لتلقي الطلبات.';
+  String get inactiveHint => 'أنت مخفي. اتصل لتلقي الطلبات.';
 
   @override
-  String get activate => 'أنا متاح';
+  String get activate => 'الاتصال الآن';
 
   @override
-  String get deactivate => 'إيقاف التوفر';
+  String get deactivate => 'قطع الاتصال';
 
   @override
   String get updateMyPosition => 'تحديث موقعي';
@@ -329,8 +329,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get editCity => 'تعديل المدينة';
 
   @override
-  String get subscriptionBlocked =>
-      'اشتراكك منتهٍ أو موقوف. جدّده لتصبح ظاهرًا للزبائن.';
+  String get subscriptionBlocked => 'صيغتك لا تسمح لك بالاتصال. افتح صيغتي.';
 
   @override
   String get subscription => 'الاشتراك';
@@ -339,7 +338,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get subTrial => 'فترة تجريبية';
 
   @override
-  String get subPaid => 'اشتراك فعّال';
+  String get subPaid => 'شهري';
 
   @override
   String get subExpired => 'منتهٍ';
@@ -358,11 +357,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get subscriptionExpiredMsg =>
-      'اشتراكك لم يعد صالحًا: لن تظهر للزبائن.';
+  String get subscriptionExpiredMsg => 'اختر صيغة لتظهر للزبائن من جديد.';
 
   @override
-  String get manageSubscription => 'إدارة اشتراكي';
+  String get manageSubscription => 'إدارة صيغتي';
 
   @override
   String get renewSubscription => 'تجديد اشتراكي';
@@ -374,7 +372,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paymentSteps =>
-      '1. أجرِ الدفع عبر المعلومات أدناه.\n2. أدخل مرجع الدفع ثم أرسل.\n3. يؤكد المسؤول الدفع ويضيف 30 يومًا إلى اشتراكك.';
+      '1. ادفع عبر المعلومات أدناه.\n2. أدخل مرجع الدفع.\n3. يتحقق فريق وصّلي ويؤكد الدفع.';
 
   @override
   String get paymentReference => 'مرجع الدفع';
@@ -392,7 +390,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get claimAlreadyPending => 'يوجد طلب قيد المراجعة بالفعل.';
 
   @override
-  String get claimsHistory => 'سجل الطلبات';
+  String get claimsHistory => 'مدفوعاتي';
 
   @override
   String get noClaims => 'لا توجد طلبات تجديد.';
@@ -467,31 +465,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get openRequestsTab => 'الزبائن';
 
   @override
-  String get openRequestsTitle => 'زبائن يبحثون عن موصّل';
+  String get openRequestsTitle => 'طلبات متاحة';
 
   @override
   String get noOpenRequests => 'لا يوجد زبائن يبحثون عن موصّل حاليًا.';
 
   @override
   String get openRequestsLocked =>
-      'تحتاج إلى اشتراك ساري لرؤية الزبائن الذين يبحثون عن موصّل.';
+      'اختر صيغة لرؤية الزبائن الذين يبحثون عن موصّل.';
 
   @override
   String get notifNewOpenRequest => 'زبون يبحث عن موصّل.';
 
   @override
-  String get publishOpenRequest => 'نشر طلب مفتوح';
+  String get publishOpenRequest => 'نشر طلب توصيل';
 
   @override
   String get publishOpenRequestHint =>
-      'سيراه الموصّلون المشتركون ويمكنهم التواصل معك.';
+      'يراه كل الموصّلين القريبين، وأول من يأخذه يتواصل معك.';
 
   @override
   String get newOpenRequest => 'طلب مفتوح';
 
   @override
   String get openRequestIntro =>
-      'صف توصيلتك: يمكن للموصّلين المشتركين الاتصال بك أو مراسلتك.';
+      'صف طلبك. أول موصّل يأخذه يحصل على رقمك ويتواصل معك.';
 
   @override
   String get publishAction => 'نشر';
@@ -732,4 +730,405 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminNoRevenue => 'لا توجد توصيلات مكتملة.';
+
+  @override
+  String get welcomeHeadline => 'طرودك يوصلها موصّلون من حيّك.';
+
+  @override
+  String get welcomeForWho => 'الزبائن والموصّلون يستعملون التطبيق نفسه.';
+
+  @override
+  String get onboardingIntro => 'خطوة أخيرة: رقمك ودورك.';
+
+  @override
+  String get phonePrivacyHint =>
+      'لا يُشارك إلا مع الزبون أو الموصّل في توصيلة مقبولة.';
+
+  @override
+  String get roleDriverTrial => 'شهران مجانًا';
+
+  @override
+  String get accountMenu => 'حسابي';
+
+  @override
+  String get tabHome => 'الرئيسية';
+
+  @override
+  String get publishHeroTitle => 'تحتاج إلى موصّل؟';
+
+  @override
+  String get sendRequestShort => 'اطلب';
+
+  @override
+  String get phoneAfterAccept => 'سيظهر رقمه بمجرد قبوله طلبك.';
+
+  @override
+  String get contactAfterAccept => 'سيظهر رقم الموصّل بمجرد قبوله.';
+
+  @override
+  String get noRequestsTitle => 'لا توجد طلبات';
+
+  @override
+  String get currentRequests => 'جارية';
+
+  @override
+  String get pastRequests => 'السجل';
+
+  @override
+  String get toHandleRequests => 'بانتظار ردّك';
+
+  @override
+  String get addressHint => 'الشارع، الحي أو معلم قريب';
+
+  @override
+  String get noteHint => 'مثال: طرد قابل للكسر، الطابق الثاني';
+
+  @override
+  String get phoneNotAllowed =>
+      'لا تكتب رقم الهاتف هنا: يُشارك بعد قبول التوصيلة.';
+
+  @override
+  String get phoneNotAllowedChat =>
+      'لم تُرسل الرسالة: تُتبادل الأرقام بعد قبول التوصيلة.';
+
+  @override
+  String get chatSafetyNotice => 'تُتبادل أرقام الهاتف بعد قبول التوصيلة.';
+
+  @override
+  String get noConversationsTitle => 'لا توجد محادثات';
+
+  @override
+  String notifOpenRequestTaken(String name) {
+    return '$name أخذ طلبك';
+  }
+
+  @override
+  String openRequestTakenBy(String name) {
+    return 'أخذه $name';
+  }
+
+  @override
+  String get reportDriver => 'الإبلاغ عن هذا الموصّل';
+
+  @override
+  String reportTitle(String name) {
+    return 'الإبلاغ عن $name';
+  }
+
+  @override
+  String get reportIntro =>
+      'يدرس فريق وصّلي كل بلاغ، ولا يعرف الموصّل من أبلغ عنه.';
+
+  @override
+  String get reportReasonOffApp => 'اقترح عليّ التعامل خارج التطبيق';
+
+  @override
+  String get reportReasonNotDelivered => 'لم يقم بالتوصيل';
+
+  @override
+  String get reportReasonBehavior => 'سلوك غير لائق';
+
+  @override
+  String get reportReasonOther => 'سبب آخر';
+
+  @override
+  String get reportNoteLabel => 'ماذا حدث؟ (اختياري)';
+
+  @override
+  String get reportSend => 'إرسال البلاغ';
+
+  @override
+  String get reportSent => 'تم إرسال البلاغ';
+
+  @override
+  String get reportNotAllowed =>
+      'لا يمكن الإبلاغ: سبق أن أبلغت عن هذا الموصّل، أو لم تتواصل معه بعد.';
+
+  @override
+  String acceptWithPrice(String price) {
+    return 'قبول ($price دج)';
+  }
+
+  @override
+  String get acceptChargeTitle => 'قبول هذه التوصيلة؟';
+
+  @override
+  String acceptChargeBody(String price, String newDebt, String limit) {
+    return 'ستُضاف $price دج إلى المبلغ المستحق عليك ليصبح $newDebt دج. عند بلوغ $limit دج، عليك الدفع قبل قبول توصيلات جديدة.';
+  }
+
+  @override
+  String get takeAction => 'آخذ هذا الطلب';
+
+  @override
+  String takeWithPrice(String price) {
+    return 'آخذه ($price دج)';
+  }
+
+  @override
+  String get takeTitle => 'أخذ هذا الطلب؟';
+
+  @override
+  String get takeBody => 'سيُبلَّغ الزبون وستحصل على رقمه.';
+
+  @override
+  String takeChargeBody(String price, String newDebt, String limit) {
+    return 'ستُضاف $price دج إلى المبلغ المستحق عليك ليصبح $newDebt دج (التوقيف عند $limit دج). بعدها تحصل على رقم الزبون.';
+  }
+
+  @override
+  String get takeConfirm => 'آخذه';
+
+  @override
+  String takeDone(String name) {
+    return 'تم أخذ الطلب. تواصل مع $name من تبويب الطلبات.';
+  }
+
+  @override
+  String get takeHint => 'يظهر رقم الزبون بعد أخذ الطلب.';
+
+  @override
+  String get openRequestsIntro => 'أول موصّل يأخذ الطلب يحصل على رقم الزبون.';
+
+  @override
+  String openRequestsIntroPaid(String price) {
+    return 'أول موصّل يأخذ الطلب يحصل على رقم الزبون، وتُضاف $price دج إلى المبلغ المستحق عليك.';
+  }
+
+  @override
+  String get openRequestsLockedDebt =>
+      'بلغ المبلغ المستحق عليك 1000 دج. ادفعه لرؤية الطلبات وأخذها.';
+
+  @override
+  String get noOpenRequestsTitle => 'لا توجد طلبات حاليًا';
+
+  @override
+  String get pendingRequestsLabel => 'طلبات في الانتظار';
+
+  @override
+  String get unreadMessagesLabel => 'رسائل غير مقروءة';
+
+  @override
+  String get myPosition => 'موقعي';
+
+  @override
+  String get positionNeverShared => 'لم يُشارك بعد';
+
+  @override
+  String get suspendedMsg => 'حسابك موقوف. تواصل مع فريق وصّلي.';
+
+  @override
+  String trialEndingTitle(String days) {
+    return 'تنتهي فترتك التجريبية خلال $days يوم';
+  }
+
+  @override
+  String get trialEndingMsg =>
+      'اختر صيغتك لتواصل تلقي الطلبات: 1000 دج شهريًا أو 50 دج لكل توصيلة.';
+
+  @override
+  String get myPlan => 'صيغتي';
+
+  @override
+  String get noActivePlan => 'لا توجد صيغة مفعّلة';
+
+  @override
+  String get subPerDelivery => 'حسب التوصيلة';
+
+  @override
+  String get subBlocked => 'موقوف مؤقتًا';
+
+  @override
+  String get choosePlan => 'اختيار صيغة';
+
+  @override
+  String get choosePlanConfirm => 'اختيار هذه الصيغة';
+
+  @override
+  String get planForLater => 'الصيغة القادمة';
+
+  @override
+  String get planSaved => 'تم حفظ الصيغة';
+
+  @override
+  String get planMonthlyTitle => 'شهرية';
+
+  @override
+  String planMonthlyPrice(String price) {
+    return '$price دج شهريًا';
+  }
+
+  @override
+  String get planMonthlyDesc =>
+      'توصيلات غير محدودة لمدة 30 يومًا، تدفع مسبقًا.';
+
+  @override
+  String get planPerDeliveryTitle => 'حسب التوصيلة';
+
+  @override
+  String planPerDeliveryPrice(String price) {
+    return '$price دج لكل توصيلة';
+  }
+
+  @override
+  String planPerDeliveryDesc(String limit) {
+    return 'لا شيء تدفعه مسبقًا. تُضاف كل توصيلة مقبولة إلى المبلغ المستحق عليك، وتدفعه قبل أن يبلغ $limit دج.';
+  }
+
+  @override
+  String planEffectOn(String date) {
+    return 'تبدأ في $date، عند نهاية فترتك الحالية.';
+  }
+
+  @override
+  String planEffectAfterPayment(String amount) {
+    return 'تبدأ بمجرد تأكيد دفعك $amount دج.';
+  }
+
+  @override
+  String get planEffectNow => 'تبدأ فورًا: 50 دج لكل توصيلة مقبولة.';
+
+  @override
+  String trialUntil(String days, String date) {
+    return 'باقي $days يوم مجاني، حتى $date.';
+  }
+
+  @override
+  String get debtLabel => 'المبلغ المستحق عليك';
+
+  @override
+  String debtLimitSuffix(String limit) {
+    return 'من $limit دج';
+  }
+
+  @override
+  String debtOfLimit(String debt, String limit) {
+    return 'المستحق: $debt دج من $limit دج';
+  }
+
+  @override
+  String deliveriesLeft(String count) {
+    return 'باقي $count توصيلة قبل التوقيف.';
+  }
+
+  @override
+  String get debtBlockedTitle => 'مبلغ مستحق للدفع';
+
+  @override
+  String debtBlockedMsg(String debt) {
+    return 'عليك $debt دج. ادفع هذا المبلغ لقبول توصيلات جديدة.';
+  }
+
+  @override
+  String debtWarnTitle(String debt) {
+    return 'بلغ المستحق عليك $debt دج';
+  }
+
+  @override
+  String debtWarnMsg(String count) {
+    return 'باقي $count توصيلة قبل التوقيف. فكّر في دفع المستحق.';
+  }
+
+  @override
+  String get payTitle => 'الدفع';
+
+  @override
+  String get payDebt => 'دفع المستحق';
+
+  @override
+  String get payMonth => 'دفع الشهر';
+
+  @override
+  String get amountToPay => 'المبلغ المطلوب';
+
+  @override
+  String monthPlusDebt(String month, String debt) {
+    return '$month دج للشهر و$debt دج مستحقة';
+  }
+
+  @override
+  String iHavePaidAmount(String amount) {
+    return 'دفعت $amount دج';
+  }
+
+  @override
+  String claimTitle(String kind, String amount) {
+    return '$kind: $amount';
+  }
+
+  @override
+  String get ledgerTitle => 'حركات المستحق';
+
+  @override
+  String get ledgerCharge => 'توصيلة مقبولة';
+
+  @override
+  String get ledgerRefund => 'استرجاع (إلغاء)';
+
+  @override
+  String get ledgerPayment => 'دفع مؤكد';
+
+  @override
+  String get billingErrorDebtLimit =>
+      'بلغ المستحق عليك 1000 دج. ادفعه من صيغتي لقبول توصيلات جديدة.';
+
+  @override
+  String get billingErrorNotEligible =>
+      'صيغتك لا تسمح لك بقبول التوصيلات. افتح صيغتي.';
+
+  @override
+  String get billingErrorNotPending => 'هذا الطلب لم يعد في الانتظار.';
+
+  @override
+  String get billingErrorAlreadyTaken => 'أخذ موصّل آخر هذا الطلب قبلك.';
+
+  @override
+  String get adminSuspects => 'مشبوهون';
+
+  @override
+  String get adminNoSuspectsTitle => 'لا شيء يُذكر';
+
+  @override
+  String get adminNoSuspects => 'لا يوجد موصّل بسلوك غير عادي.';
+
+  @override
+  String get adminPaymentApproved => 'تم تأكيد الدفع';
+
+  @override
+  String suspectCancellations(String cancelled, String accepted) {
+    return '$cancelled توصيلات أُلغيت بعد القبول من أصل $accepted';
+  }
+
+  @override
+  String suspectChats(String chats, String accepted) {
+    return '$chats محادثة مقابل $accepted توصيلة مقبولة';
+  }
+
+  @override
+  String suspectReports(String count) {
+    return 'أبلغ عنه $count زبائن';
+  }
+
+  @override
+  String suspectDebt(String debt) {
+    return 'موقوف منذ أكثر من 7 أيام بمستحق $debt دج';
+  }
+
+  @override
+  String get statAccepted => 'مقبولة';
+
+  @override
+  String get statCompleted => 'مكتملة';
+
+  @override
+  String get statCancelled => 'ملغاة';
+
+  @override
+  String get statChats => 'محادثات';
+
+  @override
+  String get statReports => 'بلاغات';
+
+  @override
+  String get reportsTitle => 'البلاغات';
 }

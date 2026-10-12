@@ -16,7 +16,6 @@ class DeliveryRequest {
     required this.clientId,
     required this.driverId,
     required this.clientName,
-    required this.clientPhone,
     required this.driverName,
     required this.pickup,
     required this.delivery,
@@ -26,13 +25,15 @@ class DeliveryRequest {
     required this.updatedAt,
     this.amount,
     this.completedAt,
+    this.acceptedAt,
+    this.charged = 0,
+    this.source = 'direct',
   });
 
   final String id;
   final String clientId;
   final String driverId;
   final String clientName;
-  final String clientPhone;
   final String driverName;
   final GeoPlace pickup;
   final GeoPlace delivery;
@@ -48,6 +49,18 @@ class DeliveryRequest {
   /// Date de fin de la livraison (serveur). Null pour les anciennes livraisons.
   final DateTime? completedAt;
 
+  /// Date d'acceptation (serveur, Cloud Function).
+  final DateTime? acceptedAt;
+
+  /// Montant debite au livreur a l'acceptation (formule a la livraison), 0 sinon.
+  final int charged;
+
+  /// direct (envoyee a un livreur) | open (demande ouverte prise par un livreur).
+  final String source;
+
+  /// Les telephones ne sont partages qu'une fois la demande acceptee.
+  bool get contactShared => isAccepted || isCompleted;
+
   bool get isPending => status == RequestStatus.pending;
   bool get isAccepted => status == RequestStatus.accepted;
   bool get isCompleted => status == RequestStatus.completed;
@@ -60,7 +73,6 @@ class DeliveryRequest {
       clientId: (map['clientId'] as String?) ?? '',
       driverId: (map['driverId'] as String?) ?? '',
       clientName: (map['clientName'] as String?) ?? '',
-      clientPhone: (map['clientPhone'] as String?) ?? '',
       driverName: (map['driverName'] as String?) ?? '',
       pickup: GeoPlace.fromMap(map['pickup'] as Map<String, dynamic>?),
       delivery: GeoPlace.fromMap(map['delivery'] as Map<String, dynamic>?),
@@ -71,6 +83,10 @@ class DeliveryRequest {
       amount: (map['amount'] as num?)?.toInt(),
       completedAt:
           map['completedAt'] is Timestamp ? (map['completedAt'] as Timestamp).toDate() : null,
+      acceptedAt:
+          map['acceptedAt'] is Timestamp ? (map['acceptedAt'] as Timestamp).toDate() : null,
+      charged: (map['charged'] as num?)?.toInt() ?? 0,
+      source: (map['source'] as String?) ?? 'direct',
     );
   }
 }

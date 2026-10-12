@@ -14,7 +14,6 @@ class OpenRequestRepository {
   Future<void> create({
     required String clientId,
     required String clientName,
-    required String clientPhone,
     required GeoPlace pickup,
     required GeoPlace delivery,
     required String note,
@@ -22,7 +21,6 @@ class OpenRequestRepository {
     return _col.add({
       'clientId': clientId,
       'clientName': clientName,
-      'clientPhone': clientPhone,
       'pickup': pickup.toMap(),
       'delivery': delivery.toMap(),
       'note': note.trim(),

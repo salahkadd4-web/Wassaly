@@ -10,13 +10,14 @@ Langues : francais et arabe (avec affichage de droite a gauche). Theme clair par
 | Connexion Google, choix du role (client / livreur), telephone algerien | Fait |
 | Livreur : activation, position GPS, ville, essai gratuit de 2 mois | Fait |
 | Client : liste des livreurs actifs triee par distance (GPS) | Fait |
-| Appel, WhatsApp, messagerie interne | Fait |
+| Appel, WhatsApp (apres acceptation d'une livraison), messagerie interne | Fait |
 | Demande de livraison (recuperation + livraison, adresse et/ou GPS, note) | Fait |
 | Acceptation / refus / fin de livraison, annulation par le client | Fait |
 | Itineraire Google Maps vers les adresses de la demande | Fait |
-| Abonnement 1 000 DA/mois, declaration de paiement, validation par l'admin | Fait |
-| Panneau administrateur (livreurs, paiements, clients, demandes, admins) | Fait |
-| Demandes ouvertes : le client publie, les livreurs abonnes les consultent et le contactent | Fait |
+| Formules livreur apres l'essai : 1 000 DA/mois ou 50 DA par livraison, paiement declare et valide par l'admin | Fait (voir section 6 septies) |
+| Anti-fraude : numeros masques, debit cote serveur, signalements, onglet admin Suspects | Fait (voir section 6 septies) |
+| Panneau administrateur (livreurs, paiements, verifications, suspects, chiffre d'affaires, clients, demandes, admins) | Fait |
+| Demandes ouvertes : le client publie, le premier livreur qui la prend obtient la course | Fait |
 | Bouton retour Android : confirmation avant de quitter (connexion et tableaux de bord) | Fait |
 | Notifications dans l'application (bandeaux + pastilles de compteur) | Fait |
 | Notifications push livreur (nouveau message, nouvelle demande) application fermee | Fait (Cloud Functions, voir section 6 quinquies) |
@@ -178,39 +179,95 @@ Les livraisons terminees **avant** cette mise a jour n'ont pas de montant : elle
 (le tableau de bord indique combien). Le calcul est dans `lib/core/utils/revenue.dart` (teste dans `test/revenue_test.dart`).
 Republiez `firestore.rules` : elles autorisent la saisie du montant a la fin de la livraison.
 
+## 6 septies. Formules des livreurs et anti-fraude
+
+### Les formules
+Apres l'**essai gratuit de 2 mois**, le livreur choisit dans **Ma formule** :
+
+| Formule | Prix | Fonctionnement |
+|---|---|---|
+| Mensuelle | 1 000 DA / 30 jours | Paye d'avance (reference BaridiMob / CCP), l'admin valide. |
+| A la livraison | 50 DA par livraison acceptee | Rien a avancer : chaque acceptation ajoute 50 DA a son **solde**. A **1 000 DA** (20 livraisons), il est bloque jusqu'au paiement valide par l'admin. Alerte des 800 DA. |
+
+- Pendant l'essai ou un mois paye, le choix prend effet **a la fin de la periode** (une fonction planifiee bascule chaque nuit a 3 h).
+- Un livreur expire qui choisit « a la livraison » peut travailler tout de suite.
+- Un livreur « a la livraison » qui veut passer au mensuel paie **solde + 1 000 DA**.
+- **Remboursement** : si le client annule moins de 2 h apres l'acceptation, les 50 DA sont rendus (3 fois par mois au maximum).
+
+Valeurs modifiables : `lib/core/constants/app_config.dart` **et** `functions/billing.js` (les deux doivent rester identiques ;
+c'est le serveur qui debite, l'application ne fait qu'afficher).
+
+### Comment les livraisons sont comptees
+Le livreur ne peut plus accepter une demande lui-meme dans Firestore : il passe par la Cloud Function `acceptDelivery`
+(ou `takeOpenRequest` pour une demande ouverte), qui verifie sa formule, debite 50 DA si besoin et note le mouvement
+dans `driverBilling/{uid}/ledger`. Chaque livraison a un identifiant unique de debit : impossible de payer deux fois.
+
+### Ce qui empeche de contourner l'application
+- **Numeros masques** : le telephone n'est plus dans les profils publics. Client et livreur le voient seulement une fois la
+  livraison acceptee (`deliveryRequests/{id}/private/contact`, ecrit par le serveur).
+- **Demandes ouvertes** : plus de numero ni de chat avant de les prendre ; le premier livreur qui appuie sur **Je prends**
+  l'obtient, et la course devient une livraison suivie.
+- **Chat, notes, noms** : les regles Firestore refusent tout texte contenant un numero (05/06/07, +213, chiffres arabes...).
+- **Signalement** : le client peut signaler un livreur (une fois par livreur, apres un echange).
+- **Onglet admin Suspects** : livreurs avec plus de 30 % d'annulations apres acceptation, plus de 3 conversations par
+  livraison acceptee, 2 signalements ou plus, ou bloques pour dette depuis plus de 7 jours. Bouton Suspendre.
+
+**Limite** : un client et un livreur qui se connaissent deja peuvent toujours s'arranger hors application.
+Le systeme le rend visible (ratios, signalements), il ne peut pas l'empecher.
+
+### Mise en service (une seule fois)
+```
+cd functions
+npm install
+npm test
+cd ..
+firebase deploy --only functions,firestore:rules
+```
+Puis, pour retirer les numeros des donnees de test deja enregistrees (voir l'en-tete du script) :
+```
+cd tools
+node strip_public_phones.js          # simulation
+node strip_public_phones.js --apply
+```
+La fonction planifiee `rolloverSubscriptions` utilise Cloud Scheduler (inclus dans le forfait Blaze, 3 taches gratuites).
+
 ## 7. Utilisation
 
 ### Client
 1. Connexion Google, saisie du telephone, choix du role **Client**.
-2. Onglet **Livreurs** : autorisez la localisation. Les livreurs disponibles s'affichent, du plus proche au plus loin.
-   Tirez vers le bas pour actualiser.
-3. Sur une carte : **Appeler**, **WhatsApp** ou **Message**. Touchez la carte pour ouvrir le profil.
-4. Profil du livreur > **Envoyer une demande de livraison** : renseignez le lieu de recuperation et le lieu de livraison
-   (adresse ecrite et/ou bouton **Partager ma position actuelle**), ajoutez une note, envoyez.
-5. Onglet **Demandes** : suivez le statut (en attente, acceptee, terminee...), annulez si besoin.
+2. Onglet **Accueil** : **Publier une course** (tous les livreurs proches la voient), ou choisir un livreur dans la liste,
+   triee du plus proche au plus loin (autorisez la localisation ; tirez vers le bas pour actualiser).
+3. Sur une carte : **Demander** ou **Message**. Touchez la carte pour ouvrir le profil.
+4. **Demander** : renseignez le lieu de recuperation et le lieu de livraison (adresse et/ou **Partager ma position actuelle**),
+   ajoutez une note, envoyez.
+5. Onglet **Demandes** : suivez le statut. Une fois la demande acceptee, **Appeler** et **WhatsApp** apparaissent.
+   Annulez si besoin, ou **Signalez** le livreur.
 
 ### Demandes ouvertes (client -> livreurs)
-Le client ouvre l'onglet **Demandes** > **Publier une demande ouverte** (recuperation, livraison, note). Tous les livreurs dont
-l'abonnement est valide la voient dans l'onglet **Clients** et peuvent appeler, ecrire sur WhatsApp ou envoyer un message.
-Le client peut la **Clôturer** ; elle disparait aussi pour les livreurs apres 72 h.
+Le client appuie sur **Publier une course** (recuperation, livraison, note). Tous les livreurs qui peuvent travailler la
+voient dans l'onglet **Clients**, sans le numero du client. Le premier qui appuie sur **Je prends** obtient la course :
+elle devient une livraison acceptee, avec les numeros des deux cotes. Le client peut la **Cloturer** tant que personne ne l'a prise ;
+elle disparait aussi pour les livreurs apres 72 h.
 
 ### Livreur
 1. Connexion Google, telephone, role **Livreur**. L'essai gratuit de 2 mois demarre automatiquement.
-2. **Tableau de bord** : renseignez votre ville, puis appuyez sur **Je suis disponible** (la position GPS est enregistree).
-   Utilisez **Mettre a jour ma position** quand vous changez de quartier.
-3. Onglet **Demandes** : **Accepter** ou **Refuser**, puis **Marquer comme terminee** (saisir le montant de la livraison). Les boutons Appeler, WhatsApp et
-   l'icone d'itineraire ouvrent le telephone, WhatsApp et Google Maps.
-4. **Abonnement** : quand l'essai se termine, payez 1 000 DA, saisissez la reference du paiement et envoyez.
-   Sans abonnement valide, le livreur est automatiquement retire de la liste des clients.
+2. **Accueil** : renseignez votre ville, puis **Me mettre en ligne** (la position GPS est enregistree).
+   Actualisez **Ma position** quand vous changez de quartier.
+3. Onglet **Demandes** : **Accepter** (avec le prix si vous etes « a la livraison ») ou **Refuser**, puis **Marquer comme terminee**
+   (saisir le montant). Apres acceptation : Appeler, WhatsApp, Message et l'itineraire Google Maps.
+4. **Ma formule** : choisir mensuelle ou a la livraison, suivre son solde, declarer un paiement (reference BaridiMob / CCP).
+   Sans formule valide (ou bloque a 1 000 DA), le livreur est retire de la liste des clients.
 
 ### Bouton retour
 Sur l'ecran de connexion et sur les tableaux de bord, le bouton retour demande confirmation avant de quitter. Depuis un autre onglet, il ramene d'abord au premier.
 
 ### Administrateur
-Icone **Administration** dans la barre du haut :
+Menu du compte (photo en haut a droite) > **Administration** :
+- **Livreurs** : statut, formule, solde, date de fin, menu pour prolonger de 30 jours, suspendre / lever la suspension, desactiver, appeler.
+- **Paiements** : declarations (mois ou solde, avec le montant). **Valider** rembourse d'abord le solde, puis ajoute 30 jours
+  pour un paiement mensuel. Verifiez la reference dans votre BaridiMob / CCP avant de valider.
 - **Verifications** : pieces d'identite en attente (voir, valider, refuser).
-- **Livreurs** : statut, date de fin d'abonnement, menu pour prolonger de 30 jours, suspendre / lever la suspension, desactiver, appeler.
-- **Paiements** : liste des declarations de paiement ; **Valider** ajoute 30 jours, **Refuser** rejette.
+- **Suspects** : livreurs au comportement anormal (voir section 6 septies).
 - **Chiffre d'affaires** : total et classement des livreurs par periode.
 - **Clients** et **Demandes** : consultation.
 
@@ -230,6 +287,7 @@ Utilisez alors `flutter build appbundle --release`.
 
 - **Notifications push** : reservees aux livreurs et necessitent le forfait Firebase Blaze (voir section 6 quinquies).
 - **Paiement** : la validation est manuelle (l'admin verifie le paiement puis valide). Une integration de paiement en ligne n'est pas incluse.
+- **Hors application** : un client et un livreur qui se connaissent peuvent s'arranger sans l'application apres une premiere livraison.
 - **Position du livreur** : elle est enregistree a l'activation et lors de la mise a jour manuelle (pas de suivi en temps reel).
 - **Distance** : calculee en ligne droite (pas la distance routiere).
 - **Test sur emulateur** : le GPS de l'emulateur est fixe ; definissez une position dans Extended controls > Location.
@@ -240,6 +298,7 @@ Utilisez alors `flutter build appbundle --release`.
 |---|---|
 | `ApiException: 10` a la connexion Google | SHA-1 manquante dans Firebase (section 4, etape 2) |
 | `permission-denied` | Regles Firestore non publiees ou ancienne version (section 4, etape 4) |
+| « Accepter » ne fait rien / erreur | Cloud Functions non deployees ou region differente (`REGION` dans `functions/index.js` = `functionsRegion` dans `app_config.dart`) |
 | Aucun livreur affiche | Le livreur doit etre **actif**, avec un abonnement valide, et avoir une position enregistree |
 | La liste n'est pas triee par distance | Localisation refusee ou GPS coupe (un bandeau l'indique) |
 | L'icone ou l'ecran de demarrage n'a pas change | Desinstallez l'ancienne version puis relancez `flutter run` |
@@ -253,11 +312,12 @@ lib/
   core/        configuration, theme, routeur, langues, utilitaires
   models/      DriverProfile, DeliveryRequest, Conversation, ...
   services/    localisation GPS
-  features/    auth, client, driver, drivers, requests, chat, subscription, admin
+  features/    auth, client, driver, drivers, requests, chat, subscription, billing, reports, admin
   widgets/     composants partages
   l10n/        traductions francais / arabe (fichiers .arb)
 assets/branding/   logo et identite visuelle
 firestore.rules    regles de securite a publier
+functions/         Cloud Functions : notifications push, facturation (billing.js = regles de prix, testees)
 functions/         Cloud Functions (notifications push)
 PUBLIER_UNE_VERSION.md   tutoriel de publication d'une nouvelle version
 ```

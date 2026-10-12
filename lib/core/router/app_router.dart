@@ -83,30 +83,30 @@ String? _redirect(Ref ref, GoRouterState state) {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
-  ref.listen(authStateProvider, (_, __) => refresh.value++);
-  ref.listen(userProfileProvider, (_, __) => refresh.value++);
-  ref.listen(myDriverProvider, (_, __) => refresh.value++);
-  ref.listen(isAdminProvider, (_, __) => refresh.value++);
+  ref.listen(authStateProvider, (_, _) => refresh.value++);
+  ref.listen(userProfileProvider, (_, _) => refresh.value++);
+  ref.listen(myDriverProvider, (_, _) => refresh.value++);
+  ref.listen(isAdminProvider, (_, _) => refresh.value++);
 
   final router = GoRouter(
     initialLocation: '/splash',
     refreshListenable: refresh,
     redirect: (context, state) => _redirect(ref, state),
     routes: [
-      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
-      GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
+      GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
+      GoRoute(path: '/welcome', builder: (_, _) => const WelcomeScreen()),
       GoRoute(
         path: '/onboarding',
-        builder: (_, __) => const OnboardingScreen(),
+        builder: (_, _) => const OnboardingScreen(),
       ),
-      GoRoute(path: '/error', builder: (_, __) => const ErrorScreen()),
+      GoRoute(path: '/error', builder: (_, _) => const ErrorScreen()),
       GoRoute(
         path: '/verification',
-        builder: (_, __) => const VerificationScreen(),
+        builder: (_, _) => const VerificationScreen(),
       ),
       GoRoute(
         path: '/client',
-        builder: (_, __) => const ClientHomeScreen(),
+        builder: (_, _) => const ClientHomeScreen(),
         routes: [
           GoRoute(
             path: 'driver/:id',
@@ -115,7 +115,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'open-request',
-            builder: (_, __) => const NewOpenRequestScreen(),
+            builder: (_, _) => const NewOpenRequestScreen(),
           ),
           GoRoute(
             path: 'request/:driverId',
@@ -126,11 +126,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/driver',
-        builder: (_, __) => const DriverHomeScreen(),
+        builder: (_, _) => const DriverHomeScreen(),
         routes: [
           GoRoute(
             path: 'subscription',
-            builder: (_, __) => const SubscriptionScreen(),
+            builder: (_, _) => const SubscriptionScreen(),
           ),
         ],
       ),
@@ -144,7 +144,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      GoRoute(path: '/admin', builder: (_, __) => const AdminScreen()),
+      GoRoute(path: '/admin', builder: (_, _) => const AdminScreen()),
     ],
   );
 

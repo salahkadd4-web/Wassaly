@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/phone_guard.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/chat.dart';
 import '../../widgets/empty_state.dart';
@@ -37,6 +39,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final t = AppLocalizations.of(context)!;
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    // Les numeros ne s'echangent qu'apres l'acceptation (regle Firestore).
+    if (containsPhoneNumber(text)) {
+      showSnack(context, t.phoneNotAllowedChat);
+      return;
+    }
     _controller.clear();
 
     final isClient = myUid == _clientId;
@@ -101,10 +108,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       appBar: AppBar(title: Text(otherName.isEmpty ? t.messages : otherName)),
       body: Column(
         children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: context.surfaceAlt,
+            child: Row(
+              children: [
+                Icon(Icons.lock_outline_rounded, size: 14, color: context.muted),
+                const SizedBox(width: 8),
+                Expanded(child: Text(t.chatSafetyNotice, style: context.text.bodySmall)),
+              ],
+            ),
+          ),
           Expanded(
             child: messages.when(
               loading: () => const LoadingState(),
-              error: (_, __) => const ErrorState(),
+              error: (_, _) => const ErrorState(),
               data: (list) {
                 if (list.isEmpty) {
                   return EmptyState(
@@ -115,60 +134,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 final reversed = list.reversed.toList();
                 return ListView.builder(
                   reverse: true,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                   itemCount: reversed.length,
                   itemBuilder: (context, i) {
                     final m = reversed[i];
                     final mine = m.senderId == me.uid;
-                    return Align(
-                      alignment: mine
-                          ? AlignmentDirectional.centerEnd
-                          : AlignmentDirectional.centerStart,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.sizeOf(context).width * 0.75,
-                        ),
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 3),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: mine
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.surface,
-                            border: mine
-                                ? null
-                                : Border.all(color: theme.dividerColor),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                m.text,
-                                style: TextStyle(
-                                  color: mine
-                                      ? Colors.white
-                                      : theme.colorScheme.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                formatTime(m.createdAt),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: mine
-                                      ? Colors.white70
-                                      : theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    // Messages consecutifs du meme auteur : groupes visuellement.
+                    final next = i > 0 ? reversed[i - 1] : null;
+                    final lastOfGroup = next == null || next.senderId != m.senderId;
+                    return _Bubble(
+                      text: m.text,
+                      time: formatTime(m.createdAt),
+                      mine: mine,
+                      tail: lastOfGroup,
                     );
                   },
                 );
@@ -177,8 +155,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           SafeArea(
             top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                border: Border(top: BorderSide(color: theme.dividerColor)),
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -194,8 +176,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         counterText: '',
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
+                          horizontal: 16,
                           vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide(color: theme.colorScheme.primary),
                         ),
                       ),
                     ),
@@ -203,14 +197,72 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   const SizedBox(width: 8),
                   IconButton.filled(
                     tooltip: t.send,
+                    style: IconButton.styleFrom(minimumSize: const Size(46, 46)),
                     onPressed: () => _send(me.uid, conv),
-                    icon: const Icon(Icons.send),
+                    icon: const Icon(Icons.send_rounded, size: 20),
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Bubble extends StatelessWidget {
+  const _Bubble({
+    required this.text,
+    required this.time,
+    required this.mine,
+    required this.tail,
+  });
+
+  final String text;
+  final String time;
+  final bool mine;
+
+  /// Dernier message d'un groupe : coin "queue" et espace apres.
+  final bool tail;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const r = Radius.circular(18);
+    const small = Radius.circular(6);
+    final fg = mine ? Colors.white : theme.colorScheme.onSurface;
+    return Align(
+      alignment: mine ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.78),
+        child: Container(
+          margin: EdgeInsets.only(top: 2, bottom: tail ? 10 : 2),
+          padding: const EdgeInsets.fromLTRB(14, 9, 14, 7),
+          decoration: BoxDecoration(
+            color: mine ? theme.colorScheme.primary : theme.colorScheme.surface,
+            border: mine ? null : Border.all(color: theme.dividerColor),
+            borderRadius: BorderRadiusDirectional.only(
+              topStart: r,
+              topEnd: r,
+              bottomStart: mine || !tail ? r : small,
+              bottomEnd: mine && tail ? small : r,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(text, style: context.text.bodyMedium?.copyWith(color: fg)),
+              const SizedBox(height: 2),
+              Text(
+                time,
+                style: context.text.labelSmall?.copyWith(
+                  color: mine ? Colors.white70 : context.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

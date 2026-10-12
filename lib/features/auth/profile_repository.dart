@@ -55,9 +55,9 @@ class ProfileRepository {
       final trialEnd = DateTime.now().add(
         const Duration(days: AppConfig.trialDays),
       );
+      // Profil public : sans le numero (il reste dans users/{uid}, prive).
       batch.set(_db.collection('drivers').doc(user.uid), {
         'name': name,
-        'phone': phone,
         'photo': user.photoURL,
         'active': false,
         'city': null,

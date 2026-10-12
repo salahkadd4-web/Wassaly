@@ -32,6 +32,11 @@ class ClientHomeScreen extends ConsumerWidget {
       final old = {for (final r in before) r.id: r.status};
       for (final r in after) {
         final previous = old[r.id];
+        // Demande ouverte prise par un livreur : elle arrive deja acceptee.
+        if (previous == null && r.isAccepted && r.source == 'open') {
+          showSnack(context, t.notifOpenRequestTaken(r.driverName));
+          continue;
+        }
         if (previous == null || previous == r.status) continue;
         if (r.status == RequestStatus.accepted) {
           showSnack(context, t.notifRequestAccepted(r.driverName));
@@ -43,7 +48,7 @@ class ClientHomeScreen extends ConsumerWidget {
       }
     });
 
-    final titles = [t.driversNearby, t.myRequests, t.messages];
+    final titles = [t.appName, t.myRequests, t.messages];
 
     return ExitConfirmScope(
       onBack: () {
@@ -57,7 +62,7 @@ class ClientHomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: BrandTitle(
           title: titles[index],
-          logo: const LogoMark(size: 34),
+          logo: const LogoMark(size: 32),
         ),
         actions: buildAppBarActions(context, ref),
       ),
@@ -75,9 +80,9 @@ class ClientHomeScreen extends ConsumerWidget {
             ref.read(homeTabProvider.notifier).select(i),
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.two_wheeler_outlined),
-            selectedIcon: const Icon(Icons.two_wheeler),
-            label: t.tabDrivers,
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home_rounded),
+            label: t.tabHome,
           ),
           NavigationDestination(
             icon: const Icon(Icons.inventory_2_outlined),

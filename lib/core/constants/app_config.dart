@@ -13,13 +13,34 @@ class AppConfig {
   /// Prix mensuel affiche aux livreurs.
   static const int monthlyPriceDa = 1000;
 
+  // Formule "a la livraison". Doit rester aligne sur functions/billing.js :
+  // c'est le serveur qui debite, ces valeurs ne servent qu'a l'affichage.
+
+  /// Prix d'une livraison acceptee.
+  static const int perDeliveryPriceDa = 50;
+
+  /// Dette a partir de laquelle le livreur est bloque (20 livraisons).
+  static const int debtLimitDa = 1000;
+
+  /// Dette a partir de laquelle on previent le livreur.
+  static const int debtWarnDa = 800;
+
+  /// Une annulation du client est remboursee si elle arrive dans ce delai...
+  static const int refundWindowHours = 2;
+
+  /// ... et dans la limite de ce nombre de remboursements par mois.
+  static const int maxRefundsPerMonth = 3;
+
+  /// Region des Cloud Functions (REGION dans functions/index.js).
+  static const String functionsRegion = 'europe-west1';
+
   /// Indicatif pays utilise pour WhatsApp (Algerie).
   static const String countryCode = '213';
 
   /// Moyens de paiement affiches dans l'ecran d'abonnement du livreur.
   /// A MODIFIER avec vos vraies coordonnees (CCP, BaridiMob, ...).
   static const String paymentDetails =
-      'BaridiMob / CCP : a renseigner dans lib/core/constants/app_config.dart';
+      'BaridiMob / CCP : 00799999002449753636';
 
   /// Cloudinary : stockage des pieces d'identite des livreurs.
   /// Le nom du "cloud" est la partie apres le @ de votre CLOUDINARY_URL

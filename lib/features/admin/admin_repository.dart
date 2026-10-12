@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/constants/app_config.dart';
+import '../../models/driver_billing.dart';
 import '../../models/driver_profile.dart';
 import '../../models/subscription_claim.dart';
 
@@ -38,13 +39,20 @@ class AdminRepository {
     });
   }
 
-  /// Leve la suspension : "paid" si la date de fin n'est pas depassee, sinon "expired".
+  /// Leve la suspension : "paid" si la date de fin n'est pas depassee,
+  /// sinon "per_delivery" si c'est sa formule, sinon "expired".
   Future<void> unsuspend(DriverProfile d) {
     final end = d.subscriptionEnd;
     final stillValid = end != null && end.isAfter(DateTime.now());
-    return _driver(d.uid).update({
-      'subscriptionStatus': stillValid ? 'paid' : 'expired',
-    });
+    final String status;
+    if (stillValid) {
+      status = 'paid';
+    } else if (d.plan == DriverPlan.perDelivery) {
+      status = 'per_delivery';
+    } else {
+      status = 'expired';
+    }
+    return _driver(d.uid).update({'subscriptionStatus': status});
   }
 
   /// Valide la piece d'identite : le livreur est debloque.
@@ -77,11 +85,72 @@ class AdminRepository {
 
   Future<void> deactivate(String uid) => _driver(uid).update({'active': false});
 
-  Future<void> approveClaim(SubscriptionClaim claim) async {
-    await extend(claim.driverId);
-    await _db.collection('subscriptionRequests').doc(claim.id).update({
-      'status': 'approved',
-      'reviewedAt': FieldValue.serverTimestamp(),
+  /// Valide un paiement declare. Le montant rembourse d'abord la dette
+  /// (formule a la livraison) ; un paiement mensuel ajoute ensuite 30 jours.
+  /// Les anciennes demandes sans montant valent un mois.
+  Future<void> approveClaim(SubscriptionClaim claim) {
+    final driverRef = _driver(claim.driverId);
+    final billingRef = _db.collection('driverBilling').doc(claim.driverId);
+    final claimRef = _db.collection('subscriptionRequests').doc(claim.id);
+
+    return _db.runTransaction((tx) async {
+      final driverSnap = await tx.get(driverRef);
+      final billingSnap = await tx.get(billingRef);
+      final driver = DriverProfile.fromMap(claim.driverId, driverSnap.data() ?? {});
+      final debt = DriverBilling.fromMap(claim.driverId, billingSnap.data()).debt;
+
+      final paid = claim.amount > 0
+          ? claim.amount
+          : AppConfig.monthlyPriceDa + debt;
+      final toDebt = paid < debt ? paid : debt;
+      final newDebt = debt - toDebt;
+      final driverUpdate = <String, dynamic>{};
+
+      if (toDebt > 0) {
+        tx.set(
+          billingRef,
+          {
+            'debt': newDebt,
+            if (newDebt < AppConfig.debtLimitDa) 'blockedSince': null,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+        tx.set(billingRef.collection('ledger').doc('payment_${claim.id}'), {
+          'type': 'payment',
+          'amount': toDebt,
+          'claimId': claim.id,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        if (newDebt < AppConfig.debtLimitDa) driverUpdate['billingBlocked'] = false;
+      }
+
+      if (!claim.isDebt && newDebt == 0) {
+        final now = DateTime.now();
+        final end = driver.subscriptionEnd;
+        final running = driver.periodRunningAt(now) && end != null;
+        final base = running ? end : now;
+        driverUpdate.addAll({
+          'subscriptionStatus': 'paid',
+          'subscriptionEnd': Timestamp.fromDate(
+            base.add(const Duration(days: AppConfig.subscriptionDays)),
+          ),
+          'plan': DriverPlan.monthly,
+          'billingBlocked': false,
+        });
+      }
+
+      if (driverUpdate.isNotEmpty && !driver.isSuspended) {
+        tx.update(driverRef, driverUpdate);
+      } else if (driverUpdate.isNotEmpty) {
+        // Suspendu : on enregistre le paiement sans lever la suspension.
+        driverUpdate.remove('subscriptionStatus');
+        tx.update(driverRef, driverUpdate);
+      }
+      tx.update(claimRef, {
+        'status': 'approved',
+        'reviewedAt': FieldValue.serverTimestamp(),
+      });
     });
   }
 

@@ -65,7 +65,7 @@ class DriverHomeScreen extends ConsumerWidget {
       if (fresh.isNotEmpty) showSnack(context, t.notifNewOpenRequest);
     });
 
-    final titles = [t.dashboard, t.tabRequests, t.openRequestsTitle, t.messages];
+    final titles = [t.appName, t.tabRequests, t.openRequestsTitle, t.messages];
 
     return ExitConfirmScope(
       onBack: () {
@@ -79,7 +79,7 @@ class DriverHomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: BrandTitle(
           title: titles[index],
-          logo: const LogoMark(size: 34),
+          logo: const LogoMark(size: 32),
         ),
         actions: buildAppBarActions(context, ref),
       ),
@@ -98,9 +98,9 @@ class DriverHomeScreen extends ConsumerWidget {
             ref.read(homeTabProvider.notifier).select(i),
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.dashboard_outlined),
-            selectedIcon: const Icon(Icons.dashboard),
-            label: t.dashboard,
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home_rounded),
+            label: t.tabHome,
           ),
           NavigationDestination(
             icon: Badge(

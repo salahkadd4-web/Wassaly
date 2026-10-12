@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 import '../models/delivery_request.dart';
 
+/// Pastille d'etat : point de couleur + libelle, sur fond teinte.
 class StatusChip extends StatelessWidget {
   const StatusChip({
     super.key,
@@ -14,30 +15,37 @@ class StatusChip extends StatelessWidget {
 
   final String label;
   final Color color;
+
+  /// Icone a la place du point (etats qui ne sont pas un "voyant").
   final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
+    final fg = context.ink(color);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 10, 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(20),
+        color: color.withValues(alpha: context.isDark ? 0.20 : 0.12),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 4),
-          ],
+          if (icon != null)
+            Icon(icon, size: 14, color: fg)
+          else
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+          const SizedBox(width: 6),
           Flexible(
             child: Text(
               label,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
+              style: context.text.labelMedium?.copyWith(
+                color: fg,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -59,40 +67,25 @@ class RequestStatusChip extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     switch (status) {
       case RequestStatus.accepted:
-        return StatusChip(
-          label: t.statusAccepted,
-          color: AppTheme.blue,
-          icon: Icons.thumb_up_alt_outlined,
-        );
+        return StatusChip(label: t.statusAccepted, color: AppTheme.blue);
       case RequestStatus.rejected:
-        return StatusChip(
-          label: t.statusRejected,
-          color: AppTheme.danger,
-          icon: Icons.block,
-        );
+        return StatusChip(label: t.statusRejected, color: AppTheme.danger);
       case RequestStatus.completed:
         return StatusChip(
           label: t.statusCompleted,
           color: AppTheme.success,
-          icon: Icons.check_circle_outline,
+          icon: Icons.check_rounded,
         );
       case RequestStatus.cancelled:
-        return StatusChip(
-          label: t.statusCancelled,
-          color: AppTheme.neutral,
-          icon: Icons.cancel_outlined,
-        );
+        return StatusChip(label: t.statusCancelled, color: AppTheme.neutral);
       default:
-        return StatusChip(
-          label: t.statusPending,
-          color: AppTheme.orange,
-          icon: Icons.schedule,
-        );
+        return StatusChip(label: t.statusPending, color: AppTheme.orange);
     }
   }
 }
 
-/// Pastille de statut d'abonnement : trial | paid | expired | suspended.
+/// Pastille de statut d'abonnement :
+/// trial | paid | per_delivery | blocked | expired | suspended.
 class SubscriptionChip extends StatelessWidget {
   const SubscriptionChip({super.key, required this.status});
 
@@ -103,29 +96,25 @@ class SubscriptionChip extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     switch (status) {
       case 'paid':
-        return StatusChip(
-          label: t.subPaid,
-          color: AppTheme.success,
-          icon: Icons.verified_outlined,
-        );
+        return StatusChip(label: t.subPaid, color: AppTheme.success);
       case 'trial':
+        return StatusChip(label: t.subTrial, color: AppTheme.orange);
+      case 'per_delivery':
+        return StatusChip(label: t.subPerDelivery, color: AppTheme.blue);
+      case 'blocked':
         return StatusChip(
-          label: t.subTrial,
-          color: AppTheme.orange,
-          icon: Icons.hourglass_bottom,
+          label: t.subBlocked,
+          color: AppTheme.danger,
+          icon: Icons.lock_outline,
         );
       case 'suspended':
         return StatusChip(
           label: t.subSuspended,
           color: AppTheme.danger,
-          icon: Icons.pause_circle_outline,
+          icon: Icons.pause_rounded,
         );
       default:
-        return StatusChip(
-          label: t.subExpired,
-          color: AppTheme.danger,
-          icon: Icons.event_busy,
-        );
+        return StatusChip(label: t.subExpired, color: AppTheme.danger);
     }
   }
 }

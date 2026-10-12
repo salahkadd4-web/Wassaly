@@ -66,7 +66,7 @@ class _IdViewerScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(driver.name)),
       body: async.when(
         loading: () => const LoadingState(),
-        error: (_, __) => const ErrorState(),
+        error: (_, _) => const ErrorState(),
         data: (identity) {
           if (identity == null || identity.idUrl.isEmpty) {
             return EmptyState(
@@ -83,7 +83,7 @@ class _IdViewerScreen extends ConsumerWidget {
                 loadingBuilder: (_, child, progress) => progress == null
                     ? child
                     : const Center(child: CircularProgressIndicator()),
-                errorBuilder: (_, __, ___) => EmptyState(
+                errorBuilder: (_, _, _) => EmptyState(
                   icon: Icons.broken_image_outlined,
                   message: t.idImageUnavailable,
                 ),
@@ -164,7 +164,7 @@ class AdminVerificationsTab extends ConsumerWidget {
 
     return async.when(
       loading: () => const LoadingState(),
-      error: (_, __) => const ErrorState(),
+      error: (_, _) => const ErrorState(),
       data: (all) {
         final list = all.where((d) => d.isVerificationPending).toList();
         if (list.isEmpty) {
@@ -176,7 +176,7 @@ class AdminVerificationsTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: list.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, i) {
             final d = list[i];
             return Card(
@@ -187,7 +187,10 @@ class AdminVerificationsTab extends ConsumerWidget {
                   children: [
                     Text(d.name, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 2),
-                    Text(prettyPhone(d.phone)),
+                    Text(
+                      prettyPhone(ref.watch(adminUserProvider(d.uid)).value?.phone ?? ''),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     const SizedBox(height: 12),
                     _IdPreview(driver: d),
                     const SizedBox(height: 12),
@@ -239,7 +242,7 @@ class _IdPreview extends ConsumerWidget {
 
     return async.when(
       loading: () => const SizedBox(height: 180, child: LoadingState()),
-      error: (_, __) => const SizedBox(height: 180, child: ErrorState()),
+      error: (_, _) => const SizedBox(height: 180, child: ErrorState()),
       data: (identity) {
         if (identity == null || identity.idUrl.isEmpty) {
           return SizedBox(
@@ -264,7 +267,7 @@ class _IdPreview extends ConsumerWidget {
                 loadingBuilder: (_, child, progress) => progress == null
                     ? child
                     : const Center(child: CircularProgressIndicator()),
-                errorBuilder: (_, __, ___) => EmptyState(
+                errorBuilder: (_, _, _) => EmptyState(
                   icon: Icons.broken_image_outlined,
                   message: t.idImageUnavailable,
                 ),

@@ -16,7 +16,6 @@ DeliveryRequest _req({
     clientId: 'c',
     driverId: driverId,
     clientName: 'Client',
-    clientPhone: '0550123456',
     driverName: 'Livreur',
     pickup: const GeoPlace(address: 'A'),
     delivery: const GeoPlace(address: 'B'),

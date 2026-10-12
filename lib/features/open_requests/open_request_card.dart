@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../l10n/app_localizations.dart';
-import '../../models/chat.dart';
 import '../../models/open_request.dart';
-import '../../widgets/contact_buttons.dart';
 import '../../widgets/driver_avatar.dart';
-import '../../widgets/place_row.dart';
+import '../../widgets/route_track.dart';
 import '../../widgets/snack.dart';
 import '../../widgets/status_chip.dart';
 import '../auth/auth_providers.dart';
-import '../chat/chat_repository.dart';
+import '../billing/billing_functions.dart';
+import '../billing/billing_providers.dart';
+import '../common/home_tab_provider.dart';
+import '../drivers/driver_providers.dart';
 import 'open_request_providers.dart';
 
 /// Carte d'une demande ouverte.
-/// Vue livreur : boutons de contact. Vue client : bouton pour la cloturer.
-class OpenRequestCard extends ConsumerWidget {
+/// Vue livreur : "Je prends cette demande" (le premier l'obtient ; le contact
+/// du client n'est donne qu'ensuite). Vue client : etat et cloture.
+class OpenRequestCard extends ConsumerStatefulWidget {
   const OpenRequestCard({
     super.key,
     required this.request,
@@ -28,129 +30,183 @@ class OpenRequestCard extends ConsumerWidget {
   final OpenRequest request;
   final bool asDriver;
 
-  void _openChat(BuildContext context, WidgetRef ref) {
-    final myUid = ref.read(authStateProvider).value?.uid;
-    if (myUid == null) return;
-    final myName = ref.read(userProfileProvider).value?.name ?? '';
-    context.push(
-      '/chat/${ChatRepository.idFor(request.clientId, myUid)}',
-      extra: ChatArgs(clientName: request.clientName, driverName: myName),
-    );
-  }
+  @override
+  ConsumerState<OpenRequestCard> createState() => _OpenRequestCardState();
+}
 
-  Future<void> _close(BuildContext context, WidgetRef ref) async {
+class _OpenRequestCardState extends ConsumerState<OpenRequestCard> {
+  bool _busy = false;
+
+  OpenRequest get request => widget.request;
+
+  Future<bool> _confirm(String title, String body, String confirmLabel) async {
     final t = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(t.closeOpenRequestTitle),
-        content: Text(t.closeOpenRequestBody),
+        title: Text(title),
+        content: Text(body),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(t.no),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(t.yes),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.no)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(confirmLabel)),
         ],
       ),
     );
-    if (ok != true) return;
+    return ok == true;
+  }
+
+  Future<void> _take(bool charged, int debt) async {
+    final t = AppLocalizations.of(context)!;
+    final body = charged
+        ? t.takeChargeBody(
+            '${AppConfig.perDeliveryPriceDa}',
+            formatAmount(debt + AppConfig.perDeliveryPriceDa),
+            formatAmount(AppConfig.debtLimitDa),
+          )
+        : t.takeBody;
+    if (!await _confirm(t.takeTitle, body, t.takeConfirm)) return;
+
+    setState(() => _busy = true);
+    try {
+      await ref.read(billingFunctionsProvider).takeOpenRequest(request.id);
+      if (!mounted) return;
+      showSnack(context, t.takeDone(request.clientName));
+      ref.read(homeTabProvider.notifier).select(1);
+    } on BillingException catch (e) {
+      if (mounted) showSnack(context, e.message(t));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _close() async {
+    final t = AppLocalizations.of(context)!;
+    if (!await _confirm(t.closeOpenRequestTitle, t.closeOpenRequestBody, t.yes)) return;
     try {
       await ref.read(openRequestRepositoryProvider).close(request.id);
     } catch (_) {
-      if (context.mounted) showSnack(context, t.genericError);
+      if (mounted) showSnack(context, t.genericError);
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                const DriverAvatar(radius: 20, icon: Icons.person),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        request.clientName,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      Text(
-                        formatDateTime(request.createdAt),
-                        style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!asDriver)
-                  StatusChip(
-                    label: request.isOpen
-                        ? t.openRequestOpenLabel
-                        : t.openRequestClosedLabel,
-                    color: request.isOpen ? AppTheme.success : AppTheme.neutral,
-                    icon: Icons.circle,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            PlaceRow(
-              icon: Icons.upload_outlined,
-              label: t.pickup,
-              place: request.pickup,
-              color: AppTheme.orange,
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Divider(height: 1),
-            ),
-            PlaceRow(
-              icon: Icons.home_outlined,
-              label: t.delivery,
-              place: request.delivery,
-            ),
-            if (request.note.isNotEmpty) ...[
-              const SizedBox(height: 12),
+            // Le client voit sa propre demande : inutile de repeter son nom.
+            if (widget.asDriver)
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.sticky_note_2_outlined, size: 18, color: muted),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(request.note)),
+                  DriverAvatar(name: request.clientName, radius: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(request.clientName, style: context.text.titleMedium),
+                        Text(
+                          formatDateTime(request.createdAt),
+                          style: context.text.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      formatDateTime(request.createdAt),
+                      style: context.text.bodySmall,
+                    ),
+                  ),
+                  _clientChip(t),
                 ],
               ),
-            ],
-            if (asDriver) ...[
+            const SizedBox(height: 16),
+            RouteTrack(
+              pickup: request.pickup,
+              delivery: request.delivery,
+              showDirections: widget.asDriver,
+            ),
+            if (request.note.isNotEmpty) ...[
               const SizedBox(height: 14),
-              ContactButtons(
-                phone: request.clientPhone,
-                onMessage: () => _openChat(context, ref),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.surfaceAlt,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                ),
+                child: Text(request.note, style: context.text.bodyMedium),
               ),
-            ] else if (request.isOpen) ...[
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(foregroundColor: AppTheme.danger),
-                onPressed: () => _close(context, ref),
-                icon: const Icon(Icons.cancel_outlined),
-                label: Text(t.closeOpenRequest),
+            ],
+            if (widget.asDriver) ..._driverAction(t),
+            if (!widget.asDriver && request.isOpen) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton(
+                  style: TextButton.styleFrom(foregroundColor: context.ink(AppTheme.danger)),
+                  onPressed: _close,
+                  child: Text(t.closeOpenRequest),
+                ),
               ),
             ],
           ],
         ),
       ),
     );
+  }
+
+  Widget _clientChip(AppLocalizations t) {
+    if (request.isOpen) {
+      return StatusChip(label: t.openRequestOpenLabel, color: AppTheme.orange);
+    }
+    if (request.isTaken) {
+      return StatusChip(
+        label: t.openRequestTakenBy(request.takenByName ?? ''),
+        color: AppTheme.success,
+        icon: Icons.check_rounded,
+      );
+    }
+    return StatusChip(label: t.openRequestClosedLabel, color: AppTheme.neutral);
+  }
+
+  List<Widget> _driverAction(AppLocalizations t) {
+    final me = ref.watch(authStateProvider).value?.uid ?? '';
+    final driver = ref.watch(driverProvider(me)).value;
+    final charged = driver?.isPerDeliveryMode ?? false;
+    final debt = charged ? (ref.watch(myBillingProvider).value?.debt ?? 0) : 0;
+    return [
+      const SizedBox(height: 16),
+      FilledButton.icon(
+        style: AppTheme.goButton,
+        onPressed: _busy ? null : () => _take(charged, debt),
+        icon: _busy
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.navy),
+              )
+            : const Icon(Icons.bolt_rounded),
+        label: Text(
+          charged ? t.takeWithPrice('${AppConfig.perDeliveryPriceDa}') : t.takeAction,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        t.takeHint,
+        textAlign: TextAlign.center,
+        style: context.text.bodySmall,
+      ),
+    ];
   }
 }

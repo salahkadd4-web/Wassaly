@@ -647,37 +647,37 @@ abstract class AppLocalizations {
   /// No description provided for @statusActive.
   ///
   /// In fr, this message translates to:
-  /// **'Actif'**
+  /// **'En ligne'**
   String get statusActive;
 
   /// No description provided for @statusInactive.
   ///
   /// In fr, this message translates to:
-  /// **'Inactif'**
+  /// **'Hors ligne'**
   String get statusInactive;
 
   /// No description provided for @activeHint.
   ///
   /// In fr, this message translates to:
-  /// **'Les clients proches de vous peuvent vous voir et vous contacter.'**
+  /// **'Les clients proches vous voient et peuvent vous envoyer des demandes.'**
   String get activeHint;
 
   /// No description provided for @inactiveHint.
   ///
   /// In fr, this message translates to:
-  /// **'Vous êtes masqué. Activez-vous pour recevoir des demandes.'**
+  /// **'Vous êtes masqué. Passez en ligne pour recevoir des demandes.'**
   String get inactiveHint;
 
   /// No description provided for @activate.
   ///
   /// In fr, this message translates to:
-  /// **'Je suis disponible'**
+  /// **'Me mettre en ligne'**
   String get activate;
 
   /// No description provided for @deactivate.
   ///
   /// In fr, this message translates to:
-  /// **'Me rendre indisponible'**
+  /// **'Passer hors ligne'**
   String get deactivate;
 
   /// No description provided for @updateMyPosition.
@@ -707,7 +707,7 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionBlocked.
   ///
   /// In fr, this message translates to:
-  /// **'Votre abonnement est expiré ou suspendu. Renouvelez-le pour être visible.'**
+  /// **'Votre formule ne vous permet pas de passer en ligne. Ouvrez Ma formule.'**
   String get subscriptionBlocked;
 
   /// No description provided for @subscription.
@@ -725,7 +725,7 @@ abstract class AppLocalizations {
   /// No description provided for @subPaid.
   ///
   /// In fr, this message translates to:
-  /// **'Abonnement actif'**
+  /// **'Mensuelle'**
   String get subPaid;
 
   /// No description provided for @subExpired.
@@ -755,13 +755,13 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionExpiredMsg.
   ///
   /// In fr, this message translates to:
-  /// **'Votre abonnement n\'est plus valide : vous n\'apparaissez plus aux clients.'**
+  /// **'Choisissez une formule pour réapparaître auprès des clients.'**
   String get subscriptionExpiredMsg;
 
   /// No description provided for @manageSubscription.
   ///
   /// In fr, this message translates to:
-  /// **'Gérer mon abonnement'**
+  /// **'Gérer ma formule'**
   String get manageSubscription;
 
   /// No description provided for @renewSubscription.
@@ -779,7 +779,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentSteps.
   ///
   /// In fr, this message translates to:
-  /// **'1. Effectuez le paiement avec les coordonnées ci-dessous.\n2. Saisissez la référence du paiement et envoyez.\n3. L\'administrateur valide et ajoute 30 jours à votre abonnement.'**
+  /// **'1. Payez avec les coordonnées ci-dessous.\n2. Saisissez la référence du paiement.\n3. L\'équipe Wassaly vérifie et valide.'**
   String get paymentSteps;
 
   /// No description provided for @paymentReference.
@@ -815,7 +815,7 @@ abstract class AppLocalizations {
   /// No description provided for @claimsHistory.
   ///
   /// In fr, this message translates to:
-  /// **'Historique des demandes'**
+  /// **'Mes paiements'**
   String get claimsHistory;
 
   /// No description provided for @noClaims.
@@ -965,7 +965,7 @@ abstract class AppLocalizations {
   /// No description provided for @openRequestsTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Clients qui cherchent un livreur'**
+  /// **'Courses disponibles'**
   String get openRequestsTitle;
 
   /// No description provided for @noOpenRequests.
@@ -977,7 +977,7 @@ abstract class AppLocalizations {
   /// No description provided for @openRequestsLocked.
   ///
   /// In fr, this message translates to:
-  /// **'Un abonnement valide est nécessaire pour voir les clients qui cherchent un livreur.'**
+  /// **'Choisissez une formule pour voir les clients qui cherchent un livreur.'**
   String get openRequestsLocked;
 
   /// No description provided for @notifNewOpenRequest.
@@ -989,13 +989,13 @@ abstract class AppLocalizations {
   /// No description provided for @publishOpenRequest.
   ///
   /// In fr, this message translates to:
-  /// **'Publier une demande ouverte'**
+  /// **'Publier une course'**
   String get publishOpenRequest;
 
   /// No description provided for @publishOpenRequestHint.
   ///
   /// In fr, this message translates to:
-  /// **'Les livreurs abonnés la verront et pourront vous contacter.'**
+  /// **'Tous les livreurs proches la voient. Le premier qui la prend vous contacte.'**
   String get publishOpenRequestHint;
 
   /// No description provided for @newOpenRequest.
@@ -1007,7 +1007,7 @@ abstract class AppLocalizations {
   /// No description provided for @openRequestIntro.
   ///
   /// In fr, this message translates to:
-  /// **'Décrivez votre livraison : les livreurs abonnés pourront vous appeler ou vous écrire.'**
+  /// **'Décrivez votre course. Le premier livreur qui la prend obtient votre numéro et vous contacte.'**
   String get openRequestIntro;
 
   /// No description provided for @publishAction.
@@ -1459,6 +1459,672 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucune livraison terminée.'**
   String get adminNoRevenue;
+
+  /// No description provided for @welcomeHeadline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos colis livrés par des livreurs de votre quartier.'**
+  String get welcomeHeadline;
+
+  /// No description provided for @welcomeForWho.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clients et livreurs utilisent la même application.'**
+  String get welcomeForWho;
+
+  /// No description provided for @onboardingIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Encore une étape : votre numéro et votre rôle.'**
+  String get onboardingIntro;
+
+  /// No description provided for @phonePrivacyHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il n\'est partagé qu\'avec le client ou le livreur d\'une livraison acceptée.'**
+  String get phonePrivacyHint;
+
+  /// No description provided for @roleDriverTrial.
+  ///
+  /// In fr, this message translates to:
+  /// **'2 mois gratuits'**
+  String get roleDriverTrial;
+
+  /// No description provided for @accountMenu.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon compte'**
+  String get accountMenu;
+
+  /// No description provided for @tabHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accueil'**
+  String get tabHome;
+
+  /// No description provided for @publishHeroTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Besoin d\'un livreur ?'**
+  String get publishHeroTitle;
+
+  /// No description provided for @sendRequestShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demander'**
+  String get sendRequestShort;
+
+  /// No description provided for @phoneAfterAccept.
+  ///
+  /// In fr, this message translates to:
+  /// **'Son numéro s\'affichera dès qu\'il aura accepté votre demande.'**
+  String get phoneAfterAccept;
+
+  /// No description provided for @contactAfterAccept.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le numéro du livreur s\'affichera dès qu\'il aura accepté.'**
+  String get contactAfterAccept;
+
+  /// No description provided for @noRequestsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune demande'**
+  String get noRequestsTitle;
+
+  /// No description provided for @currentRequests.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cours'**
+  String get currentRequests;
+
+  /// No description provided for @pastRequests.
+  ///
+  /// In fr, this message translates to:
+  /// **'Historique'**
+  String get pastRequests;
+
+  /// No description provided for @toHandleRequests.
+  ///
+  /// In fr, this message translates to:
+  /// **'À traiter'**
+  String get toHandleRequests;
+
+  /// No description provided for @addressHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rue, quartier ou repère'**
+  String get addressHint;
+
+  /// No description provided for @noteHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex. : colis fragile, 2e étage'**
+  String get noteHint;
+
+  /// No description provided for @phoneNotAllowed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de numéro de téléphone ici : il est partagé une fois la livraison acceptée.'**
+  String get phoneNotAllowed;
+
+  /// No description provided for @phoneNotAllowedChat.
+  ///
+  /// In fr, this message translates to:
+  /// **'Message non envoyé : les numéros s\'échangent une fois la livraison acceptée.'**
+  String get phoneNotAllowedChat;
+
+  /// No description provided for @chatSafetyNotice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les numéros de téléphone s\'échangent une fois la livraison acceptée.'**
+  String get chatSafetyNotice;
+
+  /// No description provided for @noConversationsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune conversation'**
+  String get noConversationsTitle;
+
+  /// No description provided for @notifOpenRequestTaken.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name} a pris votre demande'**
+  String notifOpenRequestTaken(String name);
+
+  /// No description provided for @openRequestTakenBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prise par {name}'**
+  String openRequestTakenBy(String name);
+
+  /// No description provided for @reportDriver.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signaler ce livreur'**
+  String get reportDriver;
+
+  /// No description provided for @reportTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signaler {name}'**
+  String reportTitle(String name);
+
+  /// No description provided for @reportIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'équipe Wassaly examine chaque signalement. Le livreur ne voit pas qui l\'a signalé.'**
+  String get reportIntro;
+
+  /// No description provided for @reportReasonOffApp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il m\'a proposé de passer hors de l\'application'**
+  String get reportReasonOffApp;
+
+  /// No description provided for @reportReasonNotDelivered.
+  ///
+  /// In fr, this message translates to:
+  /// **'Livraison non effectuée'**
+  String get reportReasonNotDelivered;
+
+  /// No description provided for @reportReasonBehavior.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comportement inapproprié'**
+  String get reportReasonBehavior;
+
+  /// No description provided for @reportReasonOther.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autre'**
+  String get reportReasonOther;
+
+  /// No description provided for @reportNoteLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce qui s\'est passé (facultatif)'**
+  String get reportNoteLabel;
+
+  /// No description provided for @reportSend.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer le signalement'**
+  String get reportSend;
+
+  /// No description provided for @reportSent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalement envoyé'**
+  String get reportSent;
+
+  /// No description provided for @reportNotAllowed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalement impossible : vous avez déjà signalé ce livreur, ou vous n\'avez pas encore échangé avec lui.'**
+  String get reportNotAllowed;
+
+  /// No description provided for @acceptWithPrice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accepter ({price} DA)'**
+  String acceptWithPrice(String price);
+
+  /// No description provided for @acceptChargeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accepter cette livraison ?'**
+  String get acceptChargeTitle;
+
+  /// No description provided for @acceptChargeBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'{price} DA seront ajoutés à votre solde, qui passera à {newDebt} DA. À {limit} DA, vous devrez payer avant d\'accepter de nouvelles livraisons.'**
+  String acceptChargeBody(String price, String newDebt, String limit);
+
+  /// No description provided for @takeAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Je prends cette demande'**
+  String get takeAction;
+
+  /// No description provided for @takeWithPrice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Je prends ({price} DA)'**
+  String takeWithPrice(String price);
+
+  /// No description provided for @takeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prendre cette demande ?'**
+  String get takeTitle;
+
+  /// No description provided for @takeBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le client sera prévenu et vous aurez accès à son numéro.'**
+  String get takeBody;
+
+  /// No description provided for @takeChargeBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'{price} DA seront ajoutés à votre solde, qui passera à {newDebt} DA (blocage à {limit} DA). Vous aurez ensuite accès au numéro du client.'**
+  String takeChargeBody(String price, String newDebt, String limit);
+
+  /// No description provided for @takeConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Je la prends'**
+  String get takeConfirm;
+
+  /// No description provided for @takeDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demande prise. Contactez {name} depuis l\'onglet Demandes.'**
+  String takeDone(String name);
+
+  /// No description provided for @takeHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le contact du client s\'affiche une fois la demande prise.'**
+  String get takeHint;
+
+  /// No description provided for @openRequestsIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le premier livreur qui prend une demande obtient le contact du client.'**
+  String get openRequestsIntro;
+
+  /// No description provided for @openRequestsIntroPaid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le premier livreur qui prend une demande obtient le contact du client. {price} DA sont ajoutés à votre solde.'**
+  String openRequestsIntroPaid(String price);
+
+  /// No description provided for @openRequestsLockedDebt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre solde a atteint 1 000 DA. Réglez-le pour voir et prendre les demandes.'**
+  String get openRequestsLockedDebt;
+
+  /// No description provided for @noOpenRequestsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune demande pour l\'instant'**
+  String get noOpenRequestsTitle;
+
+  /// No description provided for @pendingRequestsLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demandes en attente'**
+  String get pendingRequestsLabel;
+
+  /// No description provided for @unreadMessagesLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Messages non lus'**
+  String get unreadMessagesLabel;
+
+  /// No description provided for @myPosition.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma position'**
+  String get myPosition;
+
+  /// No description provided for @positionNeverShared.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jamais partagée'**
+  String get positionNeverShared;
+
+  /// No description provided for @suspendedMsg.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre compte est suspendu. Contactez l\'équipe Wassaly.'**
+  String get suspendedMsg;
+
+  /// No description provided for @trialEndingTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre essai se termine dans {days} jour(s)'**
+  String trialEndingTitle(String days);
+
+  /// No description provided for @trialEndingMsg.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez votre formule pour continuer à recevoir des demandes : 1 000 DA par mois ou 50 DA par livraison.'**
+  String get trialEndingMsg;
+
+  /// No description provided for @myPlan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma formule'**
+  String get myPlan;
+
+  /// No description provided for @noActivePlan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune formule active'**
+  String get noActivePlan;
+
+  /// No description provided for @subPerDelivery.
+  ///
+  /// In fr, this message translates to:
+  /// **'À la livraison'**
+  String get subPerDelivery;
+
+  /// No description provided for @subBlocked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bloqué'**
+  String get subBlocked;
+
+  /// No description provided for @choosePlan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une formule'**
+  String get choosePlan;
+
+  /// No description provided for @choosePlanConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir cette formule'**
+  String get choosePlanConfirm;
+
+  /// No description provided for @planForLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Formule pour la suite'**
+  String get planForLater;
+
+  /// No description provided for @planSaved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Formule enregistrée'**
+  String get planSaved;
+
+  /// No description provided for @planMonthlyTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mensuelle'**
+  String get planMonthlyTitle;
+
+  /// No description provided for @planMonthlyPrice.
+  ///
+  /// In fr, this message translates to:
+  /// **'{price} DA par mois'**
+  String planMonthlyPrice(String price);
+
+  /// No description provided for @planMonthlyDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Livraisons illimitées pendant 30 jours. Vous payez d\'avance.'**
+  String get planMonthlyDesc;
+
+  /// No description provided for @planPerDeliveryTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'À la livraison'**
+  String get planPerDeliveryTitle;
+
+  /// No description provided for @planPerDeliveryPrice.
+  ///
+  /// In fr, this message translates to:
+  /// **'{price} DA par livraison'**
+  String planPerDeliveryPrice(String price);
+
+  /// No description provided for @planPerDeliveryDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à avancer. Chaque livraison acceptée s\'ajoute à votre solde, à régler avant d\'atteindre {limit} DA.'**
+  String planPerDeliveryDesc(String limit);
+
+  /// No description provided for @planEffectOn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prendra effet le {date}, à la fin de votre période en cours.'**
+  String planEffectOn(String date);
+
+  /// No description provided for @planEffectAfterPayment.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prendra effet dès que votre paiement de {amount} DA sera validé.'**
+  String planEffectAfterPayment(String amount);
+
+  /// No description provided for @planEffectNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prend effet tout de suite : 50 DA par livraison acceptée.'**
+  String get planEffectNow;
+
+  /// No description provided for @trialUntil.
+  ///
+  /// In fr, this message translates to:
+  /// **'Encore {days} jour(s) gratuit(s), jusqu\'au {date}.'**
+  String trialUntil(String days, String date);
+
+  /// No description provided for @debtLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre solde à régler'**
+  String get debtLabel;
+
+  /// No description provided for @debtLimitSuffix.
+  ///
+  /// In fr, this message translates to:
+  /// **'sur {limit} DA'**
+  String debtLimitSuffix(String limit);
+
+  /// No description provided for @debtOfLimit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Solde : {debt} DA sur {limit} DA'**
+  String debtOfLimit(String debt, String limit);
+
+  /// No description provided for @deliveriesLeft.
+  ///
+  /// In fr, this message translates to:
+  /// **'Encore {count} livraison(s) avant le blocage.'**
+  String deliveriesLeft(String count);
+
+  /// No description provided for @debtBlockedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Solde à régler'**
+  String get debtBlockedTitle;
+
+  /// No description provided for @debtBlockedMsg.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous devez {debt} DA. Réglez ce montant pour accepter de nouvelles livraisons.'**
+  String debtBlockedMsg(String debt);
+
+  /// No description provided for @debtWarnTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre solde atteint {debt} DA'**
+  String debtWarnTitle(String debt);
+
+  /// No description provided for @debtWarnMsg.
+  ///
+  /// In fr, this message translates to:
+  /// **'Encore {count} livraison(s) avant le blocage. Pensez à régler votre solde.'**
+  String debtWarnMsg(String count);
+
+  /// No description provided for @payTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Payer'**
+  String get payTitle;
+
+  /// No description provided for @payDebt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Régler mon solde'**
+  String get payDebt;
+
+  /// No description provided for @payMonth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Payer le mois'**
+  String get payMonth;
+
+  /// No description provided for @amountToPay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant à payer'**
+  String get amountToPay;
+
+  /// No description provided for @monthPlusDebt.
+  ///
+  /// In fr, this message translates to:
+  /// **'{month} DA pour le mois et {debt} DA de solde'**
+  String monthPlusDebt(String month, String debt);
+
+  /// No description provided for @iHavePaidAmount.
+  ///
+  /// In fr, this message translates to:
+  /// **'J\'ai payé {amount} DA'**
+  String iHavePaidAmount(String amount);
+
+  /// No description provided for @claimTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'{kind} : {amount}'**
+  String claimTitle(String kind, String amount);
+
+  /// No description provided for @ledgerTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mouvements du solde'**
+  String get ledgerTitle;
+
+  /// No description provided for @ledgerCharge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Livraison acceptée'**
+  String get ledgerCharge;
+
+  /// No description provided for @ledgerRefund.
+  ///
+  /// In fr, this message translates to:
+  /// **'Remboursement (annulation)'**
+  String get ledgerRefund;
+
+  /// No description provided for @ledgerPayment.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paiement validé'**
+  String get ledgerPayment;
+
+  /// No description provided for @billingErrorDebtLimit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre solde a atteint 1 000 DA. Réglez-le dans Ma formule pour accepter de nouvelles livraisons.'**
+  String get billingErrorDebtLimit;
+
+  /// No description provided for @billingErrorNotEligible.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre formule ne vous permet pas d\'accepter de livraison. Ouvrez Ma formule.'**
+  String get billingErrorNotEligible;
+
+  /// No description provided for @billingErrorNotPending.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette demande n\'est plus en attente.'**
+  String get billingErrorNotPending;
+
+  /// No description provided for @billingErrorAlreadyTaken.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un autre livreur a pris cette demande avant vous.'**
+  String get billingErrorAlreadyTaken;
+
+  /// No description provided for @adminSuspects.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suspects'**
+  String get adminSuspects;
+
+  /// No description provided for @adminNoSuspectsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à signaler'**
+  String get adminNoSuspectsTitle;
+
+  /// No description provided for @adminNoSuspects.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun livreur ne présente de comportement inhabituel.'**
+  String get adminNoSuspects;
+
+  /// No description provided for @adminPaymentApproved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paiement validé'**
+  String get adminPaymentApproved;
+
+  /// No description provided for @suspectCancellations.
+  ///
+  /// In fr, this message translates to:
+  /// **'{cancelled} livraisons annulées après acceptation, sur {accepted}'**
+  String suspectCancellations(String cancelled, String accepted);
+
+  /// No description provided for @suspectChats.
+  ///
+  /// In fr, this message translates to:
+  /// **'{chats} conversations pour {accepted} livraisons acceptées'**
+  String suspectChats(String chats, String accepted);
+
+  /// No description provided for @suspectReports.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalé par {count} clients'**
+  String suspectReports(String count);
+
+  /// No description provided for @suspectDebt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bloqué depuis plus de 7 jours avec {debt} DA de solde'**
+  String suspectDebt(String debt);
+
+  /// No description provided for @statAccepted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Acceptées'**
+  String get statAccepted;
+
+  /// No description provided for @statCompleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminées'**
+  String get statCompleted;
+
+  /// No description provided for @statCancelled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annulées'**
+  String get statCancelled;
+
+  /// No description provided for @statChats.
+  ///
+  /// In fr, this message translates to:
+  /// **'Discussions'**
+  String get statChats;
+
+  /// No description provided for @statReports.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalements'**
+  String get statReports;
+
+  /// No description provided for @reportsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalements'**
+  String get reportsTitle;
 }
 
 class _AppLocalizationsDelegate

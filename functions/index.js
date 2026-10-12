@@ -1,7 +1,10 @@
 /**
- * Wassaly - notifications push aux livreurs (Firebase Cloud Messaging).
+ * Wassaly - Cloud Functions.
  *
- * Trois declencheurs Firestore :
+ * A. Notifications push aux livreurs (Firebase Cloud Messaging).
+ * B. Facturation des livreurs : billing_functions.js (exportees en bas).
+ *
+ * Notifications, trois declencheurs Firestore :
  *   1. nouveau message dans une conversation  -> notifie le destinataire
  *   2. nouvelle demande ouverte d'un client   -> notifie tous les livreurs abonnes
  *   3. nouvelle demande de livraison          -> notifie le livreur concerne
@@ -10,12 +13,14 @@
  * (l'application ne le fait que pour les livreurs) recoivent une notification.
  *
  * ATTENTION : REGION doit etre la meme region que votre base Firestore
- * (console Firebase > Firestore Database > onglet Donnees : "Emplacement").
+ * (console Firebase > Firestore Database > onglet Donnees : "Emplacement"),
+ * et la meme que AppConfig.functionsRegion dans l'application.
  */
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
+const billing = require('./billing');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -154,21 +159,11 @@ exports.onNewMessage = onDocumentCreated(
 
 // ---------------------------------------------------------------- 2. Demandes ouvertes
 
-/** Livreurs qui voient les demandes ouvertes : abonnement valide + identite verifiee. */
+/** Livreurs qui voient les demandes ouvertes (meme regle que firestore.rules). */
 async function subscribedDriverIds() {
-  const snap = await db
-    .collection('drivers')
-    .where('subscriptionEnd', '>', admin.firestore.Timestamp.now())
-    .get();
-  return snap.docs
-    .filter((d) => {
-      const x = d.data();
-      return (
-        ['trial', 'paid'].includes(x.subscriptionStatus) &&
-        (x.verificationStatus || 'approved') === 'approved'
-      );
-    })
-    .map((d) => d.id);
+  const now = Date.now();
+  const snap = await db.collection('drivers').get();
+  return snap.docs.filter((d) => billing.isEligible(d.data(), now)).map((d) => d.id);
 }
 
 exports.onNewOpenRequest = onDocumentCreated('openRequests/{rid}', async (event) => {
@@ -209,3 +204,7 @@ exports.onNewDeliveryRequest = onDocumentCreated(
     );
   },
 );
+
+// ================================================================ B. Facturation
+
+Object.assign(exports, require('./billing_functions'));

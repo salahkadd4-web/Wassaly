@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/cloudinary_service.dart';
@@ -97,10 +98,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           TextButton(
             onPressed:
                 _saving ? null : () => ref.read(authServiceProvider).signOut(),
-            child: Text(
-              t.signOut,
-              style: const TextStyle(color: Colors.white),
-            ),
+            child: Text(t.signOut),
           ),
         ],
       ),
@@ -108,8 +106,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
             children: [
+              Text(t.onboardingIntro, style: context.text.bodyLarge?.copyWith(color: context.muted)),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
@@ -117,19 +117,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 decoration: InputDecoration(
                   labelText: t.phoneLabel,
                   hintText: t.phoneHint,
-                  prefixIcon: const Icon(Icons.phone),
-                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.phone_outlined),
+                  helperText: t.phonePrivacyHint,
+                  helperMaxLines: 2,
                 ),
                 validator: (v) => _validatePhone(v, t),
               ),
               const SizedBox(height: 32),
-              Text(
-                t.roleQuestion,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text(t.roleQuestion, style: context.text.titleMedium),
               const SizedBox(height: 12),
               _RoleCard(
-                icon: Icons.person,
+                icon: Icons.inventory_2_outlined,
                 title: t.roleClient,
                 subtitle: t.roleClientDesc,
                 selected: _role == 'client',
@@ -140,6 +138,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 icon: Icons.two_wheeler,
                 title: t.roleDriver,
                 subtitle: t.roleDriverDesc,
+                badge: t.roleDriverTrial,
                 selected: _role == 'driver',
                 onTap: _saving ? null : () => setState(() => _role = 'driver'),
               ),
@@ -166,7 +165,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ],
               const SizedBox(height: 32),
-              ElevatedButton(
+              FilledButton(
                 onPressed: (_role == null || _saving) ? null : _submit,
                 child: _saving
                     ? const SizedBox(
@@ -191,47 +190,82 @@ class _RoleCard extends StatelessWidget {
     required this.subtitle,
     required this.selected,
     required this.onTap,
+    this.badge,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final String? badge;
   final bool selected;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final accent = context.isDark ? const Color(0xFF6B9BF7) : AppTheme.blue;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: scheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? scheme.secondary : Theme.of(context).dividerColor,
-            width: selected ? 2.5 : 1,
-          ),
+    return Material(
+      color: selected
+          ? AppTheme.blue.withValues(alpha: context.isDark ? 0.22 : 0.06)
+          : scheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        side: BorderSide(
+          color: selected ? accent : Theme.of(context).dividerColor,
+          width: selected ? 2 : 1,
         ),
-        child: Row(
-          children: [
-            Icon(icon, size: 36, color: scheme.primary),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-                ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: context.surfaceAlt,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: accent),
               ),
-            ),
-            if (selected) Icon(Icons.check_circle, color: scheme.secondary),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: context.text.titleMedium),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: context.text.bodySmall),
+                    if (badge != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppTheme.orange.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          badge!,
+                          style: context.text.labelMedium?.copyWith(
+                            color: context.ink(AppTheme.orange),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(
+                selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                color: selected ? accent : context.muted,
+              ),
+            ],
+          ),
         ),
       ),
     );

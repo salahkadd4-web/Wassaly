@@ -16,14 +16,38 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Livreur dont l'abonnement (essai ou paye) est en cours.
+    // Livreur qui peut travailler (meme regle que functions/billing.js) :
+    // piece validee, non suspendu, et essai / mois paye en cours, ou formule
+    // "a la livraison" sans dette bloquante (1 000 DA).
+    function driverEligible(d) {
+      return d.get('verificationStatus', 'approved') == 'approved'
+        && d.subscriptionStatus != 'suspended'
+        && ((d.subscriptionStatus in ['trial', 'paid'] && d.subscriptionEnd > request.time)
+            || (d.get('billingBlocked', false) != true
+                && (d.subscriptionStatus == 'per_delivery'
+                    || (d.subscriptionStatus in ['trial', 'paid']
+                        && d.get('plan', '') == 'per_delivery'))));
+    }
+
     function isSubscribedDriver() {
       return signedIn()
         && exists(/databases/$(database)/documents/drivers/$(request.auth.uid))
-        && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.subscriptionEnd > request.time
-        && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.subscriptionStatus in ['trial', 'paid']
-        // Piece d'identite validee (les anciens livreurs sans champ sont consideres valides).
-        && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.get('verificationStatus', 'approved') == 'approved';
+        && driverEligible(get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data);
+    }
+
+    // Numero de mobile algerien dans un texte (05/06/07, +213, 00213 ; espaces,
+    // points, tirets et chiffres arabes acceptes). Les numeros ne s'echangent
+    // qu'apres l'acceptation d'une livraison. Meme motif que phone_guard.dart.
+    function hasPhone(text) {
+      return text is string
+        && text.matches('(?s).*(0|٠|۰|[+]?213|00213)[ .-]*[5-7٥-٧۵-۷]([ .-]*[0-9٠-٩۰-۹]){8}.*');
+    }
+
+    // Textes libres d'une conversation sans numero de telephone.
+    function convTextsClean() {
+      return !hasPhone(request.resource.data.get('lastMessage', ''))
+        && !hasPhone(request.resource.data.get('clientName', ''))
+        && !hasPhone(request.resource.data.get('driverName', ''));
     }
 
     // Participant d'une conversation dont l'id est "clientId_driverId".
@@ -57,6 +81,7 @@ service cloud.firestore {
     }
 
     // Profil prive : visible par son proprietaire et par l'administrateur.
+    // C'est le seul endroit ou le numero de telephone est stocke.
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
 
@@ -72,19 +97,25 @@ service cloud.firestore {
       // Le role, l'email et le numero ne sont jamais modifiables depuis l'application.
       allow update: if isOwner(uid)
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['name', 'photo']);
+             .hasOnly(['name', 'photo'])
+        && !hasPhone(request.resource.data.name);
 
       allow delete: if false;
     }
 
     // Profil public du livreur : lisible par tout utilisateur connecte.
+    // Il ne contient PAS le numero de telephone (users/{uid}, prive) : client et
+    // livreur ne l'obtiennent qu'apres l'acceptation d'une livraison.
     match /drivers/{uid} {
       allow read: if signedIn();
 
       allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(
+             ['name', 'photo', 'active', 'city', 'latitude', 'longitude',
+              'lastLocationUpdate', 'trialStart', 'subscriptionStatus',
+              'subscriptionEnd', 'verificationStatus'])
         && getAfter(/databases/$(database)/documents/users/$(uid)).data.role == 'driver'
-        && request.resource.data.phone
-             == getAfter(/databases/$(database)/documents/users/$(uid)).data.phone
+        && !hasPhone(request.resource.data.name)
         && request.resource.data.active == false
         // Compte bloque jusqu'a la validation de la piece d'identite par l'admin.
         && request.resource.data.verificationStatus == 'pending'
@@ -95,16 +126,16 @@ service cloud.firestore {
              < request.time + duration.value(62, 'd');
 
       allow update: if
-        // Le livreur : disponibilite, position, ville, identite.
-        // Il ne peut pas toucher a son abonnement ni s'activer si celui-ci est invalide.
+        // Le livreur : disponibilite, position, ville, identite. Il ne touche
+        // ni a son abonnement, ni a sa formule, ni a sa dette (Cloud Functions
+        // et admin), et ne s'active que s'il peut travailler.
         (isOwner(uid)
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['active', 'latitude', 'longitude', 'lastLocationUpdate',
                          'city', 'name', 'photo'])
-          && (request.resource.data.active == false
-              || (resource.data.subscriptionEnd > request.time
-                  && resource.data.subscriptionStatus in ['trial', 'paid']
-                  && resource.data.get('verificationStatus', 'approved') == 'approved')))
+          && !hasPhone(request.resource.data.name)
+          && !hasPhone(request.resource.data.get('city', ''))
+          && (request.resource.data.active == false || driverEligible(resource.data)))
         // Le livreur dont la piece a ete refusee peut la renvoyer (rejected -> pending).
         || (isOwner(uid)
           && resource.data.get('verificationStatus', 'approved') == 'rejected'
@@ -115,6 +146,18 @@ service cloud.firestore {
         || isAdmin();
 
       allow delete: if false;
+    }
+
+    // Facturation du livreur : dette (formule a la livraison), compteurs
+    // anti-fraude, historique. Ecrite par les Cloud Functions et l'admin.
+    match /driverBilling/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAdmin();
+
+      match /ledger/{entry} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if isAdmin();
+      }
     }
 
     // Piece d'identite du livreur (URL Cloudinary) : privee, visible par le
@@ -145,7 +188,8 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Conversations : id = clientId_driverId.
+    // Conversations : id = clientId_driverId. Aucun numero de telephone ne
+    // peut y circuler (messages, apercu, noms).
     match /conversations/{cid} {
       allow get: if inConv(cid);
       allow list: if signedIn()
@@ -154,12 +198,14 @@ service cloud.firestore {
 
       allow create: if inConv(cid)
         && request.resource.data.clientId == cid.split('_')[0]
-        && request.resource.data.driverId == cid.split('_')[1];
+        && request.resource.data.driverId == cid.split('_')[1]
+        && convTextsClean();
 
       allow update: if inConv(cid)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['clientName', 'driverName', 'lastMessage', 'lastSenderId',
-                       'updatedAt', 'clientUnread', 'driverUnread']);
+                       'updatedAt', 'clientUnread', 'driverUnread'])
+        && convTextsClean();
 
       allow delete: if false;
 
@@ -169,12 +215,16 @@ service cloud.firestore {
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 1000;
+          && request.resource.data.text.size() <= 1000
+          && !hasPhone(request.resource.data.text);
         allow update, delete: if false;
       }
     }
 
     // Demandes de livraison.
+    // L'acceptation passe par la Cloud Function acceptDelivery (debit de la
+    // formule a la livraison) : le livreur ne peut pas passer lui-meme une
+    // demande a "accepted".
     match /deliveryRequests/{rid} {
       allow read: if signedIn()
         && (resource.data.clientId == request.auth.uid
@@ -183,21 +233,23 @@ service cloud.firestore {
 
       allow create: if isOwner(request.resource.data.clientId)
         && request.resource.data.status == 'pending'
+        && request.resource.data.note is string
+        && !hasPhone(request.resource.data.note)
         && request.resource.data.keys().hasOnly(
-             ['clientId', 'driverId', 'clientName', 'clientPhone', 'driverName',
+             ['clientId', 'driverId', 'clientName', 'driverName',
               'pickup', 'delivery', 'note', 'status', 'createdAt', 'updatedAt']);
 
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['status', 'updatedAt', 'amount', 'completedAt'])
         && (
-          // Le livreur accepte/refuse (sans toucher au montant)...
+          // Le livreur refuse (sans toucher au montant)...
           (resource.data.driverId == request.auth.uid
             && resource.data.status == 'pending'
-            && request.resource.data.status in ['accepted', 'rejected']
+            && request.resource.data.status == 'rejected'
             && !request.resource.data.diff(resource.data).affectedKeys()
                   .hasAny(['amount', 'completedAt']))
-          // ... puis termine la livraison en saisissant son montant (DA).
+          // ... ou termine la livraison acceptee en saisissant son montant (DA).
           || (resource.data.driverId == request.auth.uid
             && resource.data.status == 'accepted'
             && request.resource.data.status == 'completed'
@@ -214,9 +266,22 @@ service cloud.firestore {
         );
 
       allow delete: if false;
+
+      // Telephones des deux parties, ecrits par la Cloud Function a
+      // l'acceptation et lisibles seulement une fois la demande acceptee.
+      match /private/{doc} {
+        allow read: if signedIn()
+          && (isAdmin()
+              || ((get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid
+                   || get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.driverId == request.auth.uid)
+                  && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status in ['accepted', 'completed']));
+        allow write: if false;
+      }
     }
 
-    // Demandes ouvertes : publiees par un client, lues par les livreurs abonnes.
+    // Demandes ouvertes : publiees par un client, lues par les livreurs qui
+    // peuvent travailler. Un livreur la prend via la Cloud Function
+    // takeOpenRequest (statut "taken", elle devient une livraison suivie).
     match /openRequests/{rid} {
       allow read: if signedIn()
         && (resource.data.clientId == request.auth.uid
@@ -228,11 +293,12 @@ service cloud.firestore {
         && request.resource.data.status == 'open'
         && request.resource.data.note is string
         && request.resource.data.note.size() <= 300
+        && !hasPhone(request.resource.data.note)
         && request.resource.data.keys().hasOnly(
-             ['clientId', 'clientName', 'clientPhone', 'pickup', 'delivery',
+             ['clientId', 'clientName', 'pickup', 'delivery',
               'note', 'status', 'createdAt', 'updatedAt']);
 
-      // Le client peut seulement la cloturer.
+      // Le client peut seulement la cloturer, tant que personne ne l'a prise.
       allow update: if signedIn()
         && resource.data.clientId == request.auth.uid
         && resource.data.status == 'open'
@@ -256,21 +322,49 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
-    // Demandes de renouvellement d'abonnement (preuve de paiement).
+    // Paiements declares par les livreurs (reference BaridiMob / CCP) :
+    // "monthly" = un mois (+ dette eventuelle), "debt" = reglement de la dette.
     match /subscriptionRequests/{sid} {
       allow read: if signedIn()
         && (resource.data.driverId == request.auth.uid || isAdmin());
 
       allow create: if isOwner(request.resource.data.driverId)
         && request.resource.data.status == 'pending'
+        && request.resource.data.kind in ['monthly', 'debt']
+        && request.resource.data.amount is int
+        && request.resource.data.amount > 0
+        && request.resource.data.amount <= 100000
         && request.resource.data.keys().hasOnly(
-             ['driverId', 'driverName', 'driverPhone', 'reference', 'status', 'createdAt']);
+             ['driverId', 'driverName', 'driverPhone', 'reference', 'status',
+              'kind', 'amount', 'createdAt']);
 
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['status', 'reviewedAt']);
 
       allow delete: if false;
+    }
+
+    // Signalement d'un livreur par un client : un seul par couple
+    // (id = clientId_driverId), et seulement apres un echange (conversation ou
+    // demande de livraison entre eux). Lu par l'admin (onglet Suspects).
+    match /reports/{rid} {
+      allow read: if isAdmin();
+
+      allow create: if signedIn()
+        && request.resource.data.clientId == request.auth.uid
+        && rid == request.auth.uid + '_' + request.resource.data.driverId
+        && request.resource.data.keys().hasOnly(
+             ['clientId', 'driverId', 'reason', 'note', 'requestId', 'createdAt'])
+        && request.resource.data.reason in ['off_app', 'not_delivered', 'behavior', 'other']
+        && request.resource.data.note is string
+        && request.resource.data.note.size() <= 300
+        && (exists(/databases/$(database)/documents/conversations/$(rid))
+            || ('requestId' in request.resource.data
+                && get(/databases/$(database)/documents/deliveryRequests/$(request.resource.data.requestId)).data.clientId == request.auth.uid
+                && get(/databases/$(database)/documents/deliveryRequests/$(request.resource.data.requestId)).data.driverId == request.resource.data.driverId));
+
+      allow update, delete: if false;
     }
   }
 }

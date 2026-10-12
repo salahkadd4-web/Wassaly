@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/delivery_request.dart';
+import '../../models/request_contact.dart';
 import '../auth/auth_providers.dart';
 import 'request_repository.dart';
 
@@ -34,6 +35,19 @@ final driverRequestsProvider = StreamProvider<List<DeliveryRequest>>((ref) {
   final user = ref.watch(authStateProvider).value;
   if (user == null) return Stream.value(const []);
   return _watch(ref, 'driverId', user.uid);
+});
+
+/// Telephones d'une livraison acceptee (lisibles seulement apres acceptation).
+final requestContactProvider =
+    StreamProvider.family<RequestContact, String>((ref, requestId) {
+  return ref
+      .watch(firestoreProvider)
+      .collection('deliveryRequests')
+      .doc(requestId)
+      .collection('private')
+      .doc('contact')
+      .snapshots()
+      .map((s) => RequestContact.fromMap(s.data()));
 });
 
 /// Nombre de demandes en attente cote livreur.

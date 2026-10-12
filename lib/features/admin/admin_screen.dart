@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/map_links.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/delivery_request.dart';
+import '../../models/driver_billing.dart';
 import '../../models/driver_profile.dart';
 import '../../models/subscription_claim.dart';
 import '../../widgets/driver_avatar.dart';
@@ -19,6 +21,7 @@ import 'admin_identity.dart';
 import 'admin_providers.dart';
 import 'admin_repository.dart';
 import 'admin_revenue_tab.dart';
+import 'admin_suspects_tab.dart';
 
 class AdminScreen extends ConsumerWidget {
   const AdminScreen({super.key});
@@ -30,7 +33,7 @@ class AdminScreen extends ConsumerWidget {
 
     return admin.when(
       loading: () => const Scaffold(body: LoadingState()),
-      error: (_, __) => Scaffold(
+      error: (_, _) => Scaffold(
         appBar: AppBar(title: Text(t.adminPanel)),
         body: const ErrorState(),
       ),
@@ -42,6 +45,10 @@ class AdminScreen extends ConsumerWidget {
           );
         }
         final claimsCount = ref.watch(adminClaimsProvider).value?.length ?? 0;
+        final billing = ref.watch(adminBillingProvider).value ?? const {};
+        final suspectsCount = (ref.watch(adminDriversProvider).value ?? const [])
+            .where((d) => suspicionReasons(billing[d.uid] ?? DriverBilling.empty(d.uid)).isNotEmpty)
+            .length;
         final verifCount = ref
                 .watch(adminDriversProvider)
                 .value
@@ -49,36 +56,28 @@ class AdminScreen extends ConsumerWidget {
                 .length ??
             0;
 
+        Widget badged(String label, int count) => Tab(
+              child: Badge(
+                label: Text('$count'),
+                isLabelVisible: count > 0,
+                offset: const Offset(12, -6),
+                child: Text(label),
+              ),
+            );
+
         return DefaultTabController(
-          length: 7,
+          length: 8,
           child: Scaffold(
             appBar: AppBar(
               title: Text(t.adminPanel),
               bottom: TabBar(
                 isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white70,
-                indicatorColor: AppTheme.orange,
                 tabs: [
                   Tab(text: t.adminDrivers),
+                  badged(t.adminPayments, claimsCount),
+                  badged(t.adminVerifications, verifCount),
+                  badged(t.adminSuspects, suspectsCount),
                   Tab(text: t.adminRevenue),
-                  Tab(
-                    child: Badge(
-                      label: Text('$verifCount'),
-                      isLabelVisible: verifCount > 0,
-                      offset: const Offset(10, -6),
-                      child: Text(t.adminVerifications),
-                    ),
-                  ),
-                  Tab(
-                    child: Badge(
-                      label: Text('$claimsCount'),
-                      isLabelVisible: claimsCount > 0,
-                      offset: const Offset(10, -6),
-                      child: Text(t.adminPayments),
-                    ),
-                  ),
                   Tab(text: t.adminClients),
                   Tab(text: t.adminRequests),
                   Tab(text: t.adminAdmins),
@@ -88,9 +87,10 @@ class AdminScreen extends ConsumerWidget {
             body: const TabBarView(
               children: [
                 _DriversAdminTab(),
-                AdminRevenueTab(),
-                AdminVerificationsTab(),
                 _ClaimsAdminTab(),
+                AdminVerificationsTab(),
+                AdminSuspectsTab(),
+                AdminRevenueTab(),
                 _ClientsAdminTab(),
                 _RequestsAdminTab(),
                 _AdminsAdminTab(),
@@ -132,8 +132,9 @@ class _DriversAdminTab extends ConsumerWidget {
         case _DriverAction.viewId:
           if (context.mounted) showIdViewer(context, d);
         case _DriverAction.call:
-          if (context.mounted) {
-            await launchWithFeedback(context, callPhone(d.phone));
+          final phone = (await ref.read(adminUserProvider(d.uid).future))?.phone ?? '';
+          if (context.mounted && phone.isNotEmpty) {
+            await launchWithFeedback(context, callPhone(phone));
           }
       }
     } catch (_) {
@@ -148,7 +149,7 @@ class _DriversAdminTab extends ConsumerWidget {
 
     return async.when(
       loading: () => const LoadingState(),
-      error: (_, __) => const ErrorState(),
+      error: (_, _) => const ErrorState(),
       data: (list) {
         if (list.isEmpty) {
           return EmptyState(icon: Icons.two_wheeler, message: t.adminNoDrivers);
@@ -156,50 +157,18 @@ class _DriversAdminTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: list.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, i) {
             final d = list[i];
             return Card(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DriverAvatar(photo: d.photo, radius: 22),
+                    DriverAvatar(photo: d.photo, name: d.name, radius: 22),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            d.name,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          Text(prettyPhone(d.phone)),
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              StatusChip(
-                                label: d.active ? t.statusActive : t.statusInactive,
-                                color: d.active ? AppTheme.success : AppTheme.neutral,
-                                icon: Icons.circle,
-                              ),
-                              SubscriptionChip(status: d.effectiveStatus),
-                              VerificationChip(status: d.verificationStatus),
-                            ],
-                          ),
-                          if (d.subscriptionEnd != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                t.expiresOn(formatDate(d.subscriptionEnd!)),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                    Expanded(child: _DriverSummary(driver: d)),
                     PopupMenuButton<_DriverAction>(
                       onSelected: (a) => _run(context, ref, d, a),
                       itemBuilder: (_) => [
@@ -243,6 +212,56 @@ class _DriversAdminTab extends ConsumerWidget {
   }
 }
 
+/// Nom, telephone (prive), etat, formule et dette d'un livreur.
+class _DriverSummary extends ConsumerWidget {
+  const _DriverSummary({required this.driver});
+
+  final DriverProfile driver;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context)!;
+    final d = driver;
+    final phone = ref.watch(adminUserProvider(d.uid)).value?.phone ?? '';
+    final debt = ref.watch(adminBillingProvider).value?[d.uid]?.debt ?? 0;
+    final status = d.effectiveStatus;
+
+    final String? detail;
+    if (status == 'per_delivery' || status == 'blocked') {
+      detail = t.debtOfLimit(formatAmount(debt), formatAmount(AppConfig.debtLimitDa));
+    } else if (d.subscriptionEnd != null && (status == 'trial' || status == 'paid')) {
+      detail = t.expiresOn(formatDate(d.subscriptionEnd!));
+    } else {
+      detail = null;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(d.name, style: context.text.titleMedium),
+        if (phone.isNotEmpty) Text(prettyPhone(phone), style: context.text.bodySmall),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            StatusChip(
+              label: d.active ? t.statusActive : t.statusInactive,
+              color: d.active ? AppTheme.success : AppTheme.neutral,
+            ),
+            SubscriptionChip(status: status),
+            VerificationChip(status: d.verificationStatus),
+          ],
+        ),
+        if (detail != null) ...[
+          const SizedBox(height: 6),
+          Text(detail, style: context.text.bodySmall),
+        ],
+      ],
+    );
+  }
+}
+
 class _MenuRow extends StatelessWidget {
   const _MenuRow(this.icon, this.label);
 
@@ -277,7 +296,7 @@ class _ClaimsAdminTab extends ConsumerWidget {
     try {
       if (approve) {
         await repo.approveClaim(c);
-        if (context.mounted) showSnack(context, t.adminExtended);
+        if (context.mounted) showSnack(context, t.adminPaymentApproved);
       } else {
         await repo.rejectClaim(c);
       }
@@ -293,7 +312,7 @@ class _ClaimsAdminTab extends ConsumerWidget {
 
     return async.when(
       loading: () => const LoadingState(),
-      error: (_, __) => const ErrorState(),
+      error: (_, _) => const ErrorState(),
       data: (list) {
         if (list.isEmpty) {
           return EmptyState(icon: Icons.payments_outlined, message: t.adminNoClaims);
@@ -301,7 +320,7 @@ class _ClaimsAdminTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: list.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, i) {
             final c = list[i];
             return Card(
@@ -310,11 +329,24 @@ class _ClaimsAdminTab extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(c.driverName,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(c.driverName, style: context.text.titleMedium),
+                        ),
+                        if (c.amount > 0)
+                          Text(
+                            t.amountDa(formatAmount(c.amount)),
+                            style: context.text.titleLarge,
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 2),
-                    Text(prettyPhone(c.driverPhone)),
-                    const SizedBox(height: 8),
+                    Text(
+                      '${c.isDebt ? t.payDebt : t.payMonth}, ${prettyPhone(c.driverPhone)}',
+                      style: context.text.bodySmall,
+                    ),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         const Icon(Icons.receipt_long_outlined, size: 18),
@@ -331,26 +363,20 @@ class _ClaimsAdminTab extends ConsumerWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.danger,
-                            ),
+                          child: OutlinedButton(
+                            style: AppTheme.dangerOutlined(context),
                             onPressed: () =>
                                 _review(context, ref, c, approve: false),
-                            icon: const Icon(Icons.close),
-                            label: Text(t.reject),
+                            child: Text(t.reject),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppTheme.success,
-                            ),
+                          child: FilledButton(
+                            style: AppTheme.confirmButton,
                             onPressed: () =>
                                 _review(context, ref, c, approve: true),
-                            icon: const Icon(Icons.check),
-                            label: Text(t.adminValidate),
+                            child: Text(t.adminValidate),
                           ),
                         ),
                       ],
@@ -378,7 +404,7 @@ class _ClientsAdminTab extends ConsumerWidget {
 
     return async.when(
       loading: () => const LoadingState(),
-      error: (_, __) => const ErrorState(),
+      error: (_, _) => const ErrorState(),
       data: (list) {
         if (list.isEmpty) {
           return EmptyState(icon: Icons.people_outline, message: t.adminNoClients);
@@ -386,7 +412,7 @@ class _ClientsAdminTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: list.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, i) {
             final UserProfile u = list[i];
             return Card(
@@ -424,7 +450,7 @@ class _RequestsAdminTab extends ConsumerWidget {
 
     return async.when(
       loading: () => const LoadingState(),
-      error: (_, __) => const ErrorState(),
+      error: (_, _) => const ErrorState(),
       data: (list) {
         if (list.isEmpty) {
           return EmptyState(
@@ -435,7 +461,7 @@ class _RequestsAdminTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: list.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, i) => _AdminRequestTile(request: list[i]),
         );
       },
@@ -636,7 +662,7 @@ class _AdminsAdminTabState extends ConsumerState<_AdminsAdminTab> {
             padding: EdgeInsets.all(24),
             child: LoadingState(),
           ),
-          error: (_, __) => const Padding(
+          error: (_, _) => const Padding(
             padding: EdgeInsets.all(24),
             child: ErrorState(),
           ),

@@ -1,41 +1,61 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_theme.dart';
+
+/// Ecran vide : dit ce qui manque et, si possible, propose quoi faire.
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
     required this.icon,
     required this.message,
+    this.title,
     this.action,
   });
 
   final IconData icon;
   final String message;
+  final String? title;
   final Widget? action;
 
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55);
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 56, color: muted),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(color: muted),
-            ),
-            if (action != null) ...[
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: context.surfaceAlt,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 32, color: context.muted),
+              ),
               const SizedBox(height: 16),
-              action!,
+              if (title != null) ...[
+                Text(
+                  title!,
+                  textAlign: TextAlign.center,
+                  style: context.text.titleMedium,
+                ),
+                const SizedBox(height: 6),
+              ],
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: context.text.bodyMedium?.copyWith(color: context.muted),
+              ),
+              if (action != null) ...[
+                const SizedBox(height: 20),
+                action!,
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

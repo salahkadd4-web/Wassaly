@@ -2,7 +2,7 @@ name: wassaly
 description: "Wassaly - mise en relation clients et livreurs de proximite en Algerie."
 publish_to: 'none'
 
-version: 1.1.0+2
+version: 1.2.0+3
 
 environment:
   sdk: ^3.13.5
@@ -27,6 +27,7 @@ dependencies:
   shared_preferences: ^2.5.3
   image_picker: ^1.1.2
   http: ^1.2.2
+  cloud_functions: ^6.5.0
 
 dev_dependencies:
   flutter_test:
@@ -39,3 +40,16 @@ flutter:
   assets:
     - assets/branding/
     - assets/branding/logo/
+
+  # Readex Pro (SIL Open Font License, assets/fonts/OFL.txt) : latin + arabe,
+  # embarquee pour ne dependre d'aucun telechargement au demarrage.
+  fonts:
+    - family: ReadexPro
+      fonts:
+        - asset: assets/fonts/ReadexPro-Regular.ttf
+        - asset: assets/fonts/ReadexPro-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ReadexPro-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ReadexPro-Bold.ttf
+          weight: 700

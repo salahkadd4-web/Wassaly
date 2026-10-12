@@ -1,12 +1,13 @@
 {
   "name": "wassaly-functions",
-  "description": "Cloud Functions de Wassaly : notifications push aux livreurs",
+  "description": "Cloud Functions de Wassaly : notifications push et facturation des livreurs",
   "private": true,
   "main": "index.js",
   "engines": { "node": "22" },
   "scripts": {
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "node --test"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

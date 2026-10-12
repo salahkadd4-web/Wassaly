@@ -68,10 +68,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
             TextButton(
               onPressed:
                   _sending ? null : () => ref.read(authServiceProvider).signOut(),
-              child: Text(
-                t.signOut,
-                style: const TextStyle(color: Colors.white),
-              ),
+              child: Text(t.signOut),
             ),
           ],
         ),
@@ -79,10 +76,21 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              Icon(
-                rejected ? Icons.gpp_bad_outlined : Icons.hourglass_top,
-                size: 72,
-                color: rejected ? AppTheme.danger : AppTheme.orange,
+              Center(
+                child: Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    color: (rejected ? AppTheme.danger : AppTheme.orange)
+                        .withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    rejected ? Icons.gpp_bad_outlined : Icons.hourglass_top_rounded,
+                    size: 40,
+                    color: context.ink(rejected ? AppTheme.danger : AppTheme.orange),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -94,7 +102,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
               Text(
                 rejected ? t.verifRejectedBody : t.verifPendingBody,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge,
+                style: theme.textTheme.bodyLarge?.copyWith(color: context.muted),
               ),
               if (rejected &&
                   (identity?.rejectReason?.trim().isNotEmpty ?? false)) ...[
@@ -102,9 +110,8 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                 Text(
                   t.verifReason(identity!.rejectReason!.trim()),
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.danger,
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: context.ink(AppTheme.danger),
                   ),
                 ),
               ],
@@ -116,7 +123,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                   onPicked: (f) => setState(() => _photo = f),
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton(
+                FilledButton(
                   onPressed: _sending ? null : () => _resend(user.uid),
                   child: _sending
                       ? const SizedBox(
@@ -128,13 +135,13 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                 ),
               ] else if (identity != null && identity.idUrl.isNotEmpty)
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusCard),
                   child: SizedBox(
                     height: 190,
                     child: Image.network(
                       identity.idUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
                     ),
                   ),
                 ),

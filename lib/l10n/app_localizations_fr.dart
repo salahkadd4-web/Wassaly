@@ -304,24 +304,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get yourAvailability => 'Votre disponibilité';
 
   @override
-  String get statusActive => 'Actif';
+  String get statusActive => 'En ligne';
 
   @override
-  String get statusInactive => 'Inactif';
+  String get statusInactive => 'Hors ligne';
 
   @override
   String get activeHint =>
-      'Les clients proches de vous peuvent vous voir et vous contacter.';
+      'Les clients proches vous voient et peuvent vous envoyer des demandes.';
 
   @override
   String get inactiveHint =>
-      'Vous êtes masqué. Activez-vous pour recevoir des demandes.';
+      'Vous êtes masqué. Passez en ligne pour recevoir des demandes.';
 
   @override
-  String get activate => 'Je suis disponible';
+  String get activate => 'Me mettre en ligne';
 
   @override
-  String get deactivate => 'Me rendre indisponible';
+  String get deactivate => 'Passer hors ligne';
 
   @override
   String get updateMyPosition => 'Mettre à jour ma position';
@@ -337,7 +337,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get subscriptionBlocked =>
-      'Votre abonnement est expiré ou suspendu. Renouvelez-le pour être visible.';
+      'Votre formule ne vous permet pas de passer en ligne. Ouvrez Ma formule.';
 
   @override
   String get subscription => 'Abonnement';
@@ -346,7 +346,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get subTrial => 'Essai gratuit';
 
   @override
-  String get subPaid => 'Abonnement actif';
+  String get subPaid => 'Mensuelle';
 
   @override
   String get subExpired => 'Expiré';
@@ -366,10 +366,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get subscriptionExpiredMsg =>
-      'Votre abonnement n\'est plus valide : vous n\'apparaissez plus aux clients.';
+      'Choisissez une formule pour réapparaître auprès des clients.';
 
   @override
-  String get manageSubscription => 'Gérer mon abonnement';
+  String get manageSubscription => 'Gérer ma formule';
 
   @override
   String get renewSubscription => 'Renouveler mon abonnement';
@@ -381,7 +381,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get paymentSteps =>
-      '1. Effectuez le paiement avec les coordonnées ci-dessous.\n2. Saisissez la référence du paiement et envoyez.\n3. L\'administrateur valide et ajoute 30 jours à votre abonnement.';
+      '1. Payez avec les coordonnées ci-dessous.\n2. Saisissez la référence du paiement.\n3. L\'équipe Wassaly vérifie et valide.';
 
   @override
   String get paymentReference => 'Référence du paiement';
@@ -400,7 +400,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Une demande est déjà en cours de validation.';
 
   @override
-  String get claimsHistory => 'Historique des demandes';
+  String get claimsHistory => 'Mes paiements';
 
   @override
   String get noClaims => 'Aucune demande de renouvellement.';
@@ -475,7 +475,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get openRequestsTab => 'Clients';
 
   @override
-  String get openRequestsTitle => 'Clients qui cherchent un livreur';
+  String get openRequestsTitle => 'Courses disponibles';
 
   @override
   String get noOpenRequests =>
@@ -483,24 +483,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get openRequestsLocked =>
-      'Un abonnement valide est nécessaire pour voir les clients qui cherchent un livreur.';
+      'Choisissez une formule pour voir les clients qui cherchent un livreur.';
 
   @override
   String get notifNewOpenRequest => 'Un client cherche un livreur.';
 
   @override
-  String get publishOpenRequest => 'Publier une demande ouverte';
+  String get publishOpenRequest => 'Publier une course';
 
   @override
   String get publishOpenRequestHint =>
-      'Les livreurs abonnés la verront et pourront vous contacter.';
+      'Tous les livreurs proches la voient. Le premier qui la prend vous contacte.';
 
   @override
   String get newOpenRequest => 'Demande ouverte';
 
   @override
   String get openRequestIntro =>
-      'Décrivez votre livraison : les livreurs abonnés pourront vous appeler ou vous écrire.';
+      'Décrivez votre course. Le premier livreur qui la prend obtient votre numéro et vous contacte.';
 
   @override
   String get publishAction => 'Publier';
@@ -750,4 +750,419 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminNoRevenue => 'Aucune livraison terminée.';
+
+  @override
+  String get welcomeHeadline =>
+      'Vos colis livrés par des livreurs de votre quartier.';
+
+  @override
+  String get welcomeForWho =>
+      'Clients et livreurs utilisent la même application.';
+
+  @override
+  String get onboardingIntro =>
+      'Encore une étape : votre numéro et votre rôle.';
+
+  @override
+  String get phonePrivacyHint =>
+      'Il n\'est partagé qu\'avec le client ou le livreur d\'une livraison acceptée.';
+
+  @override
+  String get roleDriverTrial => '2 mois gratuits';
+
+  @override
+  String get accountMenu => 'Mon compte';
+
+  @override
+  String get tabHome => 'Accueil';
+
+  @override
+  String get publishHeroTitle => 'Besoin d\'un livreur ?';
+
+  @override
+  String get sendRequestShort => 'Demander';
+
+  @override
+  String get phoneAfterAccept =>
+      'Son numéro s\'affichera dès qu\'il aura accepté votre demande.';
+
+  @override
+  String get contactAfterAccept =>
+      'Le numéro du livreur s\'affichera dès qu\'il aura accepté.';
+
+  @override
+  String get noRequestsTitle => 'Aucune demande';
+
+  @override
+  String get currentRequests => 'En cours';
+
+  @override
+  String get pastRequests => 'Historique';
+
+  @override
+  String get toHandleRequests => 'À traiter';
+
+  @override
+  String get addressHint => 'Rue, quartier ou repère';
+
+  @override
+  String get noteHint => 'Ex. : colis fragile, 2e étage';
+
+  @override
+  String get phoneNotAllowed =>
+      'Pas de numéro de téléphone ici : il est partagé une fois la livraison acceptée.';
+
+  @override
+  String get phoneNotAllowedChat =>
+      'Message non envoyé : les numéros s\'échangent une fois la livraison acceptée.';
+
+  @override
+  String get chatSafetyNotice =>
+      'Les numéros de téléphone s\'échangent une fois la livraison acceptée.';
+
+  @override
+  String get noConversationsTitle => 'Aucune conversation';
+
+  @override
+  String notifOpenRequestTaken(String name) {
+    return '$name a pris votre demande';
+  }
+
+  @override
+  String openRequestTakenBy(String name) {
+    return 'Prise par $name';
+  }
+
+  @override
+  String get reportDriver => 'Signaler ce livreur';
+
+  @override
+  String reportTitle(String name) {
+    return 'Signaler $name';
+  }
+
+  @override
+  String get reportIntro =>
+      'L\'équipe Wassaly examine chaque signalement. Le livreur ne voit pas qui l\'a signalé.';
+
+  @override
+  String get reportReasonOffApp =>
+      'Il m\'a proposé de passer hors de l\'application';
+
+  @override
+  String get reportReasonNotDelivered => 'Livraison non effectuée';
+
+  @override
+  String get reportReasonBehavior => 'Comportement inapproprié';
+
+  @override
+  String get reportReasonOther => 'Autre';
+
+  @override
+  String get reportNoteLabel => 'Ce qui s\'est passé (facultatif)';
+
+  @override
+  String get reportSend => 'Envoyer le signalement';
+
+  @override
+  String get reportSent => 'Signalement envoyé';
+
+  @override
+  String get reportNotAllowed =>
+      'Signalement impossible : vous avez déjà signalé ce livreur, ou vous n\'avez pas encore échangé avec lui.';
+
+  @override
+  String acceptWithPrice(String price) {
+    return 'Accepter ($price DA)';
+  }
+
+  @override
+  String get acceptChargeTitle => 'Accepter cette livraison ?';
+
+  @override
+  String acceptChargeBody(String price, String newDebt, String limit) {
+    return '$price DA seront ajoutés à votre solde, qui passera à $newDebt DA. À $limit DA, vous devrez payer avant d\'accepter de nouvelles livraisons.';
+  }
+
+  @override
+  String get takeAction => 'Je prends cette demande';
+
+  @override
+  String takeWithPrice(String price) {
+    return 'Je prends ($price DA)';
+  }
+
+  @override
+  String get takeTitle => 'Prendre cette demande ?';
+
+  @override
+  String get takeBody =>
+      'Le client sera prévenu et vous aurez accès à son numéro.';
+
+  @override
+  String takeChargeBody(String price, String newDebt, String limit) {
+    return '$price DA seront ajoutés à votre solde, qui passera à $newDebt DA (blocage à $limit DA). Vous aurez ensuite accès au numéro du client.';
+  }
+
+  @override
+  String get takeConfirm => 'Je la prends';
+
+  @override
+  String takeDone(String name) {
+    return 'Demande prise. Contactez $name depuis l\'onglet Demandes.';
+  }
+
+  @override
+  String get takeHint =>
+      'Le contact du client s\'affiche une fois la demande prise.';
+
+  @override
+  String get openRequestsIntro =>
+      'Le premier livreur qui prend une demande obtient le contact du client.';
+
+  @override
+  String openRequestsIntroPaid(String price) {
+    return 'Le premier livreur qui prend une demande obtient le contact du client. $price DA sont ajoutés à votre solde.';
+  }
+
+  @override
+  String get openRequestsLockedDebt =>
+      'Votre solde a atteint 1 000 DA. Réglez-le pour voir et prendre les demandes.';
+
+  @override
+  String get noOpenRequestsTitle => 'Aucune demande pour l\'instant';
+
+  @override
+  String get pendingRequestsLabel => 'Demandes en attente';
+
+  @override
+  String get unreadMessagesLabel => 'Messages non lus';
+
+  @override
+  String get myPosition => 'Ma position';
+
+  @override
+  String get positionNeverShared => 'Jamais partagée';
+
+  @override
+  String get suspendedMsg =>
+      'Votre compte est suspendu. Contactez l\'équipe Wassaly.';
+
+  @override
+  String trialEndingTitle(String days) {
+    return 'Votre essai se termine dans $days jour(s)';
+  }
+
+  @override
+  String get trialEndingMsg =>
+      'Choisissez votre formule pour continuer à recevoir des demandes : 1 000 DA par mois ou 50 DA par livraison.';
+
+  @override
+  String get myPlan => 'Ma formule';
+
+  @override
+  String get noActivePlan => 'Aucune formule active';
+
+  @override
+  String get subPerDelivery => 'À la livraison';
+
+  @override
+  String get subBlocked => 'Bloqué';
+
+  @override
+  String get choosePlan => 'Choisir une formule';
+
+  @override
+  String get choosePlanConfirm => 'Choisir cette formule';
+
+  @override
+  String get planForLater => 'Formule pour la suite';
+
+  @override
+  String get planSaved => 'Formule enregistrée';
+
+  @override
+  String get planMonthlyTitle => 'Mensuelle';
+
+  @override
+  String planMonthlyPrice(String price) {
+    return '$price DA par mois';
+  }
+
+  @override
+  String get planMonthlyDesc =>
+      'Livraisons illimitées pendant 30 jours. Vous payez d\'avance.';
+
+  @override
+  String get planPerDeliveryTitle => 'À la livraison';
+
+  @override
+  String planPerDeliveryPrice(String price) {
+    return '$price DA par livraison';
+  }
+
+  @override
+  String planPerDeliveryDesc(String limit) {
+    return 'Rien à avancer. Chaque livraison acceptée s\'ajoute à votre solde, à régler avant d\'atteindre $limit DA.';
+  }
+
+  @override
+  String planEffectOn(String date) {
+    return 'Prendra effet le $date, à la fin de votre période en cours.';
+  }
+
+  @override
+  String planEffectAfterPayment(String amount) {
+    return 'Prendra effet dès que votre paiement de $amount DA sera validé.';
+  }
+
+  @override
+  String get planEffectNow =>
+      'Prend effet tout de suite : 50 DA par livraison acceptée.';
+
+  @override
+  String trialUntil(String days, String date) {
+    return 'Encore $days jour(s) gratuit(s), jusqu\'au $date.';
+  }
+
+  @override
+  String get debtLabel => 'Votre solde à régler';
+
+  @override
+  String debtLimitSuffix(String limit) {
+    return 'sur $limit DA';
+  }
+
+  @override
+  String debtOfLimit(String debt, String limit) {
+    return 'Solde : $debt DA sur $limit DA';
+  }
+
+  @override
+  String deliveriesLeft(String count) {
+    return 'Encore $count livraison(s) avant le blocage.';
+  }
+
+  @override
+  String get debtBlockedTitle => 'Solde à régler';
+
+  @override
+  String debtBlockedMsg(String debt) {
+    return 'Vous devez $debt DA. Réglez ce montant pour accepter de nouvelles livraisons.';
+  }
+
+  @override
+  String debtWarnTitle(String debt) {
+    return 'Votre solde atteint $debt DA';
+  }
+
+  @override
+  String debtWarnMsg(String count) {
+    return 'Encore $count livraison(s) avant le blocage. Pensez à régler votre solde.';
+  }
+
+  @override
+  String get payTitle => 'Payer';
+
+  @override
+  String get payDebt => 'Régler mon solde';
+
+  @override
+  String get payMonth => 'Payer le mois';
+
+  @override
+  String get amountToPay => 'Montant à payer';
+
+  @override
+  String monthPlusDebt(String month, String debt) {
+    return '$month DA pour le mois et $debt DA de solde';
+  }
+
+  @override
+  String iHavePaidAmount(String amount) {
+    return 'J\'ai payé $amount DA';
+  }
+
+  @override
+  String claimTitle(String kind, String amount) {
+    return '$kind : $amount';
+  }
+
+  @override
+  String get ledgerTitle => 'Mouvements du solde';
+
+  @override
+  String get ledgerCharge => 'Livraison acceptée';
+
+  @override
+  String get ledgerRefund => 'Remboursement (annulation)';
+
+  @override
+  String get ledgerPayment => 'Paiement validé';
+
+  @override
+  String get billingErrorDebtLimit =>
+      'Votre solde a atteint 1 000 DA. Réglez-le dans Ma formule pour accepter de nouvelles livraisons.';
+
+  @override
+  String get billingErrorNotEligible =>
+      'Votre formule ne vous permet pas d\'accepter de livraison. Ouvrez Ma formule.';
+
+  @override
+  String get billingErrorNotPending => 'Cette demande n\'est plus en attente.';
+
+  @override
+  String get billingErrorAlreadyTaken =>
+      'Un autre livreur a pris cette demande avant vous.';
+
+  @override
+  String get adminSuspects => 'Suspects';
+
+  @override
+  String get adminNoSuspectsTitle => 'Rien à signaler';
+
+  @override
+  String get adminNoSuspects =>
+      'Aucun livreur ne présente de comportement inhabituel.';
+
+  @override
+  String get adminPaymentApproved => 'Paiement validé';
+
+  @override
+  String suspectCancellations(String cancelled, String accepted) {
+    return '$cancelled livraisons annulées après acceptation, sur $accepted';
+  }
+
+  @override
+  String suspectChats(String chats, String accepted) {
+    return '$chats conversations pour $accepted livraisons acceptées';
+  }
+
+  @override
+  String suspectReports(String count) {
+    return 'Signalé par $count clients';
+  }
+
+  @override
+  String suspectDebt(String debt) {
+    return 'Bloqué depuis plus de 7 jours avec $debt DA de solde';
+  }
+
+  @override
+  String get statAccepted => 'Acceptées';
+
+  @override
+  String get statCompleted => 'Terminées';
+
+  @override
+  String get statCancelled => 'Annulées';
+
+  @override
+  String get statChats => 'Discussions';
+
+  @override
+  String get statReports => 'Signalements';
+
+  @override
+  String get reportsTitle => 'Signalements';
 }

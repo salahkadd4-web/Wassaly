@@ -24,6 +24,35 @@ Trois regles ne doivent jamais etre cassees, sinon les telephones refusent la mi
 
 ---
 
+## Cas de la version 1.2.0 (facturation des livreurs)
+
+Cette version deplace l'acceptation des livraisons sur le serveur. **L'ordre compte** :
+
+1. **Renseigner vos coordonnees de paiement** dans `lib/core/constants/app_config.dart`
+   (`paymentDetails` : numero CCP / RIP BaridiMob et nom du titulaire). Les livreurs les verront dans **Ma formule**.
+2. **Deployer le serveur avant l'APK** (Cloud Functions + regles) :
+   ```
+   cd functions
+   npm install
+   npm test
+   cd ..
+   firebase deploy --only functions,firestore:rules
+   ```
+   Le premier deploiement d'une fonction planifiee peut demander d'activer l'API Cloud Scheduler : acceptez.
+3. **Nettoyer les donnees de test** (numeros dans les profils publics) : `tools/strip_public_phones.js` (voir son en-tete).
+4. **Construire et publier l'APK** (etapes ci-dessous). `pubspec.yaml` est deja en `1.2.0+3`.
+
+**Personne n'a encore installe l'application ?** Alors deux options sont possibles, le QR ne change dans aucun cas :
+
+- **Nouvelle release `v1.2.0`** (recommande, garde l'historique) : etapes 3 a 6 ci-dessous.
+- **Remplacer le fichier de la release existante `v1.1.0`** : page de la release > **Edit** > supprimez `wassaly.apk` (icone
+  poubelle) > glissez le nouveau `wassaly.apk` > **Update release**. Ou en ligne de commande :
+  `gh release upload v1.1.0 wassaly.apk --clobber --repo salahkadd4-web/wassaly`.
+
+Dans les deux cas, verifiez ensuite le lien du QR (etape 6) : le telechargement doit donner le nouveau fichier.
+
+---
+
 ## Methode A : a la main (recommandee la premiere fois)
 
 ### 1. Verifier le code
@@ -128,7 +157,8 @@ Option `-SkipTests` pour ignorer `flutter test` (deconseille).
 
 ## Liste de controle rapide
 
-- [ ] `flutter analyze` et `flutter test` sans erreur
+- [ ] `flutter analyze`, `flutter test` et `cd functions && npm test` sans erreur
+- [ ] Cloud Functions et regles deployees **avant** l'APK si elles ont change
 - [ ] `pubspec.yaml` : build (apres le `+`) augmente
 - [ ] `android\key.properties` present (signature de release)
 - [ ] APK renomme `wassaly.apk`
@@ -142,5 +172,6 @@ Option `-SkipTests` pour ignorer `flutter test` (deconseille).
 |---|---|---|
 | 1.0.0 | 1 | Premiere diffusion |
 | 1.1.0 | 2 | Notifications push (livreurs), chiffre d'affaires (livreur + admin) |
+| 1.2.0 | 3 | Formules livreur (mensuelle ou 50 DA/livraison), anti-fraude, nouveau design. Deployer functions + regles avant. |
 
 (Ajoutez une ligne a chaque publication.)

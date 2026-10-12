@@ -9,14 +9,13 @@ import '../requests/request_providers.dart';
 
 /// Chiffre d'affaires du livreur connecte, calcule a partir de ses livraisons
 /// terminees (le montant est saisi a la fin de chaque course).
+/// Le mois en cours est le chiffre principal ; les autres periodes suivent.
 class RevenueCard extends ConsumerWidget {
   const RevenueCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.6);
     final requests = ref.watch(driverRequestsProvider).value ?? const [];
     final r = computeRevenue(requests);
 
@@ -28,47 +27,37 @@ class RevenueCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.account_balance_wallet_outlined,
-                    color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child:
-                      Text(t.revenueTitle, style: theme.textTheme.titleMedium),
-                ),
-              ],
-            ),
+            Text(t.revenueTitle, style: context.text.titleMedium),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: _Figure(label: t.revenueToday, value: da(r.today))),
-                Expanded(child: _Figure(label: t.revenueWeek, value: da(r.week))),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: _Figure(label: t.revenueMonth, value: da(r.month))),
-                Expanded(
-                  child: _Figure(
-                    label: t.revenueTotal,
-                    value: da(r.total),
-                    highlight: true,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+            Text(t.revenueMonth, style: context.text.labelMedium),
+            const SizedBox(height: 2),
+            Text(da(r.month), style: context.text.displaySmall),
             Text(
-              t.revenueDeliveries('${r.deliveries}'),
-              style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              t.revenueDeliveries('${r.monthDeliveries}'),
+              style: context.text.bodySmall,
             ),
-            if (r.withoutAmount > 0)
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              decoration: BoxDecoration(
+                color: context.surfaceAlt,
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              ),
+              child: Row(
+                children: [
+                  Expanded(child: _Figure(label: t.revenueToday, value: da(r.today))),
+                  Expanded(child: _Figure(label: t.revenueWeek, value: da(r.week))),
+                  Expanded(child: _Figure(label: t.revenueTotal, value: da(r.total))),
+                ],
+              ),
+            ),
+            if (r.withoutAmount > 0) ...[
+              const SizedBox(height: 8),
               Text(
                 t.revenueNoAmount('${r.withoutAmount}'),
-                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                style: context.text.bodySmall,
               ),
+            ],
           ],
         ),
       ),
@@ -77,35 +66,20 @@ class RevenueCard extends ConsumerWidget {
 }
 
 class _Figure extends StatelessWidget {
-  const _Figure({
-    required this.label,
-    required this.value,
-    this.highlight = false,
-  });
+  const _Figure({required this.label, required this.value});
 
   final String label;
   final String value;
-  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: highlight ? AppTheme.success : null,
-          ),
+        Text(label, style: context.text.labelSmall, textAlign: TextAlign.center),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(value, style: context.text.titleSmall),
         ),
       ],
     );

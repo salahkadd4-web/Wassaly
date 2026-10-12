@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/locale/locale_provider.dart';
+import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/city_illustration.dart';
 import '../../widgets/exit_confirm_scope.dart';
+import '../../widgets/logo_mark.dart';
 import '../../widgets/theme_toggle_button.dart';
 import 'auth_providers.dart';
 
@@ -41,14 +43,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final dark = theme.brightness == Brightness.dark;
-    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.65);
+    final lang = Localizations.localeOf(context).languageCode;
 
     return ExitConfirmScope(
       child: Scaffold(
-        backgroundColor: dark ? null : Colors.white,
+        backgroundColor: context.isDark ? null : Colors.white,
         body: SafeArea(
+          bottom: false,
           child: CustomScrollView(
             slivers: [
               SliverFillRemaining(
@@ -56,72 +57,68 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        PopupMenuButton<String>(
-                          tooltip: t.language,
-                          icon: const Icon(Icons.language),
-                          onSelected: (code) => ref
-                              .read(localeProvider.notifier)
-                              .setLocale(Locale(code)),
-                          itemBuilder: (_) => const [
-                            PopupMenuItem(value: 'fr', child: Text('Français')),
-                            PopupMenuItem(value: 'ar', child: Text('العربية')),
-                          ],
-                        ),
-                        const ThemeToggleButton(),
-                        const SizedBox(width: 4),
-                      ],
-                    ),
-                    Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.asset(
-                          'assets/branding/logo/wassaly_logo.png',
-                          height: 120,
-                        ),
-                      ),
-                    ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+                      child: Row(
                         children: [
-                          Text(
-                            t.welcomeGreeting,
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                          const LogoMark(size: 40),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => ref
+                                .read(localeProvider.notifier)
+                                .setLocale(Locale(lang == 'ar' ? 'fr' : 'ar')),
+                            child: Text(lang == 'ar' ? 'Français' : 'العربية'),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            t.welcomeTagline,
-                            style: theme.textTheme.bodyLarge
-                                ?.copyWith(color: muted),
-                          ),
+                          const ThemeToggleButton(),
                         ],
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                      child: ElevatedButton.icon(
-                        onPressed: _loading ? null : _signIn,
-                        icon: _loading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.login),
-                        label: Text(t.continueWithGoogle),
+                      padding: const EdgeInsets.fromLTRB(24, 36, 24, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.welcomeHeadline,
+                            style: context.text.headlineMedium?.copyWith(
+                              fontSize: 30,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            t.welcomeTagline,
+                            style: context.text.bodyLarge?.copyWith(color: context.muted),
+                          ),
+                          const SizedBox(height: 28),
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 56),
+                            ),
+                            onPressed: _loading ? null : _signIn,
+                            icon: _loading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.login_rounded),
+                            label: Text(t.continueWithGoogle),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            t.welcomeForWho,
+                            style: context.text.bodySmall,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    const SizedBox(
-                      height: 260,
-                      child: CityIllustration(),
-                    ),
+                    const Spacer(),
+                    const SizedBox(height: 24),
+                    const SizedBox(height: 240, child: CityIllustration()),
                   ],
                 ),
               ),
