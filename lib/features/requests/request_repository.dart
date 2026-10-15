@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../models/course_route.dart';
 import '../../models/delivery_request.dart';
-import '../../models/geo_place.dart';
 
 class RequestRepository {
   RequestRepository(this._db);
@@ -11,31 +11,52 @@ class RequestRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       _db.collection('deliveryRequests');
 
+  /// Demande a un livreur choisi. L'adresse exacte va dans private/route
+  /// (meme ecriture groupee) : le livreur ne la lira qu'apres l'accord.
   Future<void> create({
     required String clientId,
     required String clientName,
     required String driverId,
     required String driverName,
-    required GeoPlace pickup,
-    required GeoPlace delivery,
-    required String note,
+    required CourseDraft course,
   }) {
-    return _col.add({
-      'clientId': clientId,
-      'driverId': driverId,
-      'clientName': clientName,
-      'driverName': driverName,
-      'pickup': pickup.toMap(),
-      'delivery': delivery.toMap(),
-      'note': note.trim(),
-      'status': RequestStatus.pending,
-      'createdAt': FieldValue.serverTimestamp(),
+    final ref = _col.doc();
+    final batch = _db.batch()
+      ..set(ref, {
+        'clientId': clientId,
+        'driverId': driverId,
+        'clientName': clientName,
+        'driverName': driverName,
+        ...course.publicFields(),
+        'status': RequestStatus.pending,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      })
+      ..set(ref.collection('private').doc('route'), course.route.toMap());
+    return batch.commit();
+  }
+
+  /// Proposition du livreur (premiere offre ou reponse au client).
+  Future<void> proposeAsDriver(String id, int price) {
+    return _col.doc(id).update({
+      'status': RequestStatus.negotiating,
+      'price': price,
+      'lastBy': PriceBy.driver,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
-  /// Refus (livreur) ou annulation (client). L'acceptation passe par
-  /// BillingFunctions.acceptDelivery (serveur).
+  /// Contre-proposition du client.
+  Future<void> counterAsClient(String id, int price) {
+    return _col.doc(id).update({
+      'price': price,
+      'lastBy': PriceBy.client,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Refus (livreur) ou annulation (client). L'accord, lui, passe par
+  /// BillingFunctions.agreeDelivery (serveur).
   Future<void> setStatus(String id, String status) {
     return _col.doc(id).update({
       'status': status,
@@ -43,8 +64,7 @@ class RequestRepository {
     });
   }
 
-  /// Termine une livraison acceptee et enregistre son montant (DA).
-  /// Ce montant alimente le chiffre d'affaires du livreur.
+  /// Termine une livraison acceptee ; [amount] est le prix convenu.
   Future<void> complete(String id, int amount) {
     return _col.doc(id).update({
       'status': RequestStatus.completed,

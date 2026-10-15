@@ -13,8 +13,14 @@ enum BillingRefusal {
   /// La demande n'est plus en attente (annulee par le client...).
   notPending,
 
-  /// Un autre livreur a pris la demande ouverte avant vous.
+  /// Un autre livreur a obtenu la demande ouverte avant vous.
   alreadyTaken,
+
+  /// Ce n'est pas a vous d'accepter (vous avez fait la derniere proposition).
+  notYourTurn,
+
+  /// Le client voulait conclure, mais le livreur ne peut plus travailler.
+  driverUnavailable,
 
   /// Reseau ou erreur inattendue.
   unknown,
@@ -37,6 +43,10 @@ class BillingException implements Exception {
         return BillingRefusal.notPending;
       case 'already-taken':
         return BillingRefusal.alreadyTaken;
+      case 'not-your-turn':
+        return BillingRefusal.notYourTurn;
+      case 'driver-unavailable':
+        return BillingRefusal.driverUnavailable;
     }
     return BillingRefusal.unknown;
   }
@@ -52,6 +62,10 @@ class BillingException implements Exception {
         return t.billingErrorNotPending;
       case BillingRefusal.alreadyTaken:
         return t.billingErrorAlreadyTaken;
+      case BillingRefusal.notYourTurn:
+        return t.billingErrorNotYourTurn;
+      case BillingRefusal.driverUnavailable:
+        return t.billingErrorDriverUnavailable;
       case BillingRefusal.unknown:
         return t.genericError;
     }
@@ -77,17 +91,17 @@ class BillingFunctions {
     }
   }
 
-  /// Le livreur accepte une demande directe au [price] choisi dans
-  /// AppConfig.deliveryPricesDa (50 DA debites en formule a la livraison).
-  Future<void> acceptDelivery(String requestId, int price) =>
-      _call('acceptDelivery', {'requestId': requestId, 'price': price});
+  /// Accord sur le prix en cours d'une demande directe (par celui qui ne
+  /// l'a pas propose). Le serveur compte la course et partage les coordonnees.
+  Future<void> agreeDelivery(String requestId) =>
+      _call('agreeDelivery', {'requestId': requestId});
 
-  /// Le livreur prend une demande ouverte au [price] choisi ; retourne l'id
-  /// de la livraison creee.
-  Future<String?> takeOpenRequest(String openRequestId, int price) async {
+  /// Accord sur l'offre de [driverId] pour une demande ouverte ; retourne
+  /// l'id de la livraison creee.
+  Future<String?> agreeOffer(String openRequestId, String driverId) async {
     final data = await _call(
-      'takeOpenRequest',
-      {'openRequestId': openRequestId, 'price': price},
+      'agreeOffer',
+      {'openRequestId': openRequestId, 'driverId': driverId},
     );
     return data['deliveryRequestId'] as String?;
   }

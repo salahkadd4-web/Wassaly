@@ -200,14 +200,14 @@ Valeurs modifiables : `lib/core/constants/app_config.dart` **et** `functions/bil
 c'est le serveur qui debite, l'application ne fait qu'afficher).
 
 ### Comment les livraisons sont comptees
-Le livreur ne peut plus accepter une demande lui-meme dans Firestore : il passe par la Cloud Function `acceptDelivery`
-(ou `takeOpenRequest` pour une demande ouverte), qui verifie sa formule, debite 50 DA si besoin et note le mouvement
+Personne ne peut conclure une course directement dans Firestore : l'accord sur le prix passe par la Cloud Function
+`agreeDelivery` (ou `agreeOffer` pour une demande ouverte), qui verifie la formule du livreur, debite 50 DA si besoin et note le mouvement
 dans `driverBilling/{uid}/ledger`. Chaque livraison a un identifiant unique de debit : impossible de payer deux fois.
 
 ### Ce qui empeche de contourner l'application
 - **Numeros masques** : le telephone n'est plus dans les profils publics. Client et livreur le voient seulement une fois la
   livraison acceptee (`deliveryRequests/{id}/private/contact`, ecrit par le serveur).
-- **Demandes ouvertes** : plus de numero ni de chat avant de les prendre ; le premier livreur qui appuie sur **Je prends**
+- **Demandes ouvertes** : plus de numero ni d'adresse exacte avant l'accord ; chaque livreur fait une offre, et seul celui retenu
   l'obtient, et la course devient une livraison suivie.
 - **Chat, notes, noms** : les regles Firestore refusent tout texte contenant un numero (05/06/07, +213, chiffres arabes...).
 - **Signalement** : le client peut signaler un livreur (une fois par livreur, apres un echange).
@@ -235,11 +235,23 @@ La fonction planifiee `rolloverSubscriptions` utilise Cloud Scheduler (inclus da
 
 ## 6 octies. Prix, notes, references de paiement, recherche par zone
 
-### Prix de la course
-A l'acceptation (ou au **Je prends**), le livreur **choisit** le prix dans une liste : **100, 150, 200, 250 ou 300 DA**
-(pas de saisie libre). Le client voit le prix des l'acceptation ; s'il n'est pas d'accord, il annule.
-A la fin, **Marquer comme terminee** enregistre ce prix comme montant (les regles Firestore refusent tout autre montant).
-Liste modifiable : `deliveryPricesDa` dans `app_config.dart` **et** `DELIVERY_PRICES_DA` dans `functions/billing.js`.
+### Prix de la course (negociation)
+Le prix se **negocie**, entre **100 et 300 DA, par pas de 10 DA** (boutons -10 / +10 et raccourcis 100, 150, 200, 250, 300) :
+1. Le livreur **propose** un prix (ou refuse la demande).
+2. Le client **accepte**, **contre-propose** ou annule ; puis le livreur repond, et ainsi de suite, chacun a son tour.
+3. **A l'accord**, la course est comptee (+50 DA de solde pour un livreur « a la livraison »), et chacun voit le
+   **numero** de l'autre et l'**adresse exacte**.
+
+**Avant l'accord**, le livreur ne voit que le **quartier** de chaque etape et la **distance** de la course (si le client a
+partage ses deux positions GPS). L'adresse exacte est dans un document prive (`private/route`) que les regles Firestore
+ne lui ouvrent qu'apres l'accord.
+
+**Demande ouverte** : chaque livreur interesse fait **son offre** ; le client voit toutes les offres (avec la note de
+chaque livreur), negocie avec qui il veut, et le **premier accord** attribue la course (les autres offres sont closes).
+
+A la fin, **Marquer comme terminee** enregistre le prix convenu (les regles refusent tout autre montant).
+Bornes modifiables : `priceMinDa`, `priceMaxDa`, `priceStepDa` dans `app_config.dart`, **et** `PRICE_MIN_DA`,
+`PRICE_MAX_DA`, `PRICE_STEP_DA` dans `functions/billing.js`, **et** la fonction `validPrice` de `firestore.rules`.
 
 ### Notes
 Apres une livraison terminee, le client peut la **noter** (1 a 5 etoiles + commentaire facultatif), une seule fois.
@@ -285,10 +297,10 @@ firebase deploy --only functions,firestore:rules,firestore:indexes
    Annulez si besoin, ou **Signalez** le livreur.
 
 ### Demandes ouvertes (client -> livreurs)
-Le client appuie sur **Publier une course** (recuperation, livraison, note). Tous les livreurs qui peuvent travailler la
-voient dans l'onglet **Clients**, sans le numero du client. Le premier qui appuie sur **Je prends** obtient la course :
-elle devient une livraison acceptee, avec les numeros des deux cotes. Le client peut la **Cloturer** tant que personne ne l'a prise ;
-elle disparait aussi pour les livreurs apres 72 h.
+Le client appuie sur **Publier une course** (quartier et adresse exacte de chaque etape, note). Les livreurs qui peuvent
+travailler la voient dans l'onglet **Clients** (quartiers et distance seulement) et font chacun **une offre**. Le client
+negocie et conclut avec le livreur de son choix : la course devient une livraison acceptee, avec les numeros et l'adresse
+exacte. Le client peut la **Cloturer** tant qu'aucun accord n'est conclu ; elle disparait aussi pour les livreurs apres 72 h.
 
 ### Livreur
 1. Connexion Google, telephone, role **Livreur**. L'essai gratuit de 2 mois demarre automatiquement.

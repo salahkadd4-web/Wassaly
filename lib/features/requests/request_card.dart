@@ -21,13 +21,14 @@ import '../drivers/driver_providers.dart';
 import '../ratings/rating_sheet.dart';
 import '../reports/report_sheet.dart';
 import 'complete_dialog.dart';
-import 'price_sheet.dart';
+import 'negotiation_panel.dart';
 import 'request_providers.dart';
 
 /// Carte d'une demande de livraison, vue par le client ou par le livreur.
 ///
-/// Le numero de l'autre partie n'apparait qu'une fois la demande acceptee ;
-/// le livreur accepte via le serveur (debit de 50 DA en formule a la livraison).
+/// Tant qu'il n'y a pas d'accord, le prix se negocie ([NegotiationPanel]) et
+/// le livreur ne voit que les quartiers. A l'accord (serveur) : course
+/// comptee, telephones et adresse exacte partages.
 class RequestCard extends ConsumerStatefulWidget {
   const RequestCard({super.key, required this.request, required this.asDriver});
 
@@ -45,9 +46,14 @@ class _RequestCardState extends ConsumerState<RequestCard> {
   bool get asDriver => widget.asDriver;
 
   Future<void> _run(Future<void> Function() action) async {
+    final t = AppLocalizations.of(context)!;
     setState(() => _busy = true);
     try {
       await action();
+    } on BillingException catch (e) {
+      if (mounted) showSnack(context, e.message(t));
+    } catch (_) {
+      if (mounted) showSnack(context, t.genericError);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -72,45 +78,34 @@ class _RequestCardState extends ConsumerState<RequestCard> {
     return ok == true;
   }
 
-  Future<void> _setStatus(String status) async {
-    final t = AppLocalizations.of(context)!;
-    try {
-      await ref.read(requestRepositoryProvider).setStatus(request.id, status);
-    } catch (_) {
-      if (mounted) showSnack(context, t.genericError);
-    }
-  }
-
   Future<void> _cancel() async {
     final t = AppLocalizations.of(context)!;
     if (!await _confirm(t.confirmCancelTitle, t.confirmCancelBody, t.yes)) return;
-    await _run(() => _setStatus(RequestStatus.cancelled));
+    await _run(() => ref
+        .read(requestRepositoryProvider)
+        .setStatus(request.id, RequestStatus.cancelled));
   }
 
-  /// Acceptation par le serveur au prix choisi dans la liste. En formule a la
-  /// livraison, les 50 DA ajoutes au solde sont indiques dans la meme feuille.
-  Future<void> _accept(bool charged, int debt) async {
+  Future<void> _propose(int price) => _run(() {
+        final repo = ref.read(requestRepositoryProvider);
+        return asDriver
+            ? repo.proposeAsDriver(request.id, price)
+            : repo.counterAsClient(request.id, price);
+      });
+
+  Future<void> _agree() =>
+      _run(() => ref.read(billingFunctionsProvider).agreeDelivery(request.id));
+
+  Future<void> _reject() async {
     final t = AppLocalizations.of(context)!;
-    final fee = charged ? AppConfig.perDeliveryPriceDa : 0;
-    final price = await pickDeliveryPrice(
-      context,
-      title: t.acceptPriceTitle,
-      confirmLabel: t.accept,
-      feeDa: fee,
-      debtAfter: debt + fee,
-    );
-    if (price == null) return;
-    await _run(() async {
-      try {
-        await ref.read(billingFunctionsProvider).acceptDelivery(request.id, price);
-      } on BillingException catch (e) {
-        if (mounted) showSnack(context, e.message(t));
-      }
-    });
+    if (!await _confirm(t.refuseTitle, t.refuseBody, t.reject)) return;
+    await _run(() => ref
+        .read(requestRepositoryProvider)
+        .setStatus(request.id, RequestStatus.rejected));
   }
 
-  /// Le livreur termine la course : le montant est le prix convenu (les
-  /// anciennes demandes sans prix demandent encore une saisie).
+  /// Fin de course : le montant est le prix convenu (saisie seulement pour
+  /// les anciennes demandes sans prix).
   Future<void> _complete() async {
     final t = AppLocalizations.of(context)!;
     final price = request.price;
@@ -127,13 +122,7 @@ class _RequestCardState extends ConsumerState<RequestCard> {
     }
     if (chosen == null) return;
     final amount = chosen;
-    await _run(() async {
-      try {
-        await ref.read(requestRepositoryProvider).complete(request.id, amount);
-      } catch (_) {
-        if (mounted) showSnack(context, t.genericError);
-      }
-    });
+    await _run(() => ref.read(requestRepositoryProvider).complete(request.id, amount));
   }
 
   void _openChat() {
@@ -155,6 +144,17 @@ class _RequestCardState extends ConsumerState<RequestCard> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final name = asDriver ? request.clientName : request.driverName;
+
+    // Adresse exacte : le client la voit toujours, le livreur apres l'accord.
+    final canSeeExact = !asDriver || request.contactShared;
+    final route = canSeeExact
+        ? (ref.watch(deliveryRouteProvider(request.id)).value ?? request.legacyRoute)
+        : null;
+
+    // Prix convenu, affiche une fois l'accord conclu.
+    final agreedPrice = request.contactShared
+        ? (request.price ?? (request.isCompleted ? request.amount : null))
+        : null;
 
     String phone = '';
     if (request.contactShared && request.isOpen) {
@@ -189,25 +189,27 @@ class _RequestCardState extends ConsumerState<RequestCard> {
             ),
             const SizedBox(height: 16),
             RouteTrack(
-              pickup: request.pickup,
-              delivery: request.delivery,
-              showDirections: asDriver && request.isOpen,
+              pickup: RouteStop(area: request.pickupArea, place: route?.pickup),
+              delivery: RouteStop(area: request.deliveryArea, place: route?.delivery),
+              showDirections: asDriver && request.isAccepted,
+              exactHidden: !canSeeExact,
+              distanceKm: request.distanceKm,
             ),
             if (request.note.isNotEmpty) ...[
               const SizedBox(height: 14),
               _NoteBox(note: request.note),
             ],
-            if ((request.price ?? (request.isCompleted ? request.amount : null))
-                case final shown?) ...[
+            if (request.awaitingAgreement) ...[
+              const SizedBox(height: 14),
+              _negotiation(t),
+            ],
+            if (agreedPrice case final shown?) ...[
               const SizedBox(height: 14),
               Row(
                 children: [
                   Text(t.agreedPrice, style: context.text.bodyMedium),
                   const Spacer(),
-                  Text(
-                    t.amountDa(formatAmount(shown)),
-                    style: context.text.titleLarge,
-                  ),
+                  Text(t.amountDa(formatAmount(shown)), style: context.text.titleLarge),
                 ],
               ),
             ],
@@ -218,56 +220,44 @@ class _RequestCardState extends ConsumerState<RequestCard> {
     );
   }
 
+  Widget _negotiation(AppLocalizations t) {
+    var fee = 0;
+    var debt = 0;
+    if (asDriver) {
+      final me = ref.watch(authStateProvider).value?.uid ?? '';
+      if (ref.watch(driverProvider(me)).value?.isPerDeliveryMode ?? false) {
+        fee = AppConfig.perDeliveryPriceDa;
+        debt = ref.watch(myBillingProvider).value?.debt ?? 0;
+      }
+    }
+    return NegotiationPanel(
+      asDriver: asDriver,
+      price: request.isPending ? null : request.price,
+      lastBy: request.lastBy,
+      otherName: asDriver ? request.clientName : request.driverName,
+      busy: _busy,
+      onPropose: _propose,
+      onAccept: _agree,
+      // Le client annule avec le bouton du bas ; le livreur refuse ici.
+      onRefuse: asDriver ? _reject : null,
+      feeDa: fee,
+      debt: debt,
+    );
+  }
+
   List<Widget> _actions(AppLocalizations t, String phone) {
     if (asDriver) {
-      if (request.isPending) {
-        final me = ref.watch(authStateProvider).value?.uid ?? '';
-        final driver = ref.watch(driverProvider(me)).value;
-        final charged = driver?.isPerDeliveryMode ?? false;
-        final debt = charged ? (ref.watch(myBillingProvider).value?.debt ?? 0) : 0;
-        return [
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  style: AppTheme.dangerOutlined(context),
-                  onPressed: _busy ? null : () => _run(() => _setStatus(RequestStatus.rejected)),
-                  child: Text(t.reject),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: FilledButton(
-                  style: AppTheme.confirmButton,
-                  onPressed: _busy ? null : () => _accept(charged, debt),
-                  child: _busy
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : Text(t.accept),
-                ),
-              ),
-            ],
-          ),
-        ];
-      }
-      if (request.isAccepted) {
-        return [
-          const SizedBox(height: 16),
-          ContactButtons(phone: phone, onMessage: _openChat),
-          const SizedBox(height: 10),
-          FilledButton.icon(
-            onPressed: _busy ? null : _complete,
-            icon: const Icon(Icons.done_all_rounded),
-            label: Text(t.markCompleted),
-          ),
-        ];
-      }
-      return const [];
+      if (!request.isAccepted) return const [];
+      return [
+        const SizedBox(height: 16),
+        ContactButtons(phone: phone, onMessage: _openChat),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          onPressed: _busy ? null : _complete,
+          icon: const Icon(Icons.done_all_rounded),
+          label: Text(t.markCompleted),
+        ),
+      ];
     }
 
     // Vue client.
@@ -275,7 +265,7 @@ class _RequestCardState extends ConsumerState<RequestCard> {
       if (request.isOpen) ...[
         const SizedBox(height: 16),
         ContactButtons(phone: phone, onMessage: _openChat),
-        if (request.isPending) ...[
+        if (request.awaitingAgreement) ...[
           const SizedBox(height: 8),
           Text(
             t.contactAfterAccept,

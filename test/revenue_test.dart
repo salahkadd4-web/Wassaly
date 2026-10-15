@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wassaly/core/utils/formatters.dart';
 import 'package:wassaly/core/utils/revenue.dart';
 import 'package:wassaly/models/delivery_request.dart';
-import 'package:wassaly/models/geo_place.dart';
 
 DeliveryRequest _req({
   required String driverId,
@@ -17,8 +16,8 @@ DeliveryRequest _req({
     driverId: driverId,
     clientName: 'Client',
     driverName: 'Livreur',
-    pickup: const GeoPlace(address: 'A'),
-    delivery: const GeoPlace(address: 'B'),
+    pickupArea: 'A',
+    deliveryArea: 'B',
     note: '',
     status: status,
     createdAt: when,

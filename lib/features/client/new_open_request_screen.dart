@@ -10,8 +10,8 @@ import '../common/home_tab_provider.dart';
 import '../open_requests/open_request_providers.dart';
 import '../requests/route_form.dart';
 
-/// Demande ouverte : publiee a tous les livreurs proches, le premier qui la
-/// prend devient le livreur de la course.
+/// Demande ouverte : publiee aux livreurs proches, qui font chacun une offre ;
+/// le client negocie et conclut avec celui qu'il choisit.
 class NewOpenRequestScreen extends ConsumerWidget {
   const NewOpenRequestScreen({super.key});
 
@@ -28,16 +28,14 @@ class NewOpenRequestScreen extends ConsumerWidget {
         ),
         submitLabel: t.publishAction,
         submitIcon: Icons.campaign_rounded,
-        onSubmit: (pickup, delivery, note) async {
+        onSubmit: (course) async {
           final user = ref.read(authStateProvider).value;
           final profile = ref.read(userProfileProvider).value;
           if (user == null || profile == null) return;
           await ref.read(openRequestRepositoryProvider).create(
                 clientId: user.uid,
                 clientName: profile.name,
-                pickup: pickup,
-                delivery: delivery,
-                note: note,
+                course: course,
               );
           if (!context.mounted) return;
           ref.read(homeTabProvider.notifier).select(1);

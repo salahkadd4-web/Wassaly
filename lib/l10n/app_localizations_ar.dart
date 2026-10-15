@@ -482,14 +482,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get publishOpenRequestHint =>
-      'يراه كل الموصّلين القريبين، وأول من يأخذه يتواصل معك.';
+      'يقدّم لك الموصّلون القريبون عروضهم. أنت تختار ويمكنك التفاوض.';
 
   @override
   String get newOpenRequest => 'طلب مفتوح';
 
   @override
   String get openRequestIntro =>
-      'صف طلبك. أول موصّل يأخذه يحصل على رقمك ويتواصل معك.';
+      'صف طلبك. يرى الموصّلون القريبون الحي ويقدّمون عروضهم، وأنت تختار.';
 
   @override
   String get publishAction => 'نشر';
@@ -760,10 +760,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sendRequestShort => 'اطلب';
 
   @override
-  String get phoneAfterAccept => 'سيظهر رقمه بمجرد قبوله طلبك.';
+  String get phoneAfterAccept => 'سيظهر رقمه بعد الاتفاق على السعر.';
 
   @override
-  String get contactAfterAccept => 'سيظهر رقم الموصّل بمجرد قبوله.';
+  String get contactAfterAccept => 'سيظهر رقم الموصّل بعد الاتفاق على السعر.';
 
   @override
   String get noRequestsTitle => 'لا توجد طلبات';
@@ -799,12 +799,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String notifOpenRequestTaken(String name) {
-    return '$name أخذ طلبك';
+    return 'تم الاتفاق مع $name';
   }
 
   @override
   String openRequestTakenBy(String name) {
-    return 'أخذه $name';
+    return 'أُسند إلى $name';
   }
 
   @override
@@ -888,11 +888,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get takeHint => 'يظهر رقم الزبون بعد أخذ الطلب.';
 
   @override
-  String get openRequestsIntro => 'أول موصّل يأخذ الطلب يحصل على رقم الزبون.';
+  String get openRequestsIntro =>
+      'قدّم عرضك للزبون. يقارن العروض ويمكنه التفاوض ثم يختار موصّله.';
 
   @override
   String openRequestsIntroPaid(String price) {
-    return 'أول موصّل يأخذ الطلب يحصل على رقم الزبون، وتُضاف $price دج إلى المبلغ المستحق عليك.';
+    return 'قدّم عرضك للزبون. إذا قبله، تُضاف $price دج إلى المبلغ المستحق عليك.';
   }
 
   @override
@@ -1195,4 +1196,146 @@ class AppLocalizationsAr extends AppLocalizations {
   String suspectLowRating(String average, String count) {
     return 'معدل التقييم $average من $count تقييمات';
   }
+
+  @override
+  String get areaLabel => 'الحي';
+
+  @override
+  String get areaHint => 'مثال: حي الصباح، وسط المدينة';
+
+  @override
+  String get areaRequired => 'اكتب الحي';
+
+  @override
+  String get exactAddressLabel => 'العنوان الدقيق';
+
+  @override
+  String get exactAddressPrivacy =>
+      'يرى الموصّلون الحي فقط. يُشارك العنوان الدقيق وموقعك بعد الاتفاق على السعر.';
+
+  @override
+  String get exactAddressAfterAgreement =>
+      'يظهر العنوان الدقيق بعد الاتفاق على السعر';
+
+  @override
+  String courseDistance(String distance) {
+    return 'مسافة التوصيلة: $distance';
+  }
+
+  @override
+  String get statusNegotiating => 'قيد التفاوض';
+
+  @override
+  String get proposePriceTitle => 'اقتراح سعر';
+
+  @override
+  String get proposePriceHint => 'اقترح سعرك على الزبون.';
+
+  @override
+  String get proposeAction => 'اقتراح';
+
+  @override
+  String get counterAction => 'اقتراح سعر آخر';
+
+  @override
+  String counterTitle(String name) {
+    return 'سعرك لـ $name';
+  }
+
+  @override
+  String counterHint(String price) {
+    return 'الاقتراح الحالي: $price دج. عدّل بـ 10 دج.';
+  }
+
+  @override
+  String get yourProposal => 'اقتراحك';
+
+  @override
+  String waitingAnswer(String name) {
+    return 'في انتظار رد $name';
+  }
+
+  @override
+  String otherProposes(String name) {
+    return '$name يقترح';
+  }
+
+  @override
+  String waitingDriverPrice(String name) {
+    return 'في انتظار سعر $name';
+  }
+
+  @override
+  String acceptAmount(String price) {
+    return 'قبول $price دج';
+  }
+
+  @override
+  String agreeTitle(String price) {
+    return 'الاتفاق على $price دج؟';
+  }
+
+  @override
+  String agreeBody(String name) {
+    return 'سيُشارك الرقم والعنوان الدقيق مع $name.';
+  }
+
+  @override
+  String agreeFee(String fee, String debtAfter, String limit) {
+    return 'ستُضاف $fee دج إلى المبلغ المستحق عليك ليصبح $debtAfter دج (التوقيف عند $limit دج).';
+  }
+
+  @override
+  String get agreeAction => 'تأكيد الاتفاق';
+
+  @override
+  String agreementDone(String name) {
+    return 'تم الاتفاق مع $name';
+  }
+
+  @override
+  String get refuseTitle => 'رفض هذا الطلب؟';
+
+  @override
+  String get refuseBody => 'سيُبلَّغ الزبون ويمكنه اختيار موصّل آخر.';
+
+  @override
+  String get waitingClientRequests => 'في انتظار الزبون';
+
+  @override
+  String notifPriceProposed(String name, String price) {
+    return '$name يقترح $price دج';
+  }
+
+  @override
+  String get makeOfferTitle => 'تقديم عرض';
+
+  @override
+  String get makeOfferHint =>
+      'يقارن الزبون العروض ويمكنه التفاوض. تظهر معلوماته والعنوان الدقيق بعد الاتفاق.';
+
+  @override
+  String get withdrawOffer => 'سحب عرضي';
+
+  @override
+  String get offerRefusedByClient => 'رفض الزبون عرضك.';
+
+  @override
+  String get offerWithdrawn => 'سحبت عرضك.';
+
+  @override
+  String get waitingOffers => 'في انتظار عروض الموصّلين…';
+
+  @override
+  String offersCount(String count) {
+    return 'العروض المستلمة: $count';
+  }
+
+  @override
+  String get billingErrorNotYourTurn =>
+      'الرد على هذا الاقتراح من حق الطرف الآخر.';
+
+  @override
+  String get billingErrorDriverUnavailable =>
+      'لا يستطيع هذا الموصّل قبول توصيلات حاليًا. اختر موصّلًا آخر.';
 }

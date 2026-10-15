@@ -31,9 +31,18 @@ class AppConfig {
   /// ... et dans la limite de ce nombre de remboursements par mois.
   static const int maxRefundsPerMonth = 3;
 
-  /// Prix de course que le livreur choisit a l'acceptation (pas de saisie
-  /// libre). Doit rester identique a DELIVERY_PRICES_DA (functions/billing.js).
-  static const List<int> deliveryPricesDa = [100, 150, 200, 250, 300];
+  /// Prix d'une course negociee : de [priceMinDa] a [priceMaxDa], par pas de
+  /// [priceStepDa]. Doit rester identique a functions/billing.js et a la
+  /// fonction validPrice de firestore.rules.
+  static const int priceMinDa = 100;
+  static const int priceMaxDa = 300;
+  static const int priceStepDa = 10;
+
+  /// Raccourcis proposes dans le selecteur de prix.
+  static const List<int> priceShortcutsDa = [100, 150, 200, 250, 300];
+
+  static bool isValidPrice(int p) =>
+      p >= priceMinDa && p <= priceMaxDa && p % priceStepDa == 0;
 
   /// Rayon de recherche des livreurs autour du client.
   static const double searchRadiusKm = 10;

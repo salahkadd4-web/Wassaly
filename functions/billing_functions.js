@@ -5,10 +5,15 @@
  * l'application est public, on ne lui fait pas confiance. La logique pure
  * (montants, plafonds, remboursements) est dans billing.js et testee.
  *
- * Appelees par l'application (callable) :
- *   - acceptDelivery   : le livreur accepte une demande directe, au prix choisi ;
- *   - takeOpenRequest  : le livreur prend une demande ouverte (le premier l'obtient) ;
- *   - choosePlan       : le livreur choisit sa formule.
+ * Le prix d'une course se negocie dans Firestore (propositions et
+ * contre-propositions, controlees par firestore.rules). La conclusion de
+ * l'accord, elle, passe toujours par le serveur :
+ *   - agreeDelivery : accord sur une demande directe ;
+ *   - agreeOffer    : accord sur l'offre d'un livreur pour une demande ouverte
+ *                     (le premier accord ferme la demande) ;
+ *   - choosePlan    : le livreur choisit sa formule.
+ * A l'accord : course comptee, 50 DA en formule a la livraison, telephones
+ * et adresse exacte devoiles aux deux parties.
  * Declencheurs : remboursement a l'annulation, compteurs anti-fraude, notes.
  * Planifiee : bascule de fin d'essai / de mois paye, chaque nuit.
  *
@@ -90,20 +95,13 @@ function writeContact(tx, requestId, clientUser, driverUser) {
   );
 }
 
-/** Prix de course choisi par le livreur dans la liste (pas de saisie libre). */
-function requirePrice(request) {
-  const price = request.data && request.data.price;
-  if (!billing.isValidPrice(price)) throw new HttpsError('invalid-argument', 'price');
-  return price;
-}
-
 /** Lectures communes : livreur, sa facturation, les deux profils prives. */
-async function readParties(tx, uid, clientId) {
+async function readParties(tx, driverId, clientId) {
   const [driverSnap, billingSnap, clientUser, driverUser] = await Promise.all([
-    tx.get(db.collection('drivers').doc(uid)),
-    tx.get(billingRef(uid)),
+    tx.get(db.collection('drivers').doc(driverId)),
+    tx.get(billingRef(driverId)),
     tx.get(db.collection('users').doc(clientId)),
-    tx.get(db.collection('users').doc(uid)),
+    tx.get(db.collection('users').doc(driverId)),
   ]);
   if (!driverSnap.exists) throw fail('not-eligible');
   return {
@@ -114,82 +112,121 @@ async function readParties(tx, uid, clientId) {
   };
 }
 
-exports.acceptDelivery = onCall(async (request) => {
+/**
+ * Debit du livreur au moment de l'accord. Si c'est le client qui conclut et
+ * que le livreur ne peut plus travailler (dette, abonnement), on le dit au
+ * client sans detail sur la situation du livreur.
+ */
+function chargeAtAgreement(tx, args, callerIsDriver) {
+  try {
+    return chargeInTransaction(tx, args);
+  } catch (e) {
+    if (!callerIsDriver && e instanceof HttpsError) throw fail('driver-unavailable');
+    throw e;
+  }
+}
+
+exports.agreeDelivery = onCall(async (request) => {
   const uid = requireUid(request);
   const requestId = String((request.data && request.data.requestId) || '');
   if (!requestId) throw new HttpsError('invalid-argument', 'requestId');
-  const price = requirePrice(request);
 
   await db.runTransaction(async (tx) => {
     const reqRef = db.collection('deliveryRequests').doc(requestId);
     const req = (await tx.get(reqRef)).data();
-    if (!req || req.driverId !== uid || req.status !== 'pending') throw fail('not-pending');
+    if (!req || req.status !== 'negotiating') throw fail('not-pending');
+    const callerIsDriver = uid === req.driverId;
+    if (!callerIsDriver && uid !== req.clientId) throw fail('not-pending');
+    if (!billing.canAgree(req.lastBy, callerIsDriver)) throw fail('not-your-turn');
+    if (!billing.isValidPrice(req.price)) throw fail('not-pending');
 
-    const p = await readParties(tx, uid, req.clientId);
-    const charged = chargeInTransaction(tx, {
-      uid,
-      driver: p.driver,
-      billingData: p.billingData,
-      requestId,
-      now: Date.now(),
-    });
+    const p = await readParties(tx, req.driverId, req.clientId);
+    const charged = chargeAtAgreement(
+      tx,
+      { uid: req.driverId, driver: p.driver, billingData: p.billingData, requestId, now: Date.now() },
+      callerIsDriver,
+    );
     tx.update(reqRef, {
       status: 'accepted',
       acceptedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
       charged,
-      price,
     });
     writeContact(tx, requestId, p.clientUser, p.driverUser);
   });
   return { ok: true };
 });
 
-exports.takeOpenRequest = onCall(async (request) => {
+exports.agreeOffer = onCall(async (request) => {
   const uid = requireUid(request);
   const openId = String((request.data && request.data.openRequestId) || '');
-  if (!openId) throw new HttpsError('invalid-argument', 'openRequestId');
-  const price = requirePrice(request);
+  const driverId = String((request.data && request.data.driverId) || '');
+  if (!openId || !driverId) throw new HttpsError('invalid-argument', 'openRequestId');
 
+  const openRef = db.collection('openRequests').doc(openId);
+  const offersRef = openRef.collection('offers');
   const deliveryRef = db.collection('deliveryRequests').doc();
   await db.runTransaction(async (tx) => {
-    const openRef = db.collection('openRequests').doc(openId);
-    const open = (await tx.get(openRef)).data();
+    const [openSnap, offerSnap, routeSnap, othersSnap] = await Promise.all([
+      tx.get(openRef),
+      tx.get(offersRef.doc(driverId)),
+      tx.get(openRef.collection('private').doc('route')),
+      tx.get(offersRef.where('status', '==', 'open')),
+    ]);
+    const open = openSnap.data();
+    const offer = offerSnap.data();
     if (!open || open.status !== 'open') throw fail('already-taken');
+    if (!offer || offer.status !== 'open') throw fail('not-pending');
+    const callerIsDriver = uid === driverId;
+    if (!callerIsDriver && uid !== open.clientId) throw fail('not-pending');
+    if (!billing.canAgree(offer.lastBy, callerIsDriver)) throw fail('not-your-turn');
+    if (!billing.isValidPrice(offer.price)) throw fail('not-pending');
 
-    const p = await readParties(tx, uid, open.clientId);
-    const charged = chargeInTransaction(tx, {
-      uid,
-      driver: p.driver,
-      billingData: p.billingData,
-      requestId: deliveryRef.id,
-      now: Date.now(),
-    });
+    const p = await readParties(tx, driverId, open.clientId);
+    const charged = chargeAtAgreement(
+      tx,
+      { uid: driverId, driver: p.driver, billingData: p.billingData, requestId: deliveryRef.id, now: Date.now() },
+      callerIsDriver,
+    );
     tx.set(deliveryRef, {
       clientId: open.clientId,
-      driverId: uid,
+      driverId,
       clientName: open.clientName || '',
       driverName: p.driver.name || '',
-      pickup: open.pickup || {},
-      delivery: open.delivery || {},
+      pickupArea: open.pickupArea || '',
+      deliveryArea: open.deliveryArea || '',
+      distanceKm: open.distanceKm == null ? null : open.distanceKm,
       note: open.note || '',
       status: 'accepted',
       source: 'open',
       openRequestId: openId,
+      price: offer.price,
+      lastBy: offer.lastBy,
       charged,
-      price,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
       acceptedAt: FieldValue.serverTimestamp(),
     });
+    const route = routeSnap.data() || {};
+    tx.set(deliveryRef.collection('private').doc('route'), {
+      pickup: route.pickup || {},
+      delivery: route.delivery || {},
+    });
+    writeContact(tx, deliveryRef.id, p.clientUser, p.driverUser);
     tx.update(openRef, {
       status: 'taken',
-      takenBy: uid,
+      takenBy: driverId,
       takenByName: p.driver.name || '',
       deliveryRequestId: deliveryRef.id,
       updatedAt: FieldValue.serverTimestamp(),
     });
-    writeContact(tx, deliveryRef.id, p.clientUser, p.driverUser);
+    // Les autres offres en cours sont closes : la course est attribuee.
+    for (const other of othersSnap.docs) {
+      tx.update(other.ref, {
+        status: other.id === driverId ? 'agreed' : 'closed',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
   });
   return { deliveryRequestId: deliveryRef.id };
 });

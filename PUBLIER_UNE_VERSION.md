@@ -173,6 +173,6 @@ Option `-SkipTests` pour ignorer `flutter test` (deconseille).
 | 1.0.0 | 1 | Premiere diffusion |
 | 1.1.0 | 2 | Notifications push (livreurs), chiffre d'affaires (livreur + admin) |
 | 1.2.0 | 3 | Formules livreur (mensuelle ou 50 DA/livraison), anti-fraude, nouveau design. Deployer functions + regles avant. |
-| 1.3.0 | 5 | Prix de course choisi dans une liste, notes, reference de paiement unique, recherche a 10 km, notifications clients. Deployer functions + regles + index avant. |
+| 1.3.0 | 5 | Negociation du prix (100-300 DA), offres multiples, adresse exacte privee, notes, reference de paiement unique, recherche a 10 km, notifications clients. Deployer functions + regles + index avant. |
 
 (Ajoutez une ligne a chaque publication.)

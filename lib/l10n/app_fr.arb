@@ -189,9 +189,9 @@
   ,"openRequestsLocked": "Choisissez une formule pour voir les clients qui cherchent un livreur."
   ,"notifNewOpenRequest": "Un client cherche un livreur."
   ,"publishOpenRequest": "Publier une course"
-  ,"publishOpenRequestHint": "Tous les livreurs proches la voient. Le premier qui la prend vous contacte."
+  ,"publishOpenRequestHint": "Les livreurs proches vous font leurs offres. Vous choisissez, vous pouvez négocier."
   ,"newOpenRequest": "Demande ouverte"
-  ,"openRequestIntro": "Décrivez votre course. Le premier livreur qui la prend obtient votre numéro et vous contacte."
+  ,"openRequestIntro": "Décrivez votre course. Les livreurs proches voient le quartier et vous font une offre ; vous choisissez."
   ,"publishAction": "Publier"
   ,"openRequestPublished": "Demande publiée. Les livreurs peuvent maintenant vous contacter."
   ,"myOpenRequests": "Mes demandes ouvertes"
@@ -301,8 +301,8 @@
   ,"tabHome": "Accueil"
   ,"publishHeroTitle": "Besoin d'un livreur ?"
   ,"sendRequestShort": "Demander"
-  ,"phoneAfterAccept": "Son numéro s'affichera dès qu'il aura accepté votre demande."
-  ,"contactAfterAccept": "Le numéro du livreur s'affichera dès qu'il aura accepté."
+  ,"phoneAfterAccept": "Son numéro s'affichera après l'accord sur le prix."
+  ,"contactAfterAccept": "Le numéro du livreur s'affichera après l'accord sur le prix."
   ,"noRequestsTitle": "Aucune demande"
   ,"currentRequests": "En cours"
   ,"pastRequests": "Historique"
@@ -313,9 +313,9 @@
   ,"phoneNotAllowedChat": "Message non envoyé : les numéros s'échangent une fois la livraison acceptée."
   ,"chatSafetyNotice": "Les numéros de téléphone s'échangent une fois la livraison acceptée."
   ,"noConversationsTitle": "Aucune conversation"
-  ,"notifOpenRequestTaken": "{name} a pris votre demande"
+  ,"notifOpenRequestTaken": "Accord conclu avec {name}"
   ,"@notifOpenRequestTaken": {"placeholders": {"name": {"type": "String"}}}
-  ,"openRequestTakenBy": "Prise par {name}"
+  ,"openRequestTakenBy": "Attribuée à {name}"
   ,"@openRequestTakenBy": {"placeholders": {"name": {"type": "String"}}}
   ,"reportDriver": "Signaler ce livreur"
   ,"reportTitle": "Signaler {name}"
@@ -345,8 +345,8 @@
   ,"takeDone": "Demande prise. Contactez {name} depuis l'onglet Demandes."
   ,"@takeDone": {"placeholders": {"name": {"type": "String"}}}
   ,"takeHint": "Le contact du client s'affiche une fois la demande prise."
-  ,"openRequestsIntro": "Le premier livreur qui prend une demande obtient le contact du client."
-  ,"openRequestsIntroPaid": "Le premier livreur qui prend une demande obtient le contact du client. {price} DA sont ajoutés à votre solde."
+  ,"openRequestsIntro": "Faites une offre au client. Il compare les offres, peut négocier et choisit son livreur."
+  ,"openRequestsIntroPaid": "Faites une offre au client. S'il l'accepte, {price} DA sont ajoutés à votre solde."
   ,"@openRequestsIntroPaid": {"placeholders": {"price": {"type": "String"}}}
   ,"openRequestsLockedDebt": "Votre solde a atteint 1 000 DA. Réglez-le pour voir et prendre les demandes."
   ,"noOpenRequestsTitle": "Aucune demande pour l'instant"
@@ -455,4 +455,54 @@
   ,"paymentReferenceUsed": "Cette référence de paiement a déjà été déclarée. Vérifiez-la ou contactez l'équipe Wassaly."
   ,"suspectLowRating": "Note moyenne de {average} sur {count} avis"
   ,"@suspectLowRating": {"placeholders": {"average": {"type": "String"}, "count": {"type": "String"}}}
+  ,"areaLabel": "Quartier"
+  ,"areaHint": "Ex. : Hai Sabah, Centre-ville"
+  ,"areaRequired": "Indiquez le quartier"
+  ,"exactAddressLabel": "Adresse exacte"
+  ,"exactAddressPrivacy": "Les livreurs voient seulement le quartier. L'adresse exacte et votre position sont partagées après l'accord sur le prix."
+  ,"exactAddressAfterAgreement": "Adresse exacte visible après l'accord sur le prix"
+  ,"courseDistance": "Distance de la course : {distance}"
+  ,"@courseDistance": {"placeholders": {"distance": {"type": "String"}}}
+  ,"statusNegotiating": "En négociation"
+  ,"proposePriceTitle": "Proposer un prix"
+  ,"proposePriceHint": "Proposez votre prix au client."
+  ,"proposeAction": "Proposer"
+  ,"counterAction": "Contre-proposer"
+  ,"counterTitle": "Votre prix pour {name}"
+  ,"@counterTitle": {"placeholders": {"name": {"type": "String"}}}
+  ,"counterHint": "Proposition actuelle : {price} DA. Ajustez de 10 DA en 10 DA."
+  ,"@counterHint": {"placeholders": {"price": {"type": "String"}}}
+  ,"yourProposal": "Votre proposition"
+  ,"waitingAnswer": "En attente de la réponse de {name}"
+  ,"@waitingAnswer": {"placeholders": {"name": {"type": "String"}}}
+  ,"otherProposes": "{name} propose"
+  ,"@otherProposes": {"placeholders": {"name": {"type": "String"}}}
+  ,"waitingDriverPrice": "En attente du prix de {name}"
+  ,"@waitingDriverPrice": {"placeholders": {"name": {"type": "String"}}}
+  ,"acceptAmount": "Accepter {price} DA"
+  ,"@acceptAmount": {"placeholders": {"price": {"type": "String"}}}
+  ,"agreeTitle": "Conclure à {price} DA ?"
+  ,"@agreeTitle": {"placeholders": {"price": {"type": "String"}}}
+  ,"agreeBody": "Le numéro et l'adresse exacte seront partagés avec {name}."
+  ,"@agreeBody": {"placeholders": {"name": {"type": "String"}}}
+  ,"agreeFee": "{fee} DA seront ajoutés à votre solde, qui passera à {debtAfter} DA (blocage à {limit} DA)."
+  ,"@agreeFee": {"placeholders": {"fee": {"type": "String"}, "debtAfter": {"type": "String"}, "limit": {"type": "String"}}}
+  ,"agreeAction": "Conclure l'accord"
+  ,"agreementDone": "Accord conclu avec {name}"
+  ,"@agreementDone": {"placeholders": {"name": {"type": "String"}}}
+  ,"refuseTitle": "Refuser cette demande ?"
+  ,"refuseBody": "Le client sera prévenu et pourra choisir un autre livreur."
+  ,"waitingClientRequests": "En attente du client"
+  ,"notifPriceProposed": "{name} propose {price} DA"
+  ,"@notifPriceProposed": {"placeholders": {"name": {"type": "String"}, "price": {"type": "String"}}}
+  ,"makeOfferTitle": "Faire une offre"
+  ,"makeOfferHint": "Le client compare les offres et peut négocier. Ses coordonnées et l'adresse exacte s'affichent après l'accord."
+  ,"withdrawOffer": "Retirer mon offre"
+  ,"offerRefusedByClient": "Le client a refusé votre offre."
+  ,"offerWithdrawn": "Vous avez retiré votre offre."
+  ,"waitingOffers": "En attente des offres des livreurs…"
+  ,"offersCount": "Offres reçues : {count}"
+  ,"@offersCount": {"placeholders": {"count": {"type": "String"}}}
+  ,"billingErrorNotYourTurn": "C'est à l'autre partie de répondre à cette proposition."
+  ,"billingErrorDriverUnavailable": "Ce livreur ne peut plus accepter de course pour le moment. Choisissez un autre livreur."
 }

@@ -189,9 +189,9 @@
   ,"openRequestsLocked": "اختر صيغة لرؤية الزبائن الذين يبحثون عن موصّل."
   ,"notifNewOpenRequest": "زبون يبحث عن موصّل."
   ,"publishOpenRequest": "نشر طلب توصيل"
-  ,"publishOpenRequestHint": "يراه كل الموصّلين القريبين، وأول من يأخذه يتواصل معك."
+  ,"publishOpenRequestHint": "يقدّم لك الموصّلون القريبون عروضهم. أنت تختار ويمكنك التفاوض."
   ,"newOpenRequest": "طلب مفتوح"
-  ,"openRequestIntro": "صف طلبك. أول موصّل يأخذه يحصل على رقمك ويتواصل معك."
+  ,"openRequestIntro": "صف طلبك. يرى الموصّلون القريبون الحي ويقدّمون عروضهم، وأنت تختار."
   ,"publishAction": "نشر"
   ,"openRequestPublished": "تم نشر الطلب. يمكن للموصّلين التواصل معك الآن."
   ,"myOpenRequests": "طلباتي المفتوحة"
@@ -301,8 +301,8 @@
   ,"tabHome": "الرئيسية"
   ,"publishHeroTitle": "تحتاج إلى موصّل؟"
   ,"sendRequestShort": "اطلب"
-  ,"phoneAfterAccept": "سيظهر رقمه بمجرد قبوله طلبك."
-  ,"contactAfterAccept": "سيظهر رقم الموصّل بمجرد قبوله."
+  ,"phoneAfterAccept": "سيظهر رقمه بعد الاتفاق على السعر."
+  ,"contactAfterAccept": "سيظهر رقم الموصّل بعد الاتفاق على السعر."
   ,"noRequestsTitle": "لا توجد طلبات"
   ,"currentRequests": "جارية"
   ,"pastRequests": "السجل"
@@ -313,9 +313,9 @@
   ,"phoneNotAllowedChat": "لم تُرسل الرسالة: تُتبادل الأرقام بعد قبول التوصيلة."
   ,"chatSafetyNotice": "تُتبادل أرقام الهاتف بعد قبول التوصيلة."
   ,"noConversationsTitle": "لا توجد محادثات"
-  ,"notifOpenRequestTaken": "{name} أخذ طلبك"
+  ,"notifOpenRequestTaken": "تم الاتفاق مع {name}"
   ,"@notifOpenRequestTaken": {"placeholders": {"name": {"type": "String"}}}
-  ,"openRequestTakenBy": "أخذه {name}"
+  ,"openRequestTakenBy": "أُسند إلى {name}"
   ,"@openRequestTakenBy": {"placeholders": {"name": {"type": "String"}}}
   ,"reportDriver": "الإبلاغ عن هذا الموصّل"
   ,"reportTitle": "الإبلاغ عن {name}"
@@ -345,8 +345,8 @@
   ,"takeDone": "تم أخذ الطلب. تواصل مع {name} من تبويب الطلبات."
   ,"@takeDone": {"placeholders": {"name": {"type": "String"}}}
   ,"takeHint": "يظهر رقم الزبون بعد أخذ الطلب."
-  ,"openRequestsIntro": "أول موصّل يأخذ الطلب يحصل على رقم الزبون."
-  ,"openRequestsIntroPaid": "أول موصّل يأخذ الطلب يحصل على رقم الزبون، وتُضاف {price} دج إلى المبلغ المستحق عليك."
+  ,"openRequestsIntro": "قدّم عرضك للزبون. يقارن العروض ويمكنه التفاوض ثم يختار موصّله."
+  ,"openRequestsIntroPaid": "قدّم عرضك للزبون. إذا قبله، تُضاف {price} دج إلى المبلغ المستحق عليك."
   ,"@openRequestsIntroPaid": {"placeholders": {"price": {"type": "String"}}}
   ,"openRequestsLockedDebt": "بلغ المبلغ المستحق عليك 1000 دج. ادفعه لرؤية الطلبات وأخذها."
   ,"noOpenRequestsTitle": "لا توجد طلبات حاليًا"
@@ -455,4 +455,54 @@
   ,"paymentReferenceUsed": "سبق التصريح بمرجع الدفع هذا. تحقق منه أو تواصل مع فريق وصّلي."
   ,"suspectLowRating": "معدل التقييم {average} من {count} تقييمات"
   ,"@suspectLowRating": {"placeholders": {"average": {"type": "String"}, "count": {"type": "String"}}}
+  ,"areaLabel": "الحي"
+  ,"areaHint": "مثال: حي الصباح، وسط المدينة"
+  ,"areaRequired": "اكتب الحي"
+  ,"exactAddressLabel": "العنوان الدقيق"
+  ,"exactAddressPrivacy": "يرى الموصّلون الحي فقط. يُشارك العنوان الدقيق وموقعك بعد الاتفاق على السعر."
+  ,"exactAddressAfterAgreement": "يظهر العنوان الدقيق بعد الاتفاق على السعر"
+  ,"courseDistance": "مسافة التوصيلة: {distance}"
+  ,"@courseDistance": {"placeholders": {"distance": {"type": "String"}}}
+  ,"statusNegotiating": "قيد التفاوض"
+  ,"proposePriceTitle": "اقتراح سعر"
+  ,"proposePriceHint": "اقترح سعرك على الزبون."
+  ,"proposeAction": "اقتراح"
+  ,"counterAction": "اقتراح سعر آخر"
+  ,"counterTitle": "سعرك لـ {name}"
+  ,"@counterTitle": {"placeholders": {"name": {"type": "String"}}}
+  ,"counterHint": "الاقتراح الحالي: {price} دج. عدّل بـ 10 دج."
+  ,"@counterHint": {"placeholders": {"price": {"type": "String"}}}
+  ,"yourProposal": "اقتراحك"
+  ,"waitingAnswer": "في انتظار رد {name}"
+  ,"@waitingAnswer": {"placeholders": {"name": {"type": "String"}}}
+  ,"otherProposes": "{name} يقترح"
+  ,"@otherProposes": {"placeholders": {"name": {"type": "String"}}}
+  ,"waitingDriverPrice": "في انتظار سعر {name}"
+  ,"@waitingDriverPrice": {"placeholders": {"name": {"type": "String"}}}
+  ,"acceptAmount": "قبول {price} دج"
+  ,"@acceptAmount": {"placeholders": {"price": {"type": "String"}}}
+  ,"agreeTitle": "الاتفاق على {price} دج؟"
+  ,"@agreeTitle": {"placeholders": {"price": {"type": "String"}}}
+  ,"agreeBody": "سيُشارك الرقم والعنوان الدقيق مع {name}."
+  ,"@agreeBody": {"placeholders": {"name": {"type": "String"}}}
+  ,"agreeFee": "ستُضاف {fee} دج إلى المبلغ المستحق عليك ليصبح {debtAfter} دج (التوقيف عند {limit} دج)."
+  ,"@agreeFee": {"placeholders": {"fee": {"type": "String"}, "debtAfter": {"type": "String"}, "limit": {"type": "String"}}}
+  ,"agreeAction": "تأكيد الاتفاق"
+  ,"agreementDone": "تم الاتفاق مع {name}"
+  ,"@agreementDone": {"placeholders": {"name": {"type": "String"}}}
+  ,"refuseTitle": "رفض هذا الطلب؟"
+  ,"refuseBody": "سيُبلَّغ الزبون ويمكنه اختيار موصّل آخر."
+  ,"waitingClientRequests": "في انتظار الزبون"
+  ,"notifPriceProposed": "{name} يقترح {price} دج"
+  ,"@notifPriceProposed": {"placeholders": {"name": {"type": "String"}, "price": {"type": "String"}}}
+  ,"makeOfferTitle": "تقديم عرض"
+  ,"makeOfferHint": "يقارن الزبون العروض ويمكنه التفاوض. تظهر معلوماته والعنوان الدقيق بعد الاتفاق."
+  ,"withdrawOffer": "سحب عرضي"
+  ,"offerRefusedByClient": "رفض الزبون عرضك."
+  ,"offerWithdrawn": "سحبت عرضك."
+  ,"waitingOffers": "في انتظار عروض الموصّلين…"
+  ,"offersCount": "العروض المستلمة: {count}"
+  ,"@offersCount": {"placeholders": {"count": {"type": "String"}}}
+  ,"billingErrorNotYourTurn": "الرد على هذا الاقتراح من حق الطرف الآخر."
+  ,"billingErrorDriverUnavailable": "لا يستطيع هذا الموصّل قبول توصيلات حاليًا. اختر موصّلًا آخر."
 }

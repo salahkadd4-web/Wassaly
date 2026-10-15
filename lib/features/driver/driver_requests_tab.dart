@@ -9,7 +9,8 @@ import '../../widgets/state_views.dart';
 import '../requests/request_card.dart';
 import '../requests/request_providers.dart';
 
-/// Demandes du livreur : a traiter, en cours, puis l'historique.
+/// Demandes du livreur : a traiter (a lui de repondre), en attente du client,
+/// en cours, puis l'historique.
 class DriverRequestsTab extends ConsumerWidget {
   const DriverRequestsTab({super.key});
 
@@ -29,7 +30,10 @@ class DriverRequestsTab extends ConsumerWidget {
             message: t.noRequestsDriver,
           );
         }
-        final pending = list.where((r) => r.isPending).toList();
+        final pending = list.where((r) => r.myTurn(asDriver: true)).toList();
+        final waiting = list
+            .where((r) => r.awaitingAgreement && !r.myTurn(asDriver: true))
+            .toList();
         final current = list.where((r) => r.isAccepted).toList();
         final past = list.where((r) => !r.isOpen).toList();
 
@@ -46,6 +50,7 @@ class DriverRequestsTab extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
             if (pending.isNotEmpty) ...section(t.toHandleRequests, pending),
+            if (waiting.isNotEmpty) ...section(t.waitingClientRequests, waiting),
             if (current.isNotEmpty) ...section(t.currentRequests, current),
             if (past.isNotEmpty) ...section(t.pastRequests, past),
           ],

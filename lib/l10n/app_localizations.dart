@@ -995,7 +995,7 @@ abstract class AppLocalizations {
   /// No description provided for @publishOpenRequestHint.
   ///
   /// In fr, this message translates to:
-  /// **'Tous les livreurs proches la voient. Le premier qui la prend vous contacte.'**
+  /// **'Les livreurs proches vous font leurs offres. Vous choisissez, vous pouvez négocier.'**
   String get publishOpenRequestHint;
 
   /// No description provided for @newOpenRequest.
@@ -1007,7 +1007,7 @@ abstract class AppLocalizations {
   /// No description provided for @openRequestIntro.
   ///
   /// In fr, this message translates to:
-  /// **'Décrivez votre course. Le premier livreur qui la prend obtient votre numéro et vous contacte.'**
+  /// **'Décrivez votre course. Les livreurs proches voient le quartier et vous font une offre ; vous choisissez.'**
   String get openRequestIntro;
 
   /// No description provided for @publishAction.
@@ -1517,13 +1517,13 @@ abstract class AppLocalizations {
   /// No description provided for @phoneAfterAccept.
   ///
   /// In fr, this message translates to:
-  /// **'Son numéro s\'affichera dès qu\'il aura accepté votre demande.'**
+  /// **'Son numéro s\'affichera après l\'accord sur le prix.'**
   String get phoneAfterAccept;
 
   /// No description provided for @contactAfterAccept.
   ///
   /// In fr, this message translates to:
-  /// **'Le numéro du livreur s\'affichera dès qu\'il aura accepté.'**
+  /// **'Le numéro du livreur s\'affichera après l\'accord sur le prix.'**
   String get contactAfterAccept;
 
   /// No description provided for @noRequestsTitle.
@@ -1589,13 +1589,13 @@ abstract class AppLocalizations {
   /// No description provided for @notifOpenRequestTaken.
   ///
   /// In fr, this message translates to:
-  /// **'{name} a pris votre demande'**
+  /// **'Accord conclu avec {name}'**
   String notifOpenRequestTaken(String name);
 
   /// No description provided for @openRequestTakenBy.
   ///
   /// In fr, this message translates to:
-  /// **'Prise par {name}'**
+  /// **'Attribuée à {name}'**
   String openRequestTakenBy(String name);
 
   /// No description provided for @reportDriver.
@@ -1733,13 +1733,13 @@ abstract class AppLocalizations {
   /// No description provided for @openRequestsIntro.
   ///
   /// In fr, this message translates to:
-  /// **'Le premier livreur qui prend une demande obtient le contact du client.'**
+  /// **'Faites une offre au client. Il compare les offres, peut négocier et choisit son livreur.'**
   String get openRequestsIntro;
 
   /// No description provided for @openRequestsIntroPaid.
   ///
   /// In fr, this message translates to:
-  /// **'Le premier livreur qui prend une demande obtient le contact du client. {price} DA sont ajoutés à votre solde.'**
+  /// **'Faites une offre au client. S\'il l\'accepte, {price} DA sont ajoutés à votre solde.'**
   String openRequestsIntroPaid(String price);
 
   /// No description provided for @openRequestsLockedDebt.
@@ -2227,6 +2227,228 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Note moyenne de {average} sur {count} avis'**
   String suspectLowRating(String average, String count);
+
+  /// No description provided for @areaLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quartier'**
+  String get areaLabel;
+
+  /// No description provided for @areaHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex. : Hai Sabah, Centre-ville'**
+  String get areaHint;
+
+  /// No description provided for @areaRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Indiquez le quartier'**
+  String get areaRequired;
+
+  /// No description provided for @exactAddressLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse exacte'**
+  String get exactAddressLabel;
+
+  /// No description provided for @exactAddressPrivacy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les livreurs voient seulement le quartier. L\'adresse exacte et votre position sont partagées après l\'accord sur le prix.'**
+  String get exactAddressPrivacy;
+
+  /// No description provided for @exactAddressAfterAgreement.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse exacte visible après l\'accord sur le prix'**
+  String get exactAddressAfterAgreement;
+
+  /// No description provided for @courseDistance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Distance de la course : {distance}'**
+  String courseDistance(String distance);
+
+  /// No description provided for @statusNegotiating.
+  ///
+  /// In fr, this message translates to:
+  /// **'En négociation'**
+  String get statusNegotiating;
+
+  /// No description provided for @proposePriceTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Proposer un prix'**
+  String get proposePriceTitle;
+
+  /// No description provided for @proposePriceHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Proposez votre prix au client.'**
+  String get proposePriceHint;
+
+  /// No description provided for @proposeAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Proposer'**
+  String get proposeAction;
+
+  /// No description provided for @counterAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contre-proposer'**
+  String get counterAction;
+
+  /// No description provided for @counterTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre prix pour {name}'**
+  String counterTitle(String name);
+
+  /// No description provided for @counterHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Proposition actuelle : {price} DA. Ajustez de 10 DA en 10 DA.'**
+  String counterHint(String price);
+
+  /// No description provided for @yourProposal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre proposition'**
+  String get yourProposal;
+
+  /// No description provided for @waitingAnswer.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente de la réponse de {name}'**
+  String waitingAnswer(String name);
+
+  /// No description provided for @otherProposes.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name} propose'**
+  String otherProposes(String name);
+
+  /// No description provided for @waitingDriverPrice.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente du prix de {name}'**
+  String waitingDriverPrice(String name);
+
+  /// No description provided for @acceptAmount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accepter {price} DA'**
+  String acceptAmount(String price);
+
+  /// No description provided for @agreeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conclure à {price} DA ?'**
+  String agreeTitle(String price);
+
+  /// No description provided for @agreeBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le numéro et l\'adresse exacte seront partagés avec {name}.'**
+  String agreeBody(String name);
+
+  /// No description provided for @agreeFee.
+  ///
+  /// In fr, this message translates to:
+  /// **'{fee} DA seront ajoutés à votre solde, qui passera à {debtAfter} DA (blocage à {limit} DA).'**
+  String agreeFee(String fee, String debtAfter, String limit);
+
+  /// No description provided for @agreeAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conclure l\'accord'**
+  String get agreeAction;
+
+  /// No description provided for @agreementDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accord conclu avec {name}'**
+  String agreementDone(String name);
+
+  /// No description provided for @refuseTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Refuser cette demande ?'**
+  String get refuseTitle;
+
+  /// No description provided for @refuseBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le client sera prévenu et pourra choisir un autre livreur.'**
+  String get refuseBody;
+
+  /// No description provided for @waitingClientRequests.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente du client'**
+  String get waitingClientRequests;
+
+  /// No description provided for @notifPriceProposed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name} propose {price} DA'**
+  String notifPriceProposed(String name, String price);
+
+  /// No description provided for @makeOfferTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Faire une offre'**
+  String get makeOfferTitle;
+
+  /// No description provided for @makeOfferHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le client compare les offres et peut négocier. Ses coordonnées et l\'adresse exacte s\'affichent après l\'accord.'**
+  String get makeOfferHint;
+
+  /// No description provided for @withdrawOffer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer mon offre'**
+  String get withdrawOffer;
+
+  /// No description provided for @offerRefusedByClient.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le client a refusé votre offre.'**
+  String get offerRefusedByClient;
+
+  /// No description provided for @offerWithdrawn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous avez retiré votre offre.'**
+  String get offerWithdrawn;
+
+  /// No description provided for @waitingOffers.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente des offres des livreurs…'**
+  String get waitingOffers;
+
+  /// No description provided for @offersCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Offres reçues : {count}'**
+  String offersCount(String count);
+
+  /// No description provided for @billingErrorNotYourTurn.
+  ///
+  /// In fr, this message translates to:
+  /// **'C\'est à l\'autre partie de répondre à cette proposition.'**
+  String get billingErrorNotYourTurn;
+
+  /// No description provided for @billingErrorDriverUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce livreur ne peut plus accepter de course pour le moment. Choisissez un autre livreur.'**
+  String get billingErrorDriverUnavailable;
 }
 
 class _AppLocalizationsDelegate

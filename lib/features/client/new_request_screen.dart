@@ -56,7 +56,7 @@ class NewRequestScreen extends ConsumerWidget {
             ),
             submitLabel: t.sendToDriver,
             submitIcon: Icons.send_rounded,
-            onSubmit: (pickup, delivery, note) async {
+            onSubmit: (course) async {
               final user = ref.read(authStateProvider).value;
               final profile = ref.read(userProfileProvider).value;
               if (user == null || profile == null) return;
@@ -65,9 +65,7 @@ class NewRequestScreen extends ConsumerWidget {
                     clientName: profile.name,
                     driverId: driver.uid,
                     driverName: driver.name,
-                    pickup: pickup,
-                    delivery: delivery,
-                    note: note,
+                    course: course,
                   );
               if (!context.mounted) return;
               ref.read(homeTabProvider.notifier).select(1);

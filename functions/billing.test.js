@@ -139,9 +139,17 @@ test('changement de formule', () => {
   assert.deepEqual(b.planChange(driver(), 0, 'gratuit', NOW), { error: 'invalid-plan' });
 });
 
-test('prix de course : uniquement ceux de la liste', () => {
-  for (const p of [100, 150, 200, 250, 300]) assert.equal(b.isValidPrice(p), true);
-  for (const p of [0, 50, 120, 350, 1000, '200', 200.5, null, undefined]) {
+test('prix de course : 100 a 300 DA par pas de 10', () => {
+  for (const p of [100, 110, 150, 200, 290, 300]) assert.equal(b.isValidPrice(p), true, String(p));
+  for (const p of [0, 90, 105, 310, 1000, '200', 200.5, null, undefined]) {
     assert.equal(b.isValidPrice(p), false, String(p));
   }
+});
+
+test('negociation : seul celui qui n a pas propose peut accepter', () => {
+  assert.equal(b.canAgree('driver', false), true); // le client accepte l'offre du livreur
+  assert.equal(b.canAgree('driver', true), false); // le livreur ne s'accepte pas lui-meme
+  assert.equal(b.canAgree('client', true), true);
+  assert.equal(b.canAgree('client', false), false);
+  assert.equal(b.canAgree(undefined, true), false);
 });

@@ -66,6 +66,12 @@ class RequestStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     switch (status) {
+      case RequestStatus.negotiating:
+        return StatusChip(
+          label: t.statusNegotiating,
+          color: AppTheme.orange,
+          icon: Icons.swap_vert_rounded,
+        );
       case RequestStatus.accepted:
         return StatusChip(label: t.statusAccepted, color: AppTheme.blue);
       case RequestStatus.rejected:

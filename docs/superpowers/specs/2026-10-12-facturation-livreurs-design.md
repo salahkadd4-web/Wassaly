@@ -2,6 +2,11 @@
 
 Date : 2026-10-12 · Implemente sur `main` (non commite)
 
+> **Mise a jour du 2026-10-15** : l'acceptation directe (`acceptDelivery`) et le « Je prends » (`takeOpenRequest`)
+> ont ete remplaces par une **negociation du prix** (100 a 300 DA par pas de 10, chacun a son tour) conclue par
+> `agreeDelivery` / `agreeOffer`, avec offres multiples sur les demandes ouvertes et adresse exacte privee jusqu'a
+> l'accord. Le debit de 50 DA a lieu a l'accord. Voir GUIDE.md, section 6 octies. Le reste de ce document reste valable.
+
 ## 1. Objectif
 
 Après 2 mois d'essai gratuit, le livreur choisit entre :

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/course_route.dart';
 import '../../models/open_request.dart';
 import '../auth/auth_providers.dart';
 import '../drivers/driver_providers.dart';
@@ -66,6 +67,52 @@ final driverOpenRequestsProvider = StreamProvider<List<OpenRequest>>((ref) {
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
   });
+});
+
+/// Adresse exacte d'une demande ouverte (client uniquement).
+final openRequestRouteProvider =
+    StreamProvider.family<CourseRoute?, String>((ref, openId) {
+  return ref
+      .watch(firestoreProvider)
+      .collection('openRequests')
+      .doc(openId)
+      .collection('private')
+      .doc('route')
+      .snapshots()
+      .map((s) => CourseRoute.fromMap(s.data()));
+});
+
+/// Offres recues sur une demande ouverte (client) : en negociation d'abord,
+/// les plus recentes ensuite.
+final offersProvider = StreamProvider.family<List<Offer>, String>((ref, openId) {
+  return ref
+      .watch(firestoreProvider)
+      .collection('openRequests')
+      .doc(openId)
+      .collection('offers')
+      .snapshots()
+      .map((s) {
+    final list = [for (final d in s.docs) Offer.fromMap(openId, d.id, d.data())];
+    list.sort((a, b) {
+      if (a.isOpen != b.isOpen) return a.isOpen ? -1 : 1;
+      return b.updatedAt.compareTo(a.updatedAt);
+    });
+    return list;
+  });
+});
+
+/// Offre du livreur connecte sur une demande ouverte (null s'il n'en a pas fait).
+final myOfferProvider = StreamProvider.family<Offer?, String>((ref, openId) {
+  final user = ref.watch(authStateProvider).value;
+  if (user == null) return Stream.value(null);
+  return ref
+      .watch(firestoreProvider)
+      .collection('openRequests')
+      .doc(openId)
+      .collection('offers')
+      .doc(user.uid)
+      .snapshots()
+      .map((s) => s.exists ? Offer.fromMap(openId, s.id, s.data()!) : null);
 });
 
 /// Nombre de demandes ouvertes visibles par le livreur (pastille de l'onglet).

@@ -4,14 +4,16 @@ import 'package:geolocator/geolocator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/phone_guard.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/course_route.dart';
 import '../../models/geo_place.dart';
 import '../../services/location_service.dart';
 import '../../widgets/route_track.dart';
 import '../../widgets/snack.dart';
 
 /// Formulaire d'une course, commun a la demande directe et a la demande
-/// ouverte : lieu de recuperation, lieu de livraison (adresse et/ou GPS),
-/// note. Les deux lieux sont relies par le trace de course.
+/// ouverte. Pour chaque etape : le quartier (visible des livreurs avant
+/// l'accord) et l'adresse exacte et/ou le GPS (prives jusqu'a l'accord).
+/// Les deux etapes sont reliees par le trace de course.
 class RouteForm extends StatefulWidget {
   const RouteForm({
     super.key,
@@ -27,8 +29,7 @@ class RouteForm extends StatefulWidget {
   final IconData submitIcon;
 
   /// Envoi ; une exception laisse le formulaire rempli et affiche l'erreur.
-  final Future<void> Function(GeoPlace pickup, GeoPlace delivery, String note)
-      onSubmit;
+  final Future<void> Function(CourseDraft course) onSubmit;
 
   @override
   State<RouteForm> createState() => _RouteFormState();
@@ -38,6 +39,8 @@ class _RouteFormState extends State<RouteForm> {
   final _formKey = GlobalKey<FormState>();
   final _pickupCtrl = TextEditingController();
   final _deliveryCtrl = TextEditingController();
+  final _pickupAreaCtrl = TextEditingController();
+  final _deliveryAreaCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
 
   Position? _pickupGps;
@@ -50,6 +53,8 @@ class _RouteFormState extends State<RouteForm> {
   void dispose() {
     _pickupCtrl.dispose();
     _deliveryCtrl.dispose();
+    _pickupAreaCtrl.dispose();
+    _deliveryAreaCtrl.dispose();
     _noteCtrl.dispose();
     super.dispose();
   }
@@ -85,11 +90,21 @@ class _RouteFormState extends State<RouteForm> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _sending = true);
     try {
-      await widget.onSubmit(
-        _place(_pickupCtrl, _pickupGps),
-        _place(_deliveryCtrl, _deliveryGps),
-        _noteCtrl.text,
-      );
+      final a = _pickupGps;
+      final b = _deliveryGps;
+      await widget.onSubmit(CourseDraft(
+        pickupArea: _pickupAreaCtrl.text,
+        deliveryArea: _deliveryAreaCtrl.text,
+        route: CourseRoute(
+          pickup: _place(_pickupCtrl, a),
+          delivery: _place(_deliveryCtrl, b),
+        ),
+        note: _noteCtrl.text,
+        // Distance publique, seulement si les deux positions sont partagees.
+        distanceKm: (a != null && b != null)
+            ? LocationService.distanceKm(a.latitude, a.longitude, b.latitude, b.longitude)
+            : null,
+      ));
     } catch (_) {
       if (mounted) showSnack(context, AppLocalizations.of(context)!.genericError);
     } finally {
@@ -115,6 +130,7 @@ class _RouteFormState extends State<RouteForm> {
                   _StopField(
                     first: true,
                     label: t.pickup,
+                    areaController: _pickupAreaCtrl,
                     controller: _pickupCtrl,
                     hasGps: _pickupGps != null,
                     locating: _locatingPickup,
@@ -124,6 +140,7 @@ class _RouteFormState extends State<RouteForm> {
                   _StopField(
                     first: false,
                     label: t.delivery,
+                    areaController: _deliveryAreaCtrl,
                     controller: _deliveryCtrl,
                     hasGps: _deliveryGps != null,
                     locating: _locatingDelivery,
@@ -133,6 +150,14 @@ class _RouteFormState extends State<RouteForm> {
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(Icons.lock_outline_rounded, size: 16, color: context.muted),
+              const SizedBox(width: 8),
+              Expanded(child: Text(t.exactAddressPrivacy, style: context.text.bodySmall)),
+            ],
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -169,6 +194,7 @@ class _StopField extends StatelessWidget {
   const _StopField({
     required this.first,
     required this.label,
+    required this.areaController,
     required this.controller,
     required this.hasGps,
     required this.locating,
@@ -179,6 +205,11 @@ class _StopField extends StatelessWidget {
   /// Recuperation (point orange, relie a l'etape suivante) ou livraison (epingle).
   final bool first;
   final String label;
+
+  /// Quartier : public (les livreurs le voient avant l'accord).
+  final TextEditingController areaController;
+
+  /// Adresse exacte : privee jusqu'a l'accord.
   final TextEditingController controller;
   final bool hasGps;
   final bool locating;
@@ -194,9 +225,26 @@ class _StopField extends StatelessWidget {
         Text(label, style: context.text.titleSmall),
         const SizedBox(height: 8),
         TextFormField(
+          controller: areaController,
+          textInputAction: TextInputAction.next,
+          maxLength: 40,
+          decoration: InputDecoration(
+            labelText: t.areaLabel,
+            hintText: t.areaHint,
+            counterText: '',
+          ),
+          validator: (v) {
+            final value = (v ?? '').trim();
+            if (value.isEmpty) return t.areaRequired;
+            if (containsPhoneNumber(value)) return t.phoneNotAllowed;
+            return null;
+          },
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
           controller: controller,
           textInputAction: TextInputAction.next,
-          decoration: InputDecoration(hintText: t.addressHint),
+          decoration: InputDecoration(labelText: t.exactAddressLabel, hintText: t.addressHint),
           validator: (v) {
             final value = (v ?? '').trim();
             if (value.isEmpty && !hasGps) return t.placeRequired;

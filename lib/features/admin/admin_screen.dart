@@ -501,7 +501,11 @@ class _AdminRequestTile extends StatelessWidget {
               children: [
                 const Icon(Icons.upload_outlined, size: 16),
                 const SizedBox(width: 6),
-                Expanded(child: Text(addr(request.pickup.address))),
+                Expanded(
+                  child: Text(addr(request.pickupArea.isNotEmpty
+                      ? request.pickupArea
+                      : request.legacyRoute?.pickup.address ?? '')),
+                ),
               ],
             ),
             const SizedBox(height: 2),
@@ -509,7 +513,11 @@ class _AdminRequestTile extends StatelessWidget {
               children: [
                 const Icon(Icons.home_outlined, size: 16),
                 const SizedBox(width: 6),
-                Expanded(child: Text(addr(request.delivery.address))),
+                Expanded(
+                  child: Text(addr(request.deliveryArea.isNotEmpty
+                      ? request.deliveryArea
+                      : request.legacyRoute?.delivery.address ?? '')),
+                ),
               ],
             ),
             if (request.isCompleted && request.amount != null) ...[

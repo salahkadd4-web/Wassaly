@@ -12,8 +12,10 @@
 
 const PER_DELIVERY_PRICE_DA = 50;
 
-/** Prix de course que le livreur peut proposer au client (pas de saisie libre). */
-const DELIVERY_PRICES_DA = [100, 150, 200, 250, 300];
+/** Prix d'une course negociee : de 100 a 300 DA, par pas de 10 DA. */
+const PRICE_MIN_DA = 100;
+const PRICE_MAX_DA = 300;
+const PRICE_STEP_DA = 10;
 const DEBT_LIMIT_DA = 1000;
 const REFUND_WINDOW_MS = 2 * 60 * 60 * 1000;
 const MAX_REFUNDS_PER_MONTH = 3;
@@ -85,9 +87,24 @@ function refundDecision({ charged, acceptedAtMs, cancelledAtMs, refundMonth, ref
   return { refund, refundMonth: month, refundsThisMonth: refund ? used + 1 : used };
 }
 
-/** Prix de course valide : un des prix proposes. */
+/** Prix de course valide : entier, entre 100 et 300 DA, multiple de 10. */
 function isValidPrice(price) {
-  return Number.isInteger(price) && DELIVERY_PRICES_DA.includes(price);
+  return (
+    Number.isInteger(price) &&
+    price >= PRICE_MIN_DA &&
+    price <= PRICE_MAX_DA &&
+    price % PRICE_STEP_DA === 0
+  );
+}
+
+/**
+ * Negociation : qui peut accepter le prix en cours ? Celui qui ne l'a pas
+ * propose (lastBy = 'driver' -> le client, lastBy = 'client' -> le livreur).
+ */
+function canAgree(lastBy, callerIsDriver) {
+  if (lastBy === 'driver') return !callerIsDriver;
+  if (lastBy === 'client') return callerIsDriver;
+  return false;
 }
 
 /** Dette apres un remboursement ou un paiement (jamais negative). */
@@ -135,7 +152,9 @@ function planChange(driver, debt, plan, nowMs) {
 
 module.exports = {
   PER_DELIVERY_PRICE_DA,
-  DELIVERY_PRICES_DA,
+  PRICE_MIN_DA,
+  PRICE_MAX_DA,
+  PRICE_STEP_DA,
   DEBT_LIMIT_DA,
   REFUND_WINDOW_MS,
   MAX_REFUNDS_PER_MONTH,
@@ -145,6 +164,7 @@ module.exports = {
   isEligible,
   applyCharge,
   isValidPrice,
+  canAgree,
   refundDecision,
   reduceDebt,
   rolloverStatus,

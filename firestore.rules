@@ -43,6 +43,34 @@ service cloud.firestore {
         && text.matches('(?s).*(0|٠|۰|[+]?213|00213)[ .-]*[5-7٥-٧۵-۷]([ .-]*[0-9٠-٩۰-۹]){8}.*');
     }
 
+    // Prix d'une course negociee : 100 a 300 DA, par pas de 10
+    // (meme regle que isValidPrice dans functions/billing.js).
+    function validPrice(p) {
+      return p is int && p >= 100 && p <= 300 && p % 10 == 0;
+    }
+
+    // Quartier d'une etape : texte court, visible avant l'accord.
+    function validArea(a) {
+      return a is string && a.size() > 0 && a.size() <= 40 && !hasPhone(a);
+    }
+
+    // Champs publics d'une course (sans l'adresse exacte, qui est privee).
+    function validCourse(d) {
+      return validArea(d.pickupArea)
+        && validArea(d.deliveryArea)
+        && (d.get('distanceKm', null) == null
+            || (d.distanceKm is number && d.distanceKm >= 0 && d.distanceKm <= 500))
+        && d.note is string
+        && d.note.size() <= 300
+        && !hasPhone(d.note);
+    }
+
+    // Adresse exacte d'une course (document private/route).
+    function validRoute(d) {
+      return d.keys().hasOnly(['pickup', 'delivery'])
+        && d.pickup is map && d.delivery is map;
+    }
+
     // Textes libres d'une conversation sans numero de telephone.
     function convTextsClean() {
       return !hasPhone(request.resource.data.get('lastMessage', ''))
@@ -222,10 +250,11 @@ service cloud.firestore {
       }
     }
 
-    // Demandes de livraison.
-    // L'acceptation passe par la Cloud Function acceptDelivery (debit de la
-    // formule a la livraison) : le livreur ne peut pas passer lui-meme une
-    // demande a "accepted".
+    // Demandes de livraison (a un livreur choisi).
+    // Le prix se negocie ici, chacun a son tour : le livreur propose
+    // (pending -> negotiating), le client contre-propose, et ainsi de suite.
+    // L'ACCORD passe par la Cloud Function agreeDelivery (debit, telephones,
+    // adresse exacte) : personne ne peut passer lui-meme une demande a "accepted".
     match /deliveryRequests/{rid} {
       allow read: if signedIn()
         && (resource.data.clientId == request.auth.uid
@@ -234,25 +263,46 @@ service cloud.firestore {
 
       allow create: if isOwner(request.resource.data.clientId)
         && request.resource.data.status == 'pending'
-        && request.resource.data.note is string
-        && !hasPhone(request.resource.data.note)
+        && validCourse(request.resource.data)
         && request.resource.data.keys().hasOnly(
-             ['clientId', 'driverId', 'clientName', 'driverName',
-              'pickup', 'delivery', 'note', 'status', 'createdAt', 'updatedAt']);
+             ['clientId', 'driverId', 'clientName', 'driverName', 'pickupArea',
+              'deliveryArea', 'distanceKm', 'note', 'status', 'createdAt', 'updatedAt']);
 
-      allow update: if signedIn()
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['status', 'updatedAt', 'amount', 'completedAt'])
-        && (
-          // Le livreur refuse (sans toucher au montant)...
+      allow update: if signedIn() && (
+          // Le livreur propose un prix : la premiere fois, ou en reponse au client.
           (resource.data.driverId == request.auth.uid
-            && resource.data.status == 'pending'
+            && (resource.data.status == 'pending'
+                || (resource.data.status == 'negotiating'
+                    && resource.data.get('lastBy', '') == 'client'))
+            && request.resource.data.status == 'negotiating'
+            && request.resource.data.lastBy == 'driver'
+            && validPrice(request.resource.data.price)
+            && isSubscribedDriver()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'price', 'lastBy', 'updatedAt']))
+          // Le client contre-propose en reponse au livreur.
+          || (resource.data.clientId == request.auth.uid
+            && resource.data.status == 'negotiating'
+            && resource.data.get('lastBy', '') == 'driver'
+            && request.resource.data.status == 'negotiating'
+            && request.resource.data.lastBy == 'client'
+            && validPrice(request.resource.data.price)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['price', 'lastBy', 'updatedAt']))
+          // Le livreur refuse, tant qu'il n'y a pas d'accord.
+          || (resource.data.driverId == request.auth.uid
+            && resource.data.status in ['pending', 'negotiating']
             && request.resource.data.status == 'rejected'
-            && !request.resource.data.diff(resource.data).affectedKeys()
-                  .hasAny(['amount', 'completedAt']))
-          // ... ou termine la livraison acceptee. Le montant est le prix
-          // convenu a l'acceptation (choisi dans la liste, ecrit par le serveur) ;
-          // saisie libre seulement pour les anciennes demandes sans prix.
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'updatedAt']))
+          // Le client annule tant que ce n'est pas termine.
+          || (resource.data.clientId == request.auth.uid
+            && resource.data.status in ['pending', 'negotiating', 'accepted']
+            && request.resource.data.status == 'cancelled'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'updatedAt']))
+          // Le livreur termine la course acceptee : le montant est le prix
+          // convenu (saisie libre seulement pour les anciennes demandes sans prix).
           || (resource.data.driverId == request.auth.uid
             && resource.data.status == 'accepted'
             && request.resource.data.status == 'completed'
@@ -261,32 +311,37 @@ service cloud.firestore {
             && request.resource.data.amount <= 1000000
             && request.resource.data.amount
                  == resource.data.get('price', request.resource.data.amount)
-            && request.resource.data.completedAt == request.time)
-          // Le client peut annuler tant que ce n'est pas termine.
-          || (resource.data.clientId == request.auth.uid
-            && resource.data.status in ['pending', 'accepted']
-            && request.resource.data.status == 'cancelled'
-            && !request.resource.data.diff(resource.data).affectedKeys()
-                  .hasAny(['amount', 'completedAt']))
+            && request.resource.data.completedAt == request.time
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'amount', 'completedAt', 'updatedAt']))
         );
 
       allow delete: if false;
 
-      // Telephones des deux parties, ecrits par la Cloud Function a
-      // l'acceptation et lisibles seulement une fois la demande acceptee.
+      // private/route : adresse exacte + GPS, ecrite par le client a la
+      // creation ; le livreur ne la lit qu'apres l'accord.
+      // private/contact : telephones, ecrits par le serveur a l'accord.
       match /private/{doc} {
         allow read: if signedIn()
           && (isAdmin()
+              || (doc == 'route'
+                  && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid)
               || ((get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid
                    || get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.driverId == request.auth.uid)
                   && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status in ['accepted', 'completed']));
-        allow write: if false;
+        allow create: if signedIn()
+          && doc == 'route'
+          && getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid
+          && getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status == 'pending'
+          && validRoute(request.resource.data);
+        allow update, delete: if false;
       }
     }
 
-    // Demandes ouvertes : publiees par un client, lues par les livreurs qui
-    // peuvent travailler. Un livreur la prend via la Cloud Function
-    // takeOpenRequest (statut "taken", elle devient une livraison suivie).
+    // Demandes ouvertes : publiees par un client, visibles (quartiers, distance,
+    // note) par les livreurs qui peuvent travailler. Chaque livreur fait une
+    // offre (offers/{sonUid}) ; le premier accord (Cloud Function agreeOffer)
+    // attribue la course et ferme la demande (statut "taken").
     match /openRequests/{rid} {
       allow read: if signedIn()
         && (resource.data.clientId == request.auth.uid
@@ -296,14 +351,12 @@ service cloud.firestore {
       allow create: if isOwner(request.resource.data.clientId)
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'client'
         && request.resource.data.status == 'open'
-        && request.resource.data.note is string
-        && request.resource.data.note.size() <= 300
-        && !hasPhone(request.resource.data.note)
+        && validCourse(request.resource.data)
         && request.resource.data.keys().hasOnly(
-             ['clientId', 'clientName', 'pickup', 'delivery',
+             ['clientId', 'clientName', 'pickupArea', 'deliveryArea', 'distanceKm',
               'note', 'status', 'createdAt', 'updatedAt']);
 
-      // Le client peut seulement la cloturer, tant que personne ne l'a prise.
+      // Le client peut seulement la cloturer, tant qu'aucun accord n'est conclu.
       allow update: if signedIn()
         && resource.data.clientId == request.auth.uid
         && resource.data.status == 'open'
@@ -312,6 +365,70 @@ service cloud.firestore {
              .hasOnly(['status', 'updatedAt']);
 
       allow delete: if false;
+
+      // Adresse exacte : le client seulement (copiee dans la livraison a l'accord).
+      match /private/{doc} {
+        allow read: if signedIn()
+          && (isAdmin()
+              || get(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid);
+        allow create: if signedIn()
+          && doc == 'route'
+          && getAfter(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid
+          && getAfter(/databases/$(database)/documents/openRequests/$(rid)).data.status == 'open'
+          && validRoute(request.resource.data);
+        allow update, delete: if false;
+      }
+
+      // Offre d'un livreur (id = uid du livreur), negociee chacun a son tour.
+      match /offers/{driverId} {
+        allow read: if signedIn()
+          && (driverId == request.auth.uid
+              || isAdmin()
+              || get(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid);
+
+        allow create: if signedIn()
+          && driverId == request.auth.uid
+          && isSubscribedDriver()
+          && get(/databases/$(database)/documents/openRequests/$(rid)).data.status == 'open'
+          && request.resource.data.keys().hasOnly(
+               ['driverId', 'driverName', 'price', 'lastBy', 'status', 'createdAt', 'updatedAt'])
+          && request.resource.data.driverId == request.auth.uid
+          && request.resource.data.driverName is string
+          && !hasPhone(request.resource.data.driverName)
+          && request.resource.data.lastBy == 'driver'
+          && request.resource.data.status == 'open'
+          && validPrice(request.resource.data.price);
+
+        allow update: if signedIn()
+          && resource.data.status == 'open'
+          && get(/databases/$(database)/documents/openRequests/$(rid)).data.status == 'open'
+          && (
+            // Le livreur repond a la contre-proposition du client.
+            (driverId == request.auth.uid
+              && resource.data.lastBy == 'client'
+              && request.resource.data.lastBy == 'driver'
+              && validPrice(request.resource.data.price)
+              && isSubscribedDriver()
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['price', 'lastBy', 'updatedAt']))
+            // Le client contre-propose.
+            || (get(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid
+              && resource.data.lastBy == 'driver'
+              && request.resource.data.lastBy == 'client'
+              && validPrice(request.resource.data.price)
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['price', 'lastBy', 'updatedAt']))
+            // L'un ou l'autre refuse : la negociation avec ce livreur s'arrete.
+            || (request.resource.data.status == 'refused'
+              && ((driverId == request.auth.uid && request.resource.data.refusedBy == 'driver')
+                  || (get(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid
+                      && request.resource.data.refusedBy == 'client'))
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['status', 'refusedBy', 'updatedAt']))
+          );
+
+        allow delete: if false;
+      }
     }
 
     // Jetons de notification push (FCM) des appareils d'un livreur.

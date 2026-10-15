@@ -1,31 +1,53 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
+import '../core/utils/formatters.dart';
 import '../core/utils/map_links.dart';
 import '../l10n/app_localizations.dart';
 import '../models/geo_place.dart';
 import 'snack.dart';
 
+/// Une etape : quartier (public) et, si on y a acces, l'adresse exacte.
+class RouteStop {
+  const RouteStop({this.area = '', this.place});
+
+  final String area;
+
+  /// Adresse exacte et GPS ; null tant que le livreur n'a pas conclu l'accord.
+  final GeoPlace? place;
+}
+
 /// Trajet d'une course : point orange (recuperation) relie par un trait en
 /// pointilles a l'epingle bleue (livraison), comme sur le logo et
-/// l'illustration de l'accueil. Chaque etape ouvre l'itineraire dans Maps.
+/// l'illustration de l'accueil. Chaque etape ouvre l'itineraire dans Maps
+/// quand l'adresse exacte est connue.
 class RouteTrack extends StatelessWidget {
   const RouteTrack({
     super.key,
     required this.pickup,
     required this.delivery,
     this.showDirections = true,
+    this.exactHidden = false,
+    this.distanceKm,
   });
 
-  final GeoPlace pickup;
-  final GeoPlace delivery;
+  final RouteStop pickup;
+  final RouteStop delivery;
 
-  /// Bouton d'itineraire a cote de chaque etape.
+  /// Bouton d'itineraire a cote de chaque etape (si l'adresse est connue).
   final bool showDirections;
+
+  /// Adresse exacte masquee (livreur avant l'accord) : on le dit.
+  final bool exactHidden;
+
+  /// Distance recuperation -> livraison, si connue.
+  final double? distanceKm;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final comma = Localizations.localeOf(context).languageCode == 'fr';
+    final km = distanceKm;
     // Chaque marqueur est aligne sur le libelle de son etape ; les
     // pointilles partent du depart et descendent jusqu'a l'etape suivante.
     Widget leg({required bool first, required Widget stop}) => IntrinsicHeight(
@@ -56,16 +78,31 @@ class RouteTrack extends StatelessWidget {
           ),
         );
 
+    Widget info(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: context.muted),
+              const SizedBox(width: 8),
+              Expanded(child: Text(text, style: context.text.bodySmall)),
+            ],
+          ),
+        );
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         leg(
           first: true,
-          stop: _Stop(label: t.pickup, place: pickup, showDirections: showDirections),
+          stop: _Stop(label: t.pickup, stop: pickup, showDirections: showDirections),
         ),
         leg(
           first: false,
-          stop: _Stop(label: t.delivery, place: delivery, showDirections: showDirections),
+          stop: _Stop(label: t.delivery, stop: delivery, showDirections: showDirections),
         ),
+        if (km != null)
+          info(Icons.straighten_rounded, t.courseDistance(formatDistance(km, comma: comma))),
+        if (exactHidden) info(Icons.lock_outline_rounded, t.exactAddressAfterAgreement),
       ],
     );
   }
@@ -110,18 +147,24 @@ class RoutePin extends StatelessWidget {
 class _Stop extends StatelessWidget {
   const _Stop({
     required this.label,
-    required this.place,
+    required this.stop,
     required this.showDirections,
   });
 
   final String label;
-  final GeoPlace place;
+  final RouteStop stop;
   final bool showDirections;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final address = place.address.isEmpty ? t.gpsPosition : place.address;
+    final place = stop.place;
+    final exact = place == null
+        ? null
+        : (place.address.isEmpty ? t.gpsPosition : place.address);
+    // Titre : le quartier ; l'adresse exacte en dessous quand elle est connue.
+    final title = stop.area.isNotEmpty ? stop.area : (exact ?? '-');
+    final detail = stop.area.isNotEmpty ? exact : null;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -131,8 +174,10 @@ class _Stop extends StatelessWidget {
             children: [
               Text(label, style: context.text.labelMedium),
               const SizedBox(height: 2),
-              Text(address, style: context.text.titleSmall),
-              if (place.hasCoordinates && place.address.isNotEmpty)
+              Text(title, style: context.text.titleSmall),
+              if (detail != null)
+                Text(detail, style: context.text.bodyMedium),
+              if (place != null && place.hasCoordinates && place.address.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Row(
@@ -147,7 +192,7 @@ class _Stop extends StatelessWidget {
             ],
           ),
         ),
-        if (showDirections)
+        if (showDirections && place != null)
           IconButton(
             tooltip: t.openInMaps,
             style: IconButton.styleFrom(

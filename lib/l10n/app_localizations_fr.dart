@@ -493,14 +493,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get publishOpenRequestHint =>
-      'Tous les livreurs proches la voient. Le premier qui la prend vous contacte.';
+      'Les livreurs proches vous font leurs offres. Vous choisissez, vous pouvez négocier.';
 
   @override
   String get newOpenRequest => 'Demande ouverte';
 
   @override
   String get openRequestIntro =>
-      'Décrivez votre course. Le premier livreur qui la prend obtient votre numéro et vous contacte.';
+      'Décrivez votre course. Les livreurs proches voient le quartier et vous font une offre ; vous choisissez.';
 
   @override
   String get publishAction => 'Publier';
@@ -784,11 +784,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get phoneAfterAccept =>
-      'Son numéro s\'affichera dès qu\'il aura accepté votre demande.';
+      'Son numéro s\'affichera après l\'accord sur le prix.';
 
   @override
   String get contactAfterAccept =>
-      'Le numéro du livreur s\'affichera dès qu\'il aura accepté.';
+      'Le numéro du livreur s\'affichera après l\'accord sur le prix.';
 
   @override
   String get noRequestsTitle => 'Aucune demande';
@@ -825,12 +825,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String notifOpenRequestTaken(String name) {
-    return '$name a pris votre demande';
+    return 'Accord conclu avec $name';
   }
 
   @override
   String openRequestTakenBy(String name) {
-    return 'Prise par $name';
+    return 'Attribuée à $name';
   }
 
   @override
@@ -918,11 +918,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get openRequestsIntro =>
-      'Le premier livreur qui prend une demande obtient le contact du client.';
+      'Faites une offre au client. Il compare les offres, peut négocier et choisit son livreur.';
 
   @override
   String openRequestsIntroPaid(String price) {
-    return 'Le premier livreur qui prend une demande obtient le contact du client. $price DA sont ajoutés à votre solde.';
+    return 'Faites une offre au client. S\'il l\'accepte, $price DA sont ajoutés à votre solde.';
   }
 
   @override
@@ -1230,4 +1230,147 @@ class AppLocalizationsFr extends AppLocalizations {
   String suspectLowRating(String average, String count) {
     return 'Note moyenne de $average sur $count avis';
   }
+
+  @override
+  String get areaLabel => 'Quartier';
+
+  @override
+  String get areaHint => 'Ex. : Hai Sabah, Centre-ville';
+
+  @override
+  String get areaRequired => 'Indiquez le quartier';
+
+  @override
+  String get exactAddressLabel => 'Adresse exacte';
+
+  @override
+  String get exactAddressPrivacy =>
+      'Les livreurs voient seulement le quartier. L\'adresse exacte et votre position sont partagées après l\'accord sur le prix.';
+
+  @override
+  String get exactAddressAfterAgreement =>
+      'Adresse exacte visible après l\'accord sur le prix';
+
+  @override
+  String courseDistance(String distance) {
+    return 'Distance de la course : $distance';
+  }
+
+  @override
+  String get statusNegotiating => 'En négociation';
+
+  @override
+  String get proposePriceTitle => 'Proposer un prix';
+
+  @override
+  String get proposePriceHint => 'Proposez votre prix au client.';
+
+  @override
+  String get proposeAction => 'Proposer';
+
+  @override
+  String get counterAction => 'Contre-proposer';
+
+  @override
+  String counterTitle(String name) {
+    return 'Votre prix pour $name';
+  }
+
+  @override
+  String counterHint(String price) {
+    return 'Proposition actuelle : $price DA. Ajustez de 10 DA en 10 DA.';
+  }
+
+  @override
+  String get yourProposal => 'Votre proposition';
+
+  @override
+  String waitingAnswer(String name) {
+    return 'En attente de la réponse de $name';
+  }
+
+  @override
+  String otherProposes(String name) {
+    return '$name propose';
+  }
+
+  @override
+  String waitingDriverPrice(String name) {
+    return 'En attente du prix de $name';
+  }
+
+  @override
+  String acceptAmount(String price) {
+    return 'Accepter $price DA';
+  }
+
+  @override
+  String agreeTitle(String price) {
+    return 'Conclure à $price DA ?';
+  }
+
+  @override
+  String agreeBody(String name) {
+    return 'Le numéro et l\'adresse exacte seront partagés avec $name.';
+  }
+
+  @override
+  String agreeFee(String fee, String debtAfter, String limit) {
+    return '$fee DA seront ajoutés à votre solde, qui passera à $debtAfter DA (blocage à $limit DA).';
+  }
+
+  @override
+  String get agreeAction => 'Conclure l\'accord';
+
+  @override
+  String agreementDone(String name) {
+    return 'Accord conclu avec $name';
+  }
+
+  @override
+  String get refuseTitle => 'Refuser cette demande ?';
+
+  @override
+  String get refuseBody =>
+      'Le client sera prévenu et pourra choisir un autre livreur.';
+
+  @override
+  String get waitingClientRequests => 'En attente du client';
+
+  @override
+  String notifPriceProposed(String name, String price) {
+    return '$name propose $price DA';
+  }
+
+  @override
+  String get makeOfferTitle => 'Faire une offre';
+
+  @override
+  String get makeOfferHint =>
+      'Le client compare les offres et peut négocier. Ses coordonnées et l\'adresse exacte s\'affichent après l\'accord.';
+
+  @override
+  String get withdrawOffer => 'Retirer mon offre';
+
+  @override
+  String get offerRefusedByClient => 'Le client a refusé votre offre.';
+
+  @override
+  String get offerWithdrawn => 'Vous avez retiré votre offre.';
+
+  @override
+  String get waitingOffers => 'En attente des offres des livreurs…';
+
+  @override
+  String offersCount(String count) {
+    return 'Offres reçues : $count';
+  }
+
+  @override
+  String get billingErrorNotYourTurn =>
+      'C\'est à l\'autre partie de répondre à cette proposition.';
+
+  @override
+  String get billingErrorDriverUnavailable =>
+      'Ce livreur ne peut plus accepter de course pour le moment. Choisissez un autre livreur.';
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/course_route.dart';
 import '../../models/delivery_request.dart';
 import '../../models/request_contact.dart';
 import '../auth/auth_providers.dart';
@@ -50,8 +51,23 @@ final requestContactProvider =
       .map((s) => RequestContact.fromMap(s.data()));
 });
 
-/// Nombre de demandes en attente cote livreur.
+/// Adresse exacte d'une course : toujours pour le client, pour le livreur
+/// seulement apres l'accord (sinon le flux est en erreur : on renvoie null).
+final deliveryRouteProvider =
+    StreamProvider.family<CourseRoute?, String>((ref, requestId) {
+  return ref
+      .watch(firestoreProvider)
+      .collection('deliveryRequests')
+      .doc(requestId)
+      .collection('private')
+      .doc('route')
+      .snapshots()
+      .map((s) => CourseRoute.fromMap(s.data()));
+});
+
+/// Nombre de demandes ou c'est au livreur de repondre (proposer un prix,
+/// repondre a une contre-proposition).
 final pendingRequestsCountProvider = Provider<int>((ref) {
   final list = ref.watch(driverRequestsProvider).value ?? const [];
-  return list.where((r) => r.isPending).length;
+  return list.where((r) => r.myTurn(asDriver: true)).length;
 });

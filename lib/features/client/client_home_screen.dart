@@ -42,6 +42,10 @@ class ClientHomeScreen extends ConsumerWidget {
           continue;
         }
         if (previous == null || previous == r.status) continue;
+        if (r.isNegotiating && r.price != null) {
+          showSnack(context, t.notifPriceProposed(r.driverName, '${r.price}'));
+          continue;
+        }
         if (r.status == RequestStatus.accepted) {
           showSnack(context, t.notifRequestAccepted(r.driverName));
         } else if (r.status == RequestStatus.rejected) {
