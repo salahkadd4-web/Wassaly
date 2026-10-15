@@ -11,6 +11,9 @@
  */
 
 const PER_DELIVERY_PRICE_DA = 50;
+
+/** Prix de course que le livreur peut proposer au client (pas de saisie libre). */
+const DELIVERY_PRICES_DA = [100, 150, 200, 250, 300];
 const DEBT_LIMIT_DA = 1000;
 const REFUND_WINDOW_MS = 2 * 60 * 60 * 1000;
 const MAX_REFUNDS_PER_MONTH = 3;
@@ -82,6 +85,11 @@ function refundDecision({ charged, acceptedAtMs, cancelledAtMs, refundMonth, ref
   return { refund, refundMonth: month, refundsThisMonth: refund ? used + 1 : used };
 }
 
+/** Prix de course valide : un des prix proposes. */
+function isValidPrice(price) {
+  return Number.isInteger(price) && DELIVERY_PRICES_DA.includes(price);
+}
+
 /** Dette apres un remboursement ou un paiement (jamais negative). */
 function reduceDebt(debt, amount) {
   const next = Math.max(0, (debt || 0) - amount);
@@ -127,6 +135,7 @@ function planChange(driver, debt, plan, nowMs) {
 
 module.exports = {
   PER_DELIVERY_PRICE_DA,
+  DELIVERY_PRICES_DA,
   DEBT_LIMIT_DA,
   REFUND_WINDOW_MS,
   MAX_REFUNDS_PER_MONTH,
@@ -135,6 +144,7 @@ module.exports = {
   isPerDeliveryMode,
   isEligible,
   applyCharge,
+  isValidPrice,
   refundDecision,
   reduceDebt,
   rolloverStatus,

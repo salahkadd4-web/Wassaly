@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../ratings/rating_sheet.dart';
+import '../../core/constants/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../l10n/app_localizations.dart';
@@ -80,32 +82,41 @@ class _DriversTabState extends ConsumerState<DriversTab> {
               padding: const EdgeInsets.only(bottom: 12),
               child: _LocationBanner(problem: location.problem!),
             ),
-          drivers.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.all(32),
-              child: LoadingState(),
-            ),
-            error: (_, _) => const SizedBox(height: 240, child: ErrorState()),
-            data: (list) {
-              if (list.isEmpty) {
-                return SizedBox(
-                  height: 260,
-                  child: EmptyState(
-                    icon: Icons.two_wheeler,
-                    message: t.noDriversAvailable,
-                  ),
-                );
-              }
-              return Column(
-                children: [
-                  for (final item in list) ...[
-                    _DriverCard(item: item, comma: comma),
-                    const SizedBox(height: 10),
+          // Sans position, impossible de chercher dans le rayon : le bandeau
+          // ci-dessus explique quoi faire, la course ouverte reste possible.
+          if (location.position == null && location.problem != null)
+            const SizedBox.shrink()
+          else if (location.position == null)
+            const Padding(padding: EdgeInsets.all(32), child: LoadingState())
+          else
+            drivers.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(32),
+                child: LoadingState(),
+              ),
+              error: (_, _) => const SizedBox(height: 240, child: ErrorState()),
+              data: (list) {
+                if (list.isEmpty) {
+                  return SizedBox(
+                    height: 260,
+                    child: EmptyState(
+                      icon: Icons.two_wheeler,
+                      message: t.noDriversInRadius(
+                        '${AppConfig.searchRadiusKm.round()}',
+                      ),
+                    ),
+                  );
+                }
+                return Column(
+                  children: [
+                    for (final item in list) ...[
+                      _DriverCard(item: item, comma: comma),
+                      const SizedBox(height: 10),
+                    ],
                   ],
-                ],
-              );
-            },
-          ),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -214,7 +225,8 @@ class _LocationBanner extends ConsumerWidget {
         children: [
           OutlinedButton(
             style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40)),
-            onPressed: () => ref.read(clientLocationProvider.notifier).refresh(),
+            onPressed: () =>
+                ref.read(clientLocationProvider.notifier).refresh(),
             child: Text(t.retry),
           ),
           if (problem == LocationProblem.deniedForever ||
@@ -282,9 +294,20 @@ class _DriverCard extends ConsumerWidget {
                       children: [
                         Text(d.name, style: context.text.titleMedium),
                         const SizedBox(height: 2),
-                        Text(
-                          (d.city ?? '').isNotEmpty ? d.city! : t.available,
-                          style: context.text.bodySmall,
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                (d.city ?? '').isNotEmpty ? d.city! : t.available,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.text.bodySmall,
+                              ),
+                            ),
+                            if (d.ratingAverage != null) ...[
+                              const SizedBox(width: 10),
+                              RatingBadge(average: d.ratingAverage, count: d.ratingCount),
+                            ],
+                          ],
                         ),
                       ],
                     ),
@@ -308,7 +331,9 @@ class _DriverCard extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: FilledButton.icon(
-                      style: FilledButton.styleFrom(minimumSize: const Size(0, 46)),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 46),
+                      ),
                       onPressed: () => context.push('/client/request/${d.uid}'),
                       icon: const Icon(Icons.send_rounded, size: 18),
                       label: Text(t.sendRequestShort),
@@ -322,11 +347,16 @@ class _DriverCard extends ConsumerWidget {
                       backgroundColor: context.surfaceAlt,
                       foregroundColor: context.colors.onSurface,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusControl,
+                        ),
                       ),
                     ),
                     onPressed: () => openChatWithDriver(context, ref, d),
-                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                    icon: const Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -337,4 +367,3 @@ class _DriverCard extends ConsumerWidget {
     );
   }
 }
-

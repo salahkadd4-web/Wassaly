@@ -6,10 +6,10 @@
  * (montants, plafonds, remboursements) est dans billing.js et testee.
  *
  * Appelees par l'application (callable) :
- *   - acceptDelivery   : le livreur accepte une demande directe ;
+ *   - acceptDelivery   : le livreur accepte une demande directe, au prix choisi ;
  *   - takeOpenRequest  : le livreur prend une demande ouverte (le premier l'obtient) ;
  *   - choosePlan       : le livreur choisit sa formule.
- * Declencheurs : remboursement a l'annulation, compteurs anti-fraude.
+ * Declencheurs : remboursement a l'annulation, compteurs anti-fraude, notes.
  * Planifiee : bascule de fin d'essai / de mois paye, chaque nuit.
  *
  * admin.initializeApp() doit avoir ete appele (index.js) avant le require.
@@ -90,6 +90,13 @@ function writeContact(tx, requestId, clientUser, driverUser) {
   );
 }
 
+/** Prix de course choisi par le livreur dans la liste (pas de saisie libre). */
+function requirePrice(request) {
+  const price = request.data && request.data.price;
+  if (!billing.isValidPrice(price)) throw new HttpsError('invalid-argument', 'price');
+  return price;
+}
+
 /** Lectures communes : livreur, sa facturation, les deux profils prives. */
 async function readParties(tx, uid, clientId) {
   const [driverSnap, billingSnap, clientUser, driverUser] = await Promise.all([
@@ -111,6 +118,7 @@ exports.acceptDelivery = onCall(async (request) => {
   const uid = requireUid(request);
   const requestId = String((request.data && request.data.requestId) || '');
   if (!requestId) throw new HttpsError('invalid-argument', 'requestId');
+  const price = requirePrice(request);
 
   await db.runTransaction(async (tx) => {
     const reqRef = db.collection('deliveryRequests').doc(requestId);
@@ -130,6 +138,7 @@ exports.acceptDelivery = onCall(async (request) => {
       acceptedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
       charged,
+      price,
     });
     writeContact(tx, requestId, p.clientUser, p.driverUser);
   });
@@ -140,6 +149,7 @@ exports.takeOpenRequest = onCall(async (request) => {
   const uid = requireUid(request);
   const openId = String((request.data && request.data.openRequestId) || '');
   if (!openId) throw new HttpsError('invalid-argument', 'openRequestId');
+  const price = requirePrice(request);
 
   const deliveryRef = db.collection('deliveryRequests').doc();
   await db.runTransaction(async (tx) => {
@@ -167,6 +177,7 @@ exports.takeOpenRequest = onCall(async (request) => {
       source: 'open',
       openRequestId: openId,
       charged,
+      price,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
       acceptedAt: FieldValue.serverTimestamp(),
@@ -305,3 +316,35 @@ exports.rolloverSubscriptions = onSchedule(
     logger.info(`Bascule des abonnements : ${changed} livreur(s)`);
   },
 );
+
+/**
+ * Note laissee par un client (ratings/{idDeLaLivraison}, 1 a 5 etoiles) :
+ * moyenne publique sur le profil du livreur, compteurs pour l'onglet Suspects,
+ * et marque "notee" sur la livraison. Seul le serveur ecrit ces champs.
+ */
+exports.onRatingCreated = onDocumentCreated('ratings/{rid}', async (event) => {
+  const rating = event.data && event.data.data();
+  const stars = Number(rating && rating.stars);
+  if (!Number.isInteger(stars) || stars < 1 || stars > 5) return;
+
+  // Livreur lu dans la livraison (source de verite), pas dans la note ; la
+  // marque "rated" rend le declencheur idempotent s'il est rejoue.
+  const reqRef = db.collection('deliveryRequests').doc(event.params.rid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(reqRef);
+    const delivery = snap.data();
+    if (!delivery || delivery.status !== 'completed' || delivery.rated) return;
+    if (delivery.clientId !== rating.clientId || !delivery.driverId) return;
+
+    tx.update(db.collection('drivers').doc(delivery.driverId), {
+      ratingCount: FieldValue.increment(1),
+      ratingSum: FieldValue.increment(stars),
+    });
+    tx.set(
+      billingRef(delivery.driverId),
+      { stats: { ratingCount: FieldValue.increment(1), ratingSum: FieldValue.increment(stars) } },
+      { merge: true },
+    );
+    tx.update(reqRef, { rated: stars });
+  });
+});

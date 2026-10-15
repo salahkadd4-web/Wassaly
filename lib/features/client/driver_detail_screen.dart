@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../ratings/rating_sheet.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../l10n/app_localizations.dart';
@@ -71,6 +72,12 @@ class DriverDetailScreen extends ConsumerWidget {
                   color: available ? AppTheme.success : AppTheme.neutral,
                 ),
               ),
+              if (d.ratingAverage != null) ...[
+                const SizedBox(height: 10),
+                Center(
+                  child: RatingBadge(average: d.ratingAverage, count: d.ratingCount),
+                ),
+              ],
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

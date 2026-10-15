@@ -1131,4 +1131,68 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reportsTitle => 'البلاغات';
+
+  @override
+  String noDriversInRadius(String km) {
+    return 'لا يوجد موصّل متصل على بعد أقل من $km كم. انشر طلبك ليراه أول موصّل يتصل.';
+  }
+
+  @override
+  String get acceptPriceTitle => 'قبول التوصيلة';
+
+  @override
+  String get pricePickHint => 'اختر سعر التوصيلة. يراه الزبون فورًا.';
+
+  @override
+  String priceSheetFee(String fee, String debtAfter, String limit) {
+    return 'ستُضاف $fee دج إلى المبلغ المستحق عليك ليصبح $debtAfter دج (التوقيف عند $limit دج).';
+  }
+
+  @override
+  String confirmWithPrice(String label, String price) {
+    return '$label: $price دج';
+  }
+
+  @override
+  String get agreedPrice => 'السعر المتفق عليه';
+
+  @override
+  String get completeConfirmTitle => 'إنهاء التوصيلة؟';
+
+  @override
+  String completeConfirmBody(String price) {
+    return 'سيُسجَّل السعر المتفق عليه: $price دج.';
+  }
+
+  @override
+  String get rateDelivery => 'قيّم التوصيلة';
+
+  @override
+  String rateTitle(String name) {
+    return 'كيف كانت التوصيلة مع $name؟';
+  }
+
+  @override
+  String get rateCommentLabel => 'تعليق؟ (اختياري)';
+
+  @override
+  String get rateSend => 'إرسال التقييم';
+
+  @override
+  String get ratingSent => 'شكرًا، تم تسجيل تقييمك';
+
+  @override
+  String get ratingAlreadySent => 'سبق تقييم هذه التوصيلة.';
+
+  @override
+  String get yourRating => 'تقييمك';
+
+  @override
+  String get paymentReferenceUsed =>
+      'سبق التصريح بمرجع الدفع هذا. تحقق منه أو تواصل مع فريق وصّلي.';
+
+  @override
+  String suspectLowRating(String average, String count) {
+    return 'معدل التقييم $average من $count تقييمات';
+  }
 }

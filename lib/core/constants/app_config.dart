@@ -31,6 +31,13 @@ class AppConfig {
   /// ... et dans la limite de ce nombre de remboursements par mois.
   static const int maxRefundsPerMonth = 3;
 
+  /// Prix de course que le livreur choisit a l'acceptation (pas de saisie
+  /// libre). Doit rester identique a DELIVERY_PRICES_DA (functions/billing.js).
+  static const List<int> deliveryPricesDa = [100, 150, 200, 250, 300];
+
+  /// Rayon de recherche des livreurs autour du client.
+  static const double searchRadiusKm = 10;
+
   /// Region des Cloud Functions (REGION dans functions/index.js).
   static const String functionsRegion = 'europe-west1';
 
@@ -46,10 +53,10 @@ class AppConfig {
   /// Le nom du "cloud" est la partie apres le @ de votre CLOUDINARY_URL
   /// (cloudinary://API_KEY:API_SECRET@NOM_DU_CLOUD).
   /// Ne mettez JAMAIS la cle API ni le secret dans l'application.
-  static const String cloudinaryCloudName = 'vycmfbsf';
+  static const String cloudinaryCloudName = 'xa3xrbpw';
 
   /// Nom d'un "upload preset" de type Unsigned (voir GUIDE.md, section 6 quater).
-  static const String cloudinaryUploadPreset = 'Wassaly';
+  static const String cloudinaryUploadPreset = 'wassaly';
 
   /// Dossier Cloudinary des pieces d'identite.
   static const String cloudinaryIdFolder = 'wassaly/driver_ids';

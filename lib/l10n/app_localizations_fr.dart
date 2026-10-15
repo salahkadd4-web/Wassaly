@@ -1165,4 +1165,69 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reportsTitle => 'Signalements';
+
+  @override
+  String noDriversInRadius(String km) {
+    return 'Aucun livreur en ligne à moins de $km km. Publiez une course : elle sera visible dès qu\'un livreur se connecte.';
+  }
+
+  @override
+  String get acceptPriceTitle => 'Accepter la livraison';
+
+  @override
+  String get pricePickHint =>
+      'Choisissez le prix de la course. Le client le voit tout de suite.';
+
+  @override
+  String priceSheetFee(String fee, String debtAfter, String limit) {
+    return '$fee DA seront ajoutés à votre solde, qui passera à $debtAfter DA (blocage à $limit DA).';
+  }
+
+  @override
+  String confirmWithPrice(String label, String price) {
+    return '$label : $price DA';
+  }
+
+  @override
+  String get agreedPrice => 'Prix convenu';
+
+  @override
+  String get completeConfirmTitle => 'Terminer la livraison ?';
+
+  @override
+  String completeConfirmBody(String price) {
+    return 'Le montant enregistré sera le prix convenu : $price DA.';
+  }
+
+  @override
+  String get rateDelivery => 'Noter la livraison';
+
+  @override
+  String rateTitle(String name) {
+    return 'Comment s\'est passée la livraison avec $name ?';
+  }
+
+  @override
+  String get rateCommentLabel => 'Un commentaire ? (facultatif)';
+
+  @override
+  String get rateSend => 'Envoyer la note';
+
+  @override
+  String get ratingSent => 'Merci, votre note a été enregistrée';
+
+  @override
+  String get ratingAlreadySent => 'Cette livraison a déjà été notée.';
+
+  @override
+  String get yourRating => 'Votre note';
+
+  @override
+  String get paymentReferenceUsed =>
+      'Cette référence de paiement a déjà été déclarée. Vérifiez-la ou contactez l\'équipe Wassaly.';
+
+  @override
+  String suspectLowRating(String average, String count) {
+    return 'Note moyenne de $average sur $count avis';
+  }
 }

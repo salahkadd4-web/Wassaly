@@ -2125,6 +2125,108 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Signalements'**
   String get reportsTitle;
+
+  /// No description provided for @noDriversInRadius.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun livreur en ligne à moins de {km} km. Publiez une course : elle sera visible dès qu\'un livreur se connecte.'**
+  String noDriversInRadius(String km);
+
+  /// No description provided for @acceptPriceTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accepter la livraison'**
+  String get acceptPriceTitle;
+
+  /// No description provided for @pricePickHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez le prix de la course. Le client le voit tout de suite.'**
+  String get pricePickHint;
+
+  /// No description provided for @priceSheetFee.
+  ///
+  /// In fr, this message translates to:
+  /// **'{fee} DA seront ajoutés à votre solde, qui passera à {debtAfter} DA (blocage à {limit} DA).'**
+  String priceSheetFee(String fee, String debtAfter, String limit);
+
+  /// No description provided for @confirmWithPrice.
+  ///
+  /// In fr, this message translates to:
+  /// **'{label} : {price} DA'**
+  String confirmWithPrice(String label, String price);
+
+  /// No description provided for @agreedPrice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prix convenu'**
+  String get agreedPrice;
+
+  /// No description provided for @completeConfirmTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminer la livraison ?'**
+  String get completeConfirmTitle;
+
+  /// No description provided for @completeConfirmBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le montant enregistré sera le prix convenu : {price} DA.'**
+  String completeConfirmBody(String price);
+
+  /// No description provided for @rateDelivery.
+  ///
+  /// In fr, this message translates to:
+  /// **'Noter la livraison'**
+  String get rateDelivery;
+
+  /// No description provided for @rateTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment s\'est passée la livraison avec {name} ?'**
+  String rateTitle(String name);
+
+  /// No description provided for @rateCommentLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un commentaire ? (facultatif)'**
+  String get rateCommentLabel;
+
+  /// No description provided for @rateSend.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer la note'**
+  String get rateSend;
+
+  /// No description provided for @ratingSent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Merci, votre note a été enregistrée'**
+  String get ratingSent;
+
+  /// No description provided for @ratingAlreadySent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette livraison a déjà été notée.'**
+  String get ratingAlreadySent;
+
+  /// No description provided for @yourRating.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre note'**
+  String get yourRating;
+
+  /// No description provided for @paymentReferenceUsed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette référence de paiement a déjà été déclarée. Vérifiez-la ou contactez l\'équipe Wassaly.'**
+  String get paymentReferenceUsed;
+
+  /// No description provided for @suspectLowRating.
+  ///
+  /// In fr, this message translates to:
+  /// **'Note moyenne de {average} sur {count} avis'**
+  String suspectLowRating(String average, String count);
 }
 
 class _AppLocalizationsDelegate

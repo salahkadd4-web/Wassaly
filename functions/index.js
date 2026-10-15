@@ -1,22 +1,25 @@
 /**
  * Wassaly - Cloud Functions.
  *
- * A. Notifications push aux livreurs (Firebase Cloud Messaging).
+ * A. Notifications push aux livreurs et aux clients (Firebase Cloud Messaging).
  * B. Facturation des livreurs : billing_functions.js (exportees en bas).
  *
- * Notifications, trois declencheurs Firestore :
+ * Notifications, declencheurs Firestore :
  *   1. nouveau message dans une conversation  -> notifie le destinataire
  *   2. nouvelle demande ouverte d'un client   -> notifie tous les livreurs abonnes
- *   3. nouvelle demande de livraison          -> notifie le livreur concerne
+ *   3. nouvelle demande de livraison          -> notifie le livreur concerne ;
+ *      demande ouverte prise par un livreur   -> notifie le client
+ *   4. demande acceptee / refusee / terminee  -> notifie le client ;
+ *      demande annulee par le client          -> notifie le livreur
  *
  * Seuls les appareils qui ont enregistre un jeton dans `deviceTokens/{uid}`
- * (l'application ne le fait que pour les livreurs) recoivent une notification.
+ * recoivent une notification (clients et livreurs).
  *
  * ATTENTION : REGION doit etre la meme region que votre base Firestore
  * (console Firebase > Firestore Database > onglet Donnees : "Emplacement"),
  * et la meme que AppConfig.functionsRegion dans l'application.
  */
-const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
@@ -46,6 +49,16 @@ const TEXTS = {
       route ? `${client} : ${route}` : `${client} cherche un livreur`,
     directTitle: 'Nouvelle demande pour vous',
     directBody: (client) => `${client} vous a envoye une demande de livraison`,
+    acceptedTitle: 'Demande acceptee',
+    acceptedBody: (driver, price) =>
+      price ? `${driver} arrive. Prix convenu : ${price} DA` : `${driver} a accepte votre demande`,
+    takenTitle: 'Un livreur a pris votre course',
+    rejectedTitle: 'Demande refusee',
+    rejectedBody: (driver) => `${driver} ne peut pas faire cette livraison. Essayez un autre livreur.`,
+    completedTitle: 'Livraison terminee',
+    completedBody: (driver) => `Comment s'est passee la livraison avec ${driver} ? Laissez une note.`,
+    cancelledTitle: 'Demande annulee',
+    cancelledBody: (client) => `${client} a annule sa demande`,
   },
   ar: {
     message: (from) => (from ? `رسالة من ${from}` : 'رسالة جديدة'),
@@ -54,6 +67,16 @@ const TEXTS = {
       route ? `${client} : ${route}` : `${client} يبحث عن موصّل`,
     directTitle: 'طلب جديد لك',
     directBody: (client) => `${client} أرسل لك طلب توصيل`,
+    acceptedTitle: 'تم قبول طلبك',
+    acceptedBody: (driver, price) =>
+      price ? `${driver} في الطريق. السعر المتفق عليه: ${price} دج` : `${driver} قبل طلبك`,
+    takenTitle: 'موصّل أخذ طلبك',
+    rejectedTitle: 'تم رفض الطلب',
+    rejectedBody: (driver) => `${driver} لا يستطيع القيام بهذا التوصيل. جرّب موصّلًا آخر.`,
+    completedTitle: 'اكتمل التوصيل',
+    completedBody: (driver) => `كيف كان التوصيل مع ${driver}؟ اترك تقييمًا.`,
+    cancelledTitle: 'تم إلغاء الطلب',
+    cancelledBody: (client) => `${client} ألغى طلبه`,
   },
 };
 
@@ -192,7 +215,21 @@ exports.onNewDeliveryRequest = onDocumentCreated(
   'deliveryRequests/{rid}',
   async (event) => {
     const req = event.data && event.data.data();
-    if (!req || req.status !== 'pending' || !req.driverId) return;
+    if (!req || !req.driverId) return;
+
+    // Demande ouverte prise par un livreur : elle est creee deja acceptee.
+    if (req.status === 'accepted' && req.source === 'open') {
+      await notifyUsers(
+        [req.clientId],
+        (lang) => ({
+          title: TEXTS[lang].takenTitle,
+          body: TEXTS[lang].acceptedBody(req.driverName || '', req.price),
+        }),
+        { type: 'request_update', requestId: event.params.rid },
+      );
+      return;
+    }
+    if (req.status !== 'pending') return;
 
     await notifyUsers(
       [req.driverId],
@@ -204,6 +241,44 @@ exports.onNewDeliveryRequest = onDocumentCreated(
     );
   },
 );
+
+// ---------------------------------------------------------------- 4. Suivi d'une demande
+
+exports.onDeliveryStatusChanged = onDocumentUpdated('deliveryRequests/{rid}', async (event) => {
+  const before = event.data.before.data();
+  const after = event.data.after.data();
+  if (!before || !after || before.status === after.status) return;
+
+  const driver = after.driverName || '';
+  const data = { type: 'request_update', requestId: event.params.rid };
+  const toClient = (title, body) =>
+    notifyUsers([after.clientId], (lang) => ({ title: title(lang), body: body(lang) }), data);
+
+  switch (after.status) {
+    case 'accepted':
+      await toClient(
+        (l) => TEXTS[l].acceptedTitle,
+        (l) => TEXTS[l].acceptedBody(driver, after.price),
+      );
+      break;
+    case 'rejected':
+      await toClient((l) => TEXTS[l].rejectedTitle, (l) => TEXTS[l].rejectedBody(driver));
+      break;
+    case 'completed':
+      await toClient((l) => TEXTS[l].completedTitle, (l) => TEXTS[l].completedBody(driver));
+      break;
+    case 'cancelled':
+      await notifyUsers(
+        [after.driverId],
+        (lang) => ({
+          title: TEXTS[lang].cancelledTitle,
+          body: TEXTS[lang].cancelledBody(after.clientName || ''),
+        }),
+        { type: 'delivery_request', requestId: event.params.rid },
+      );
+      break;
+  }
+});
 
 // ================================================================ B. Facturation
 

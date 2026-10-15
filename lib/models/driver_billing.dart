@@ -10,6 +10,8 @@ class BillingStats {
     this.cancelledAfterAccept = 0,
     this.conversations = 0,
     this.reports = 0,
+    this.ratingCount = 0,
+    this.ratingSum = 0,
   });
 
   /// Livraisons acceptees (demandes directes et demandes ouvertes prises).
@@ -25,6 +27,12 @@ class BillingStats {
   /// Clients differents qui ont signale ce livreur.
   final int reports;
 
+  /// Notes recues (1 a 5 etoiles).
+  final int ratingCount;
+  final int ratingSum;
+
+  double? get ratingAverage => ratingCount == 0 ? null : ratingSum / ratingCount;
+
   factory BillingStats.fromMap(Map<String, dynamic>? map) {
     int n(String k) => (map?[k] as num?)?.toInt() ?? 0;
     return BillingStats(
@@ -33,6 +41,8 @@ class BillingStats {
       cancelledAfterAccept: n('cancelledAfterAccept'),
       conversations: n('conversations'),
       reports: n('reports'),
+      ratingCount: n('ratingCount'),
+      ratingSum: n('ratingSum'),
     );
   }
 }
@@ -136,6 +146,9 @@ enum SuspicionReason {
 
   /// Bloque pour dette depuis plus de 7 jours.
   unpaidDebt,
+
+  /// Note moyenne inferieure a 3 sur au moins 3 avis.
+  lowRating,
 }
 
 List<SuspicionReason> suspicionReasons(DriverBilling b, {DateTime? now}) {
@@ -149,6 +162,10 @@ List<SuspicionReason> suspicionReasons(DriverBilling b, {DateTime? now}) {
     reasons.add(SuspicionReason.chatsWithoutDeliveries);
   }
   if (s.reports >= 2) reasons.add(SuspicionReason.reports);
+  final avg = s.ratingAverage;
+  if (s.ratingCount >= 3 && avg != null && avg < 3) {
+    reasons.add(SuspicionReason.lowRating);
+  }
   final since = b.blockedSince;
   if (b.atLimit &&
       since != null &&

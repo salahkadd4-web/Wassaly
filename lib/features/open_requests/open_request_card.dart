@@ -15,6 +15,7 @@ import '../billing/billing_functions.dart';
 import '../billing/billing_providers.dart';
 import '../common/home_tab_provider.dart';
 import '../drivers/driver_providers.dart';
+import '../requests/price_sheet.dart';
 import 'open_request_providers.dart';
 
 /// Carte d'une demande ouverte.
@@ -57,18 +58,19 @@ class _OpenRequestCardState extends ConsumerState<OpenRequestCard> {
 
   Future<void> _take(bool charged, int debt) async {
     final t = AppLocalizations.of(context)!;
-    final body = charged
-        ? t.takeChargeBody(
-            '${AppConfig.perDeliveryPriceDa}',
-            formatAmount(debt + AppConfig.perDeliveryPriceDa),
-            formatAmount(AppConfig.debtLimitDa),
-          )
-        : t.takeBody;
-    if (!await _confirm(t.takeTitle, body, t.takeConfirm)) return;
+    final fee = charged ? AppConfig.perDeliveryPriceDa : 0;
+    final price = await pickDeliveryPrice(
+      context,
+      title: t.takeTitle,
+      confirmLabel: t.takeConfirm,
+      feeDa: fee,
+      debtAfter: debt + fee,
+    );
+    if (price == null) return;
 
     setState(() => _busy = true);
     try {
-      await ref.read(billingFunctionsProvider).takeOpenRequest(request.id);
+      await ref.read(billingFunctionsProvider).takeOpenRequest(request.id, price);
       if (!mounted) return;
       showSnack(context, t.takeDone(request.clientName));
       ref.read(homeTabProvider.notifier).select(1);
@@ -198,7 +200,7 @@ class _OpenRequestCardState extends ConsumerState<OpenRequestCard> {
               )
             : const Icon(Icons.bolt_rounded),
         label: Text(
-          charged ? t.takeWithPrice('${AppConfig.perDeliveryPriceDa}') : t.takeAction,
+          t.takeAction,
         ),
       ),
       const SizedBox(height: 8),

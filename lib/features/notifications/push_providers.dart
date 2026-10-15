@@ -13,26 +13,28 @@ final pushServiceProvider = Provider<PushService>(
   (ref) => PushService(ref.watch(firestoreProvider)),
 );
 
-/// Index de l'onglet du tableau de bord livreur a ouvrir selon le type de
-/// notification (champ `type` envoye par les Cloud Functions).
-int? tabForNotification(Map<String, dynamic> data) {
+/// Index de l'onglet de l'accueil a ouvrir selon le type de notification
+/// (champ `type` envoye par les Cloud Functions) et le role.
+int? tabForNotification(Map<String, dynamic> data, {required bool isDriver}) {
   switch (data['type']) {
     case 'delivery_request':
+    case 'request_update':
       return 1; // Demandes
     case 'open_request':
-      return 2; // Demandes ouvertes (clients)
+      return isDriver ? 2 : null; // Demandes ouvertes (livreur)
     case 'message':
-      return 3; // Messages
+      return isDriver ? 3 : 2; // Messages
   }
   return null;
 }
 
-/// Active les notifications push pour le livreur connecte.
-/// A observer depuis l'ecran d'accueil du livreur.
-final driverPushProvider = Provider<void>((ref) {
+/// Active les notifications push pour l'utilisateur connecte (client ou
+/// livreur). A observer depuis l'ecran d'accueil.
+final pushProvider = Provider<void>((ref) {
   final user = ref.watch(authStateProvider).value;
   final role = ref.watch(userProfileProvider.select((p) => p.value?.role));
-  if (user == null || role != 'driver') return;
+  if (user == null || role == null) return;
+  final isDriver = role == 'driver';
 
   final lang = ref.watch(localeProvider)?.languageCode ??
       ui.PlatformDispatcher.instance.locale.languageCode;
@@ -41,7 +43,7 @@ final driverPushProvider = Provider<void>((ref) {
   unawaited(push.register(user.uid, lang));
 
   void open(RemoteMessage m) {
-    final tab = tabForNotification(m.data);
+    final tab = tabForNotification(m.data, isDriver: isDriver);
     if (tab != null) ref.read(homeTabProvider.notifier).select(tab);
   }
 

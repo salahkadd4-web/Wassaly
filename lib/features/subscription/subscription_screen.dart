@@ -19,6 +19,7 @@ import '../billing/billing_providers.dart';
 import '../driver/driver_dashboard_tab.dart';
 import '../drivers/driver_providers.dart';
 import 'subscription_providers.dart';
+import 'subscription_repository.dart';
 
 /// "Ma formule" : statut, choix de la formule, dette, paiement, historique.
 class SubscriptionScreen extends ConsumerWidget {
@@ -393,6 +394,8 @@ class _PaymentSectionState extends ConsumerState<_PaymentSection> {
           );
       _refCtrl.clear();
       if (mounted) showSnack(context, t.claimSent);
+    } on PaymentReferenceUsedException {
+      if (mounted) showSnack(context, t.paymentReferenceUsed);
     } catch (_) {
       if (mounted) showSnack(context, t.genericError);
     } finally {
@@ -473,8 +476,13 @@ class _PaymentSectionState extends ConsumerState<_PaymentSection> {
                       labelText: t.paymentReference,
                       prefixIcon: const Icon(Icons.receipt_long_outlined),
                     ),
-                    validator: (v) =>
-                        (v ?? '').trim().length < 3 ? t.paymentReferenceRequired : null,
+                    // Comparee sans espaces ni tirets : une reference ne sert qu'une fois.
+                    validator: (v) {
+                      final key = normalizePaymentReference(v ?? '');
+                      return key.length < 4 || key.length > 40
+                          ? t.paymentReferenceRequired
+                          : null;
+                    },
                   ),
                   const SizedBox(height: 4),
                   FilledButton(

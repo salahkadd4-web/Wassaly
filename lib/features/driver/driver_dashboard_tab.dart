@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../ratings/rating_sheet.dart';
 import '../../core/constants/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
@@ -150,7 +151,14 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
-            Text(t.hello(firstName), style: context.text.headlineMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(t.hello(firstName), style: context.text.headlineMedium),
+                ),
+                RatingBadge(average: d.ratingAverage, count: d.ratingCount),
+              ],
+            ),
             const SizedBox(height: 16),
             if (banner != null) ...[banner, const SizedBox(height: 12)],
             _AvailabilityPanel(

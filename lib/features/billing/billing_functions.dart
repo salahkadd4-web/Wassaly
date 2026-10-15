@@ -77,13 +77,18 @@ class BillingFunctions {
     }
   }
 
-  /// Le livreur accepte une demande directe (50 DA en formule a la livraison).
-  Future<void> acceptDelivery(String requestId) =>
-      _call('acceptDelivery', {'requestId': requestId});
+  /// Le livreur accepte une demande directe au [price] choisi dans
+  /// AppConfig.deliveryPricesDa (50 DA debites en formule a la livraison).
+  Future<void> acceptDelivery(String requestId, int price) =>
+      _call('acceptDelivery', {'requestId': requestId, 'price': price});
 
-  /// Le livreur prend une demande ouverte ; retourne l'id de la livraison creee.
-  Future<String?> takeOpenRequest(String openRequestId) async {
-    final data = await _call('takeOpenRequest', {'openRequestId': openRequestId});
+  /// Le livreur prend une demande ouverte au [price] choisi ; retourne l'id
+  /// de la livraison creee.
+  Future<String?> takeOpenRequest(String openRequestId, int price) async {
+    final data = await _call(
+      'takeOpenRequest',
+      {'openRequestId': openRequestId, 'price': price},
+    );
     return data['deliveryRequestId'] as String?;
   }
 

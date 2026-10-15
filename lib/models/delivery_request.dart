@@ -28,6 +28,8 @@ class DeliveryRequest {
     this.acceptedAt,
     this.charged = 0,
     this.source = 'direct',
+    this.price,
+    this.rated,
   });
 
   final String id;
@@ -58,6 +60,13 @@ class DeliveryRequest {
   /// direct (envoyee a un livreur) | open (demande ouverte prise par un livreur).
   final String source;
 
+  /// Prix de la course convenu a l'acceptation (choisi par le livreur dans
+  /// la liste). Null pour les demandes en attente et les anciennes demandes.
+  final int? price;
+
+  /// Note (1 a 5) laissee par le client, ecrite par le serveur ; null si pas encore notee.
+  final int? rated;
+
   /// Les telephones ne sont partages qu'une fois la demande acceptee.
   bool get contactShared => isAccepted || isCompleted;
 
@@ -87,6 +96,8 @@ class DeliveryRequest {
           map['acceptedAt'] is Timestamp ? (map['acceptedAt'] as Timestamp).toDate() : null,
       charged: (map['charged'] as num?)?.toInt() ?? 0,
       source: (map['source'] as String?) ?? 'direct',
+      price: (map['price'] as num?)?.toInt(),
+      rated: (map['rated'] as num?)?.toInt(),
     );
   }
 }

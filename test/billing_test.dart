@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wassaly/core/utils/phone_guard.dart';
+import 'package:wassaly/models/delivery_request.dart';
 import 'package:wassaly/models/driver_billing.dart';
+import 'package:wassaly/models/driver_profile.dart';
 import 'package:wassaly/models/subscription_claim.dart';
 
 DriverBilling _billing({
@@ -9,6 +11,8 @@ DriverBilling _billing({
   int cancelled = 0,
   int chats = 0,
   int reports = 0,
+  int ratingCount = 0,
+  int ratingSum = 0,
   DateTime? blockedSince,
 }) {
   return DriverBilling(
@@ -20,6 +24,8 @@ DriverBilling _billing({
       cancelledAfterAccept: cancelled,
       conversations: chats,
       reports: reports,
+      ratingCount: ratingCount,
+      ratingSum: ratingSum,
     ),
   );
 }
@@ -121,5 +127,46 @@ void main() {
     expect(c.kind, ClaimKind.monthly);
     expect(c.isDebt, isFalse);
     expect(c.amount, 0);
+  });
+
+  group('reference de paiement', () {
+    test('normalisee : majuscules, sans espaces ni tirets', () {
+      expect(normalizePaymentReference(' bm 123-45/x '), 'BM12345X');
+      expect(normalizePaymentReference('0079 9999 0024'), '007999990024');
+      expect(normalizePaymentReference('---'), '');
+    });
+
+    test('deux saisies differentes de la meme reference donnent la meme cle', () {
+      expect(
+        normalizePaymentReference('BM-8841 2'),
+        normalizePaymentReference('bm 88412'),
+      );
+    });
+  });
+
+  group('notes', () {
+    test('moyenne du livreur', () {
+      final d = DriverProfile.fromMap('d1', {'ratingCount': 4, 'ratingSum': 18});
+      expect(d.ratingAverage, 4.5);
+      expect(DriverProfile.fromMap('d2', {}).ratingAverage, isNull);
+    });
+
+    test('note moyenne basse : suspect a partir de 3 avis', () {
+      expect(
+        suspicionReasons(_billing(ratingCount: 3, ratingSum: 6)),
+        [SuspicionReason.lowRating],
+      );
+      expect(suspicionReasons(_billing(ratingCount: 2, ratingSum: 2)), isEmpty);
+      expect(suspicionReasons(_billing(ratingCount: 10, ratingSum: 40)), isEmpty);
+    });
+  });
+
+  test('prix convenu et note lus sur la demande', () {
+    final r = DeliveryRequest.fromMap('r1', {'status': 'accepted', 'price': 200, 'rated': 5});
+    expect(r.price, 200);
+    expect(r.rated, 5);
+    final old = DeliveryRequest.fromMap('r2', {'status': 'accepted'});
+    expect(old.price, isNull);
+    expect(old.rated, isNull);
   });
 }

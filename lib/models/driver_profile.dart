@@ -28,6 +28,8 @@ class DriverProfile {
     this.verificationStatus = 'approved',
     this.plan,
     this.billingBlocked = false,
+    this.ratingCount = 0,
+    this.ratingSum = 0,
   });
 
   final String uid;
@@ -53,6 +55,13 @@ class DriverProfile {
   /// Formule a la livraison : dette de 1 000 DA atteinte, livreur bloque
   /// jusqu'au paiement. Ecrit uniquement par le serveur et l'admin.
   final bool billingBlocked;
+
+  /// Notes des clients (1 a 5 etoiles), cumulees par le serveur.
+  final int ratingCount;
+  final int ratingSum;
+
+  /// Note moyenne, ou null sans avis.
+  double? get ratingAverage => ratingCount == 0 ? null : ratingSum / ratingCount;
 
   /// Verification de la piece d'identite : pending | approved | rejected.
   /// Les livreurs inscrits avant cette fonction n'ont pas le champ : ils
@@ -148,6 +157,8 @@ class DriverProfile {
       verificationStatus: (map['verificationStatus'] as String?) ?? 'approved',
       plan: map['plan'] as String?,
       billingBlocked: (map['billingBlocked'] as bool?) ?? false,
+      ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,
+      ratingSum: (map['ratingSum'] as num?)?.toInt() ?? 0,
     );
   }
 }

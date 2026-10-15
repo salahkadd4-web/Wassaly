@@ -2,7 +2,7 @@ name: wassaly
 description: "Wassaly - mise en relation clients et livreurs de proximite en Algerie."
 publish_to: 'none'
 
-version: 1.2.0+3
+version: 1.3.0+5
 
 environment:
   sdk: ^3.13.5

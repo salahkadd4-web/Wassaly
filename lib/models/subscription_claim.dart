@@ -9,6 +9,12 @@ class ClaimKind {
   static const debt = 'debt';
 }
 
+/// Reference de paiement normalisee : majuscules, lettres et chiffres
+/// seulement ("bm 123-45" -> "BM12345"). Sert d'identifiant dans paymentRefs
+/// pour qu'une meme reference ne soit declaree qu'une fois.
+String normalizePaymentReference(String raw) =>
+    raw.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+
 /// Paiement declare par un livreur (reference BaridiMob / CCP), valide par l'admin.
 class SubscriptionClaim {
   const SubscriptionClaim({

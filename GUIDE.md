@@ -21,6 +21,8 @@ Langues : francais et arabe (avec affichage de droite a gauche). Theme clair par
 | Bouton retour Android : confirmation avant de quitter (connexion et tableaux de bord) | Fait |
 | Notifications dans l'application (bandeaux + pastilles de compteur) | Fait |
 | Notifications push livreur (nouveau message, nouvelle demande) application fermee | Fait (Cloud Functions, voir section 6 quinquies) |
+| Notifications push client (demande acceptee / refusee / terminee, course prise, message) | Fait (voir section 6 octies) |
+| Prix de course choisi par le livreur dans une liste, notes 1 a 5 etoiles, recherche a 10 km | Fait (voir section 6 octies) |
 | Chiffre d'affaires du livreur (tableau de bord) et de tous les livreurs (admin) | Fait (voir section 6 sexies) |
 | iOS | Non inclus (Android uniquement) |
 
@@ -154,7 +156,7 @@ Un appui sur la notification ouvre l'onglet correspondant. Application ouverte, 
    cd functions
    npm install
    cd ..
-   firebase deploy --only functions,firestore:rules
+   firebase deploy --only functions,firestore:rules,firestore:indexes
    ```
    Acceptez l'activation des API proposees. La commande publie aussi les nouvelles `firestore.rules`.
 5. `flutter pub get`, reconstruire l'APK (voir `PUBLIER_UNE_VERSION.md`). Au premier lancement, le livreur doit **autoriser les notifications**.
@@ -221,7 +223,7 @@ cd functions
 npm install
 npm test
 cd ..
-firebase deploy --only functions,firestore:rules
+firebase deploy --only functions,firestore:rules,firestore:indexes
 ```
 Puis, pour retirer les numeros des donnees de test deja enregistrees (voir l'en-tete du script) :
 ```
@@ -230,6 +232,45 @@ node strip_public_phones.js          # simulation
 node strip_public_phones.js --apply
 ```
 La fonction planifiee `rolloverSubscriptions` utilise Cloud Scheduler (inclus dans le forfait Blaze, 3 taches gratuites).
+
+## 6 octies. Prix, notes, references de paiement, recherche par zone
+
+### Prix de la course
+A l'acceptation (ou au **Je prends**), le livreur **choisit** le prix dans une liste : **100, 150, 200, 250 ou 300 DA**
+(pas de saisie libre). Le client voit le prix des l'acceptation ; s'il n'est pas d'accord, il annule.
+A la fin, **Marquer comme terminee** enregistre ce prix comme montant (les regles Firestore refusent tout autre montant).
+Liste modifiable : `deliveryPricesDa` dans `app_config.dart` **et** `DELIVERY_PRICES_DA` dans `functions/billing.js`.
+
+### Notes
+Apres une livraison terminee, le client peut la **noter** (1 a 5 etoiles + commentaire facultatif), une seule fois.
+La moyenne s'affiche sur la carte et la fiche du livreur, et sur son tableau de bord. Elle est calculee par le serveur
+(`onRatingCreated`) : ni le client ni le livreur ne peuvent la modifier. Une moyenne inferieure a 3 sur au moins 3 avis
+fait apparaitre le livreur dans l'onglet **Suspects**.
+
+### Reference de paiement unique
+Chaque reference declaree est reservee dans `paymentRefs/{reference}` (majuscules, sans espaces ni tirets).
+Une reference deja declaree, par n'importe quel livreur, est refusee. Si un livreur s'est trompe et que vous refusez sa
+declaration, la reference reste bloquee : supprimez-la a la main dans la console Firestore (`paymentRefs`) si besoin.
+
+### Recherche des livreurs dans un rayon de 10 km
+Le client ne charge plus que les livreurs **en ligne a moins de 10 km** (`searchRadiusKm` dans `app_config.dart`),
+grace au geohash enregistre avec la position du livreur. Il faut l'**index Firestore** du fichier
+`firestore.indexes.json` (deploye avec la commande ci-dessous ; sa creation prend quelques minutes).
+Un livreur deja en ligne avant cette version doit se remettre en ligne (ou actualiser sa position) pour apparaitre.
+Sans localisation, le client voit un bandeau et peut toujours publier une course.
+
+### Notifications des clients
+Le telephone du client s'enregistre aussi pour les notifications. Il est prevenu quand sa demande est acceptee (avec le
+prix), refusee ou terminee (invitation a noter), quand un livreur prend sa course, et quand il recoit un message.
+Le livreur est prevenu quand un client annule.
+
+### Mise en service
+```
+cd functions
+npm test
+cd ..
+firebase deploy --only functions,firestore:rules,firestore:indexes
+```
 
 ## 7. Utilisation
 

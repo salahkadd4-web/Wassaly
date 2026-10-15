@@ -63,7 +63,7 @@ Copy-Item "build\app\outputs\flutter-apk\app-release.apk" "wassaly.apk" -Force
 Run "git add pubspec.yaml"
 Run "git commit -m `"Version $Version`""
 Run "git push"
-Run "gh release create v$Version wassaly.apk --repo $Repo --title `"Wassaly $Version`" --notes `"$Notes`" --latest"
+Run "gh release create v$Version wassaly.apk --repo $Repo --target main --title `"Wassaly $Version`" --notes `"$Notes`" --latest"
 
 Write-Host ""
 Write-Host "Release publiee : https://github.com/$Repo/releases/tag/v$Version" -ForegroundColor Green

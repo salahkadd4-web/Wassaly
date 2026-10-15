@@ -138,3 +138,10 @@ test('changement de formule', () => {
   });
   assert.deepEqual(b.planChange(driver(), 0, 'gratuit', NOW), { error: 'invalid-plan' });
 });
+
+test('prix de course : uniquement ceux de la liste', () => {
+  for (const p of [100, 150, 200, 250, 300]) assert.equal(b.isValidPrice(p), true);
+  for (const p of [0, 50, 120, 350, 1000, '200', 200.5, null, undefined]) {
+    assert.equal(b.isValidPrice(p), false, String(p));
+  }
+});

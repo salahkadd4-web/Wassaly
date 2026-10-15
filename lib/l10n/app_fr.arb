@@ -432,4 +432,27 @@
   ,"statChats": "Discussions"
   ,"statReports": "Signalements"
   ,"reportsTitle": "Signalements"
+  ,"noDriversInRadius": "Aucun livreur en ligne à moins de {km} km. Publiez une course : elle sera visible dès qu'un livreur se connecte."
+  ,"@noDriversInRadius": {"placeholders": {"km": {"type": "String"}}}
+  ,"acceptPriceTitle": "Accepter la livraison"
+  ,"pricePickHint": "Choisissez le prix de la course. Le client le voit tout de suite."
+  ,"priceSheetFee": "{fee} DA seront ajoutés à votre solde, qui passera à {debtAfter} DA (blocage à {limit} DA)."
+  ,"@priceSheetFee": {"placeholders": {"fee": {"type": "String"}, "debtAfter": {"type": "String"}, "limit": {"type": "String"}}}
+  ,"confirmWithPrice": "{label} : {price} DA"
+  ,"@confirmWithPrice": {"placeholders": {"label": {"type": "String"}, "price": {"type": "String"}}}
+  ,"agreedPrice": "Prix convenu"
+  ,"completeConfirmTitle": "Terminer la livraison ?"
+  ,"completeConfirmBody": "Le montant enregistré sera le prix convenu : {price} DA."
+  ,"@completeConfirmBody": {"placeholders": {"price": {"type": "String"}}}
+  ,"rateDelivery": "Noter la livraison"
+  ,"rateTitle": "Comment s'est passée la livraison avec {name} ?"
+  ,"@rateTitle": {"placeholders": {"name": {"type": "String"}}}
+  ,"rateCommentLabel": "Un commentaire ? (facultatif)"
+  ,"rateSend": "Envoyer la note"
+  ,"ratingSent": "Merci, votre note a été enregistrée"
+  ,"ratingAlreadySent": "Cette livraison a déjà été notée."
+  ,"yourRating": "Votre note"
+  ,"paymentReferenceUsed": "Cette référence de paiement a déjà été déclarée. Vérifiez-la ou contactez l'équipe Wassaly."
+  ,"suspectLowRating": "Note moyenne de {average} sur {count} avis"
+  ,"@suspectLowRating": {"placeholders": {"average": {"type": "String"}, "count": {"type": "String"}}}
 }

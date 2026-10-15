@@ -10,6 +10,7 @@ import '../../widgets/snack.dart';
 import '../chat/chat_providers.dart';
 import '../chat/conversations_tab.dart';
 import '../common/home_tab_provider.dart';
+import '../notifications/push_providers.dart';
 import '../requests/request_providers.dart';
 import 'client_requests_tab.dart';
 import 'drivers_tab.dart';
@@ -22,6 +23,9 @@ class ClientHomeScreen extends ConsumerWidget {
     final t = AppLocalizations.of(context)!;
     final index = ref.watch(homeTabProvider);
     final unread = ref.watch(unreadMessagesCountProvider);
+
+    // Notifications push (application fermee ou en arriere-plan).
+    ref.watch(pushProvider);
 
     // Notification dans l'application quand un livreur repond a une demande.
     ref.listen<AsyncValue<List<DeliveryRequest>>>(clientRequestsProvider,

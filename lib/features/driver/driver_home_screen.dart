@@ -30,7 +30,7 @@ class DriverHomeScreen extends ConsumerWidget {
     final openCount = ref.watch(openRequestsCountProvider);
 
     // Notifications push (application fermee ou en arriere-plan).
-    ref.watch(driverPushProvider);
+    ref.watch(pushProvider);
 
     // Notification dans l'application : nouvelle demande ou annulation.
     ref.listen<AsyncValue<List<DeliveryRequest>>>(driverRequestsProvider,

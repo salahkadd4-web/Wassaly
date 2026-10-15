@@ -126,13 +126,14 @@ service cloud.firestore {
              < request.time + duration.value(62, 'd');
 
       allow update: if
-        // Le livreur : disponibilite, position, ville, identite. Il ne touche
-        // ni a son abonnement, ni a sa formule, ni a sa dette (Cloud Functions
-        // et admin), et ne s'active que s'il peut travailler.
+        // Le livreur : disponibilite, position (+ geohash pour la recherche
+        // par zone), ville, identite. Il ne touche ni a son abonnement, ni a sa
+        // formule, ni a sa dette, ni a sa note (Cloud Functions et admin), et ne
+        // s'active que s'il peut travailler.
         (isOwner(uid)
           && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['active', 'latitude', 'longitude', 'lastLocationUpdate',
-                         'city', 'name', 'photo'])
+               .hasOnly(['active', 'latitude', 'longitude', 'geohash',
+                         'lastLocationUpdate', 'city', 'name', 'photo'])
           && !hasPhone(request.resource.data.name)
           && !hasPhone(request.resource.data.get('city', ''))
           && (request.resource.data.active == false || driverEligible(resource.data)))
@@ -249,13 +250,17 @@ service cloud.firestore {
             && request.resource.data.status == 'rejected'
             && !request.resource.data.diff(resource.data).affectedKeys()
                   .hasAny(['amount', 'completedAt']))
-          // ... ou termine la livraison acceptee en saisissant son montant (DA).
+          // ... ou termine la livraison acceptee. Le montant est le prix
+          // convenu a l'acceptation (choisi dans la liste, ecrit par le serveur) ;
+          // saisie libre seulement pour les anciennes demandes sans prix.
           || (resource.data.driverId == request.auth.uid
             && resource.data.status == 'accepted'
             && request.resource.data.status == 'completed'
             && request.resource.data.amount is int
             && request.resource.data.amount >= 0
             && request.resource.data.amount <= 1000000
+            && request.resource.data.amount
+                 == resource.data.get('price', request.resource.data.amount)
             && request.resource.data.completedAt == request.time)
           // Le client peut annuler tant que ce n'est pas termine.
           || (resource.data.clientId == request.auth.uid
@@ -335,14 +340,58 @@ service cloud.firestore {
         && request.resource.data.amount > 0
         && request.resource.data.amount <= 100000
         && request.resource.data.keys().hasOnly(
-             ['driverId', 'driverName', 'driverPhone', 'reference', 'status',
-              'kind', 'amount', 'createdAt']);
+             ['driverId', 'driverName', 'driverPhone', 'reference', 'referenceKey',
+              'status', 'kind', 'amount', 'createdAt'])
+        // La reference est reservee pour CETTE declaration dans paymentRefs
+        // (meme ecriture groupee) : une reference ne sert qu'une fois.
+        && getAfter(/databases/$(database)/documents/paymentRefs/$(request.resource.data.referenceKey)).data.claimId == sid;
 
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['status', 'reviewedAt']);
 
       allow delete: if false;
+    }
+
+    // Reference de paiement deja utilisee (id = reference normalisee :
+    // majuscules, lettres et chiffres). Creation seulement : si la reference
+    // existe, l'ecriture est refusee, donc la declaration aussi. L'admin peut
+    // supprimer une reservation saisie par erreur (console).
+    match /paymentRefs/{key} {
+      allow read: if isAdmin();
+      allow create: if signedIn()
+        && key.matches('^[A-Z0-9]{4,40}$')
+        && request.resource.data.keys().hasOnly(['driverId', 'claimId', 'createdAt'])
+        && request.resource.data.driverId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/subscriptionRequests/$(request.resource.data.claimId)).data.driverId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/subscriptionRequests/$(request.resource.data.claimId)).data.referenceKey == key;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Note d'une livraison terminee (id = id de la livraison) : une seule, par
+    // le client de cette livraison. La moyenne est calculee par le serveur.
+    match /ratings/{rid} {
+      allow read: if isAdmin()
+        || (signedIn()
+            && (resource.data.clientId == request.auth.uid
+                || resource.data.driverId == request.auth.uid));
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(
+             ['clientId', 'driverId', 'stars', 'comment', 'createdAt'])
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.stars is int
+        && request.resource.data.stars >= 1
+        && request.resource.data.stars <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 300
+        && !hasPhone(request.resource.data.comment)
+        && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid
+        && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.driverId == request.resource.data.driverId
+        && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status == 'completed';
+
+      allow update, delete: if false;
     }
 
     // Signalement d'un livreur par un client : un seul par couple

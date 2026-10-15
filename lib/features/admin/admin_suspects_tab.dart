@@ -87,6 +87,10 @@ class _SuspectCard extends ConsumerWidget {
         t.suspectChats('${s.conversations}', '${s.accepted}'),
       SuspicionReason.reports => t.suspectReports('${s.reports}'),
       SuspicionReason.unpaidDebt => t.suspectDebt(formatAmount(billing.debt)),
+      SuspicionReason.lowRating => t.suspectLowRating(
+          (s.ratingAverage ?? 0).toStringAsFixed(1),
+          '${s.ratingCount}',
+        ),
     };
   }
 

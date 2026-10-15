@@ -432,4 +432,27 @@
   ,"statChats": "محادثات"
   ,"statReports": "بلاغات"
   ,"reportsTitle": "البلاغات"
+  ,"noDriversInRadius": "لا يوجد موصّل متصل على بعد أقل من {km} كم. انشر طلبك ليراه أول موصّل يتصل."
+  ,"@noDriversInRadius": {"placeholders": {"km": {"type": "String"}}}
+  ,"acceptPriceTitle": "قبول التوصيلة"
+  ,"pricePickHint": "اختر سعر التوصيلة. يراه الزبون فورًا."
+  ,"priceSheetFee": "ستُضاف {fee} دج إلى المبلغ المستحق عليك ليصبح {debtAfter} دج (التوقيف عند {limit} دج)."
+  ,"@priceSheetFee": {"placeholders": {"fee": {"type": "String"}, "debtAfter": {"type": "String"}, "limit": {"type": "String"}}}
+  ,"confirmWithPrice": "{label}: {price} دج"
+  ,"@confirmWithPrice": {"placeholders": {"label": {"type": "String"}, "price": {"type": "String"}}}
+  ,"agreedPrice": "السعر المتفق عليه"
+  ,"completeConfirmTitle": "إنهاء التوصيلة؟"
+  ,"completeConfirmBody": "سيُسجَّل السعر المتفق عليه: {price} دج."
+  ,"@completeConfirmBody": {"placeholders": {"price": {"type": "String"}}}
+  ,"rateDelivery": "قيّم التوصيلة"
+  ,"rateTitle": "كيف كانت التوصيلة مع {name}؟"
+  ,"@rateTitle": {"placeholders": {"name": {"type": "String"}}}
+  ,"rateCommentLabel": "تعليق؟ (اختياري)"
+  ,"rateSend": "إرسال التقييم"
+  ,"ratingSent": "شكرًا، تم تسجيل تقييمك"
+  ,"ratingAlreadySent": "سبق تقييم هذه التوصيلة."
+  ,"yourRating": "تقييمك"
+  ,"paymentReferenceUsed": "سبق التصريح بمرجع الدفع هذا. تحقق منه أو تواصل مع فريق وصّلي."
+  ,"suspectLowRating": "معدل التقييم {average} من {count} تقييمات"
+  ,"@suspectLowRating": {"placeholders": {"average": {"type": "String"}, "count": {"type": "String"}}}
 }

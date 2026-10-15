@@ -36,7 +36,7 @@ Cette version deplace l'acceptation des livraisons sur le serveur. **L'ordre com
    npm install
    npm test
    cd ..
-   firebase deploy --only functions,firestore:rules
+   firebase deploy --only functions,firestore:rules,firestore:indexes
    ```
    Le premier deploiement d'une fonction planifiee peut demander d'activer l'API Cloud Scheduler : acceptez.
 3. **Nettoyer les donnees de test** (numeros dans les profils publics) : `tools/strip_public_phones.js` (voir son en-tete).
@@ -98,14 +98,14 @@ Copy-Item build\app\outputs\flutter-apk\app-release.apk wassaly.apk
 
 ### 5. Publier la release sur GitHub
 
-1. Poussez d'abord votre code (le tag de la release pointera dessus) :
+1. Poussez d'abord votre code (vers le depot prive si vous avez suivi `SEPARER_LE_CODE.md`) :
    ```
    git add -A
    git commit -m "Version 1.1.0"
    git push
    ```
 2. Ouvrez https://github.com/salahkadd4-web/wassaly/releases > **Draft a new release**.
-3. **Choose a tag** : tapez `v1.1.0` puis **Create new tag on publish**.
+3. **Choose a tag** : tapez la version (ex. `v1.3.0`) puis **Create new tag on publish** ; **Target** : `main`.
 4. **Release title** : `Wassaly 1.1.0`.
 5. **Description** : une ou deux phrases sur les nouveautes (ex. « Notifications push, chiffre d'affaires »).
 6. Glissez `wassaly.apk` dans la zone **Attach binaries**.
@@ -173,5 +173,6 @@ Option `-SkipTests` pour ignorer `flutter test` (deconseille).
 | 1.0.0 | 1 | Premiere diffusion |
 | 1.1.0 | 2 | Notifications push (livreurs), chiffre d'affaires (livreur + admin) |
 | 1.2.0 | 3 | Formules livreur (mensuelle ou 50 DA/livraison), anti-fraude, nouveau design. Deployer functions + regles avant. |
+| 1.3.0 | 5 | Prix de course choisi dans une liste, notes, reference de paiement unique, recherche a 10 km, notifications clients. Deployer functions + regles + index avant. |
 
 (Ajoutez une ligne a chaque publication.)

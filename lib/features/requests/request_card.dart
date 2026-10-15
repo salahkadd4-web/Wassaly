@@ -18,8 +18,10 @@ import '../billing/billing_functions.dart';
 import '../billing/billing_providers.dart';
 import '../chat/chat_repository.dart';
 import '../drivers/driver_providers.dart';
+import '../ratings/rating_sheet.dart';
 import '../reports/report_sheet.dart';
 import 'complete_dialog.dart';
+import 'price_sheet.dart';
 import 'request_providers.dart';
 
 /// Carte d'une demande de livraison, vue par le client ou par le livreur.
@@ -85,37 +87,46 @@ class _RequestCardState extends ConsumerState<RequestCard> {
     await _run(() => _setStatus(RequestStatus.cancelled));
   }
 
-  /// Acceptation par le serveur : en formule a la livraison, 50 DA sont
-  /// ajoutes a la dette, on le dit avant.
+  /// Acceptation par le serveur au prix choisi dans la liste. En formule a la
+  /// livraison, les 50 DA ajoutes au solde sont indiques dans la meme feuille.
   Future<void> _accept(bool charged, int debt) async {
     final t = AppLocalizations.of(context)!;
-    if (charged &&
-        !await _confirm(
-          t.acceptChargeTitle,
-          t.acceptChargeBody(
-            '${AppConfig.perDeliveryPriceDa}',
-            formatAmount(debt + AppConfig.perDeliveryPriceDa),
-            formatAmount(AppConfig.debtLimitDa),
-          ),
-          t.accept,
-        )) {
-      return;
-    }
+    final fee = charged ? AppConfig.perDeliveryPriceDa : 0;
+    final price = await pickDeliveryPrice(
+      context,
+      title: t.acceptPriceTitle,
+      confirmLabel: t.accept,
+      feeDa: fee,
+      debtAfter: debt + fee,
+    );
+    if (price == null) return;
     await _run(() async {
       try {
-        await ref.read(billingFunctionsProvider).acceptDelivery(request.id);
+        await ref.read(billingFunctionsProvider).acceptDelivery(request.id, price);
       } on BillingException catch (e) {
         if (mounted) showSnack(context, e.message(t));
       }
     });
   }
 
-  /// Le livreur termine la course : il saisit le montant, qui alimente son
-  /// chiffre d'affaires.
+  /// Le livreur termine la course : le montant est le prix convenu (les
+  /// anciennes demandes sans prix demandent encore une saisie).
   Future<void> _complete() async {
     final t = AppLocalizations.of(context)!;
-    final amount = await askDeliveryAmount(context);
-    if (amount == null) return;
+    final price = request.price;
+    final int? chosen;
+    if (price != null) {
+      final ok = await _confirm(
+        t.completeConfirmTitle,
+        t.completeConfirmBody(formatAmount(price)),
+        t.markCompleted,
+      );
+      chosen = ok ? price : null;
+    } else {
+      chosen = await askDeliveryAmount(context);
+    }
+    if (chosen == null) return;
+    final amount = chosen;
     await _run(() async {
       try {
         await ref.read(requestRepositoryProvider).complete(request.id, amount);
@@ -186,15 +197,16 @@ class _RequestCardState extends ConsumerState<RequestCard> {
               const SizedBox(height: 14),
               _NoteBox(note: request.note),
             ],
-            if (request.isCompleted && request.amount != null) ...[
+            if ((request.price ?? (request.isCompleted ? request.amount : null))
+                case final shown?) ...[
               const SizedBox(height: 14),
               Row(
                 children: [
-                  Text(t.amountLabel, style: context.text.bodySmall),
+                  Text(t.agreedPrice, style: context.text.bodyMedium),
                   const Spacer(),
                   Text(
-                    t.amountDa(formatAmount(request.amount!)),
-                    style: context.text.titleMedium,
+                    t.amountDa(formatAmount(shown)),
+                    style: context.text.titleLarge,
                   ),
                 ],
               ),
@@ -236,11 +248,7 @@ class _RequestCardState extends ConsumerState<RequestCard> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : Text(
-                          charged
-                              ? t.acceptWithPrice('${AppConfig.perDeliveryPriceDa}')
-                              : t.accept,
-                        ),
+                      : Text(t.accept),
                 ),
               ),
             ],
@@ -275,6 +283,32 @@ class _RequestCardState extends ConsumerState<RequestCard> {
             style: context.text.bodySmall,
           ),
         ],
+      ],
+      if (request.isCompleted) ...[
+        const SizedBox(height: 14),
+        if (request.rated case final stars?)
+          Row(
+            children: [
+              Text(t.yourRating, style: context.text.bodyMedium),
+              const Spacer(),
+              StarsRow(stars: stars),
+            ],
+          )
+        else
+          FilledButton.tonalIcon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.orange.withValues(alpha: 0.16),
+              foregroundColor: context.ink(AppTheme.orange),
+            ),
+            onPressed: () => showRatingSheet(
+              context,
+              requestId: request.id,
+              driverId: request.driverId,
+              driverName: request.driverName,
+            ),
+            icon: const Icon(Icons.star_rounded),
+            label: Text(t.rateDelivery),
+          ),
       ],
       const SizedBox(height: 4),
       Row(

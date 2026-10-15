@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-/// Notifications push (Firebase Cloud Messaging) pour les livreurs.
+/// Notifications push (Firebase Cloud Messaging) pour les clients et les livreurs.
 ///
 /// L'application enregistre le jeton de l'appareil dans Firestore
 /// (`deviceTokens/{uid}`). Ce sont les Cloud Functions du dossier `functions/`
-/// qui envoient les notifications (nouveau message, nouvelle demande).
+/// qui envoient les notifications (message, demande, suivi de livraison).
 class PushService {
   PushService(this._db);
 
