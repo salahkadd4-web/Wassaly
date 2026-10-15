@@ -1338,4 +1338,12 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get billingErrorDriverUnavailable =>
       'لا يستطيع هذا الموصّل قبول توصيلات حاليًا. اختر موصّلًا آخر.';
+
+  @override
+  String adminRefund(String amount) {
+    return 'إرجاع $amount دج للموصّل';
+  }
+
+  @override
+  String get adminRefunded => 'تم إرجاع الرسوم للموصّل';
 }

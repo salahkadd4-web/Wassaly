@@ -63,6 +63,7 @@ class NewRequestScreen extends ConsumerWidget {
               await ref.read(requestRepositoryProvider).create(
                     clientId: user.uid,
                     clientName: profile.name,
+                    clientPhone: profile.phone,
                     driverId: driver.uid,
                     driverName: driver.name,
                     course: course,

@@ -2449,6 +2449,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ce livreur ne peut plus accepter de course pour le moment. Choisissez un autre livreur.'**
   String get billingErrorDriverUnavailable;
+
+  /// No description provided for @adminRefund.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rembourser {amount} DA au livreur'**
+  String adminRefund(String amount);
+
+  /// No description provided for @adminRefunded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Frais remboursés au livreur'**
+  String get adminRefunded;
 }
 
 class _AppLocalizationsDelegate

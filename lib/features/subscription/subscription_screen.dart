@@ -14,7 +14,6 @@ import '../../widgets/snack.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_chip.dart';
 import '../auth/auth_providers.dart';
-import '../billing/billing_functions.dart';
 import '../billing/billing_providers.dart';
 import '../driver/driver_dashboard_tab.dart';
 import '../drivers/driver_providers.dart';
@@ -211,10 +210,10 @@ class _PlanChooserState extends ConsumerState<_PlanChooser> {
     if (ok != true) return;
     setState(() => _saving = plan);
     try {
-      await ref.read(billingFunctionsProvider).choosePlan(plan);
+      await ref.read(driverRepositoryProvider).setPlan(d.uid, plan);
       if (mounted) showSnack(context, t.planSaved);
-    } on BillingException catch (e) {
-      if (mounted) showSnack(context, e.message(t));
+    } catch (_) {
+      if (mounted) showSnack(context, t.genericError);
     } finally {
       if (mounted) setState(() => _saving = null);
     }

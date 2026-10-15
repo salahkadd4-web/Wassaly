@@ -11,11 +11,13 @@ class RequestRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       _db.collection('deliveryRequests');
 
-  /// Demande a un livreur choisi. L'adresse exacte va dans private/route
-  /// (meme ecriture groupee) : le livreur ne la lira qu'apres l'accord.
+  /// Demande a un livreur choisi. L'adresse exacte (private/route) et le
+  /// telephone du client (private/clientContact) partent dans la meme
+  /// ecriture groupee : le livreur ne les lira qu'apres l'accord.
   Future<void> create({
     required String clientId,
     required String clientName,
+    required String clientPhone,
     required String driverId,
     required String driverName,
     required CourseDraft course,
@@ -32,18 +34,27 @@ class RequestRepository {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       })
-      ..set(ref.collection('private').doc('route'), course.route.toMap());
+      ..set(ref.collection('private').doc('route'), course.route.toMap())
+      ..set(ref.collection('private').doc('clientContact'), {'phone': clientPhone});
     return batch.commit();
   }
 
-  /// Proposition du livreur (premiere offre ou reponse au client).
-  Future<void> proposeAsDriver(String id, int price) {
-    return _col.doc(id).update({
-      'status': RequestStatus.negotiating,
-      'price': price,
-      'lastBy': PriceBy.driver,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+  /// Proposition du livreur (premiere offre ou reponse au client). La
+  /// premiere fois, il depose son telephone ([driverPhone]), que le client ne
+  /// lira qu'apres l'accord.
+  Future<void> proposeAsDriver(String id, int price, {String? driverPhone}) {
+    final ref = _col.doc(id);
+    final batch = _db.batch()
+      ..update(ref, {
+        'status': RequestStatus.negotiating,
+        'price': price,
+        'lastBy': PriceBy.driver,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    if (driverPhone != null) {
+      batch.set(ref.collection('private').doc('driverContact'), {'phone': driverPhone});
+    }
+    return batch.commit();
   }
 
   /// Contre-proposition du client.

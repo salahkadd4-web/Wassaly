@@ -1,6 +1,6 @@
 {
   "name": "wassaly-functions",
-  "description": "Cloud Functions de Wassaly : notifications push et facturation des livreurs",
+  "description": "Cloud Functions OPTIONNELLES de Wassaly (offre Blaze) : notifications push",
   "private": true,
   "main": "index.js",
   "engines": { "node": "22" },

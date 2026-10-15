@@ -1373,4 +1373,12 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get billingErrorDriverUnavailable =>
       'Ce livreur ne peut plus accepter de course pour le moment. Choisissez un autre livreur.';
+
+  @override
+  String adminRefund(String amount) {
+    return 'Rembourser $amount DA au livreur';
+  }
+
+  @override
+  String get adminRefunded => 'Frais remboursés au livreur';
 }

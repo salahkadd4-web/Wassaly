@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/constants/app_config.dart';
+import 'delivery_request.dart';
+import 'driver_profile.dart';
 
 /// Compteurs tenus par le serveur pour reperer les comportements anormaux.
 class BillingStats {
@@ -88,6 +90,15 @@ class DriverBilling {
   /// Part de la dette (0..1) par rapport au plafond.
   double get debtRatio => (debt / AppConfig.debtLimitDa).clamp(0, 1).toDouble();
 
+  DriverBilling withStats(BillingStats stats) => DriverBilling(
+        uid: uid,
+        debt: debt,
+        refundsThisMonth: refundsThisMonth,
+        refundMonth: refundMonth,
+        blockedSince: blockedSince,
+        stats: stats,
+      );
+
   factory DriverBilling.fromMap(String uid, Map<String, dynamic>? map) {
     if (map == null) return DriverBilling.empty(uid);
     final blocked = map['blockedSince'];
@@ -130,6 +141,48 @@ class LedgerEntry {
       createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
     );
   }
+}
+
+/// Compteurs anti-fraude de chaque livreur, recalcules par l'admin a partir
+/// des donnees (offre Firebase gratuite : pas de serveur pour les tenir).
+///  - acceptees : courses conclues (acceptees, terminees, ou annulees apres l'accord) ;
+///  - annulees apres l'accord ; terminees ;
+///  - conversations ouvertes avec lui ; signalements ; notes (profil public).
+Map<String, BillingStats> computeDriverStats({
+  required Iterable<DeliveryRequest> requests,
+  required Iterable<String> conversationDriverIds,
+  required Map<String, int> reportsByDriver,
+  required Iterable<DriverProfile> drivers,
+}) {
+  final accepted = <String, int>{};
+  final completed = <String, int>{};
+  final cancelled = <String, int>{};
+  final chats = <String, int>{};
+  void inc(Map<String, int> m, String k) => m[k] = (m[k] ?? 0) + 1;
+
+  for (final r in requests) {
+    final agreed = r.isAccepted || r.isCompleted || r.acceptedAt != null;
+    if (agreed) inc(accepted, r.driverId);
+    if (r.isCompleted) inc(completed, r.driverId);
+    if (r.status == RequestStatus.cancelled && r.acceptedAt != null) {
+      inc(cancelled, r.driverId);
+    }
+  }
+  for (final id in conversationDriverIds) {
+    inc(chats, id);
+  }
+  return {
+    for (final d in drivers)
+      d.uid: BillingStats(
+        accepted: accepted[d.uid] ?? 0,
+        completed: completed[d.uid] ?? 0,
+        cancelledAfterAccept: cancelled[d.uid] ?? 0,
+        conversations: chats[d.uid] ?? 0,
+        reports: reportsByDriver[d.uid] ?? 0,
+        ratingCount: d.ratingCount,
+        ratingSum: d.ratingSum,
+      ),
+  };
 }
 
 /// Motifs pour lesquels un livreur apparait dans l'onglet admin "Suspects".

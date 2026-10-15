@@ -33,19 +33,26 @@ class ClientHomeScreen extends ConsumerWidget {
       final before = prev?.value;
       final after = next.value;
       if (before == null || after == null) return;
-      final old = {for (final r in before) r.id: r.status};
+      // Sans notifications push (offre gratuite), chaque etape de la
+      // negociation est signalee dans l'application.
+      final old = {for (final r in before) r.id: r};
       for (final r in after) {
-        final previous = old[r.id];
-        // Demande ouverte prise par un livreur : elle arrive deja acceptee.
+        final previousReq = old[r.id];
+        final previous = previousReq?.status;
+        // Demande ouverte attribuee : elle arrive deja acceptee.
         if (previous == null && r.isAccepted && r.source == 'open') {
           showSnack(context, t.notifOpenRequestTaken(r.driverName));
           continue;
         }
-        if (previous == null || previous == r.status) continue;
-        if (r.isNegotiating && r.price != null) {
+        if (previousReq == null) continue;
+        // Nouvelle proposition du livreur (premiere ou contre-proposition).
+        if (r.isNegotiating &&
+            r.lastBy == 'driver' &&
+            (previousReq.lastBy != 'driver' || previousReq.price != r.price)) {
           showSnack(context, t.notifPriceProposed(r.driverName, '${r.price}'));
           continue;
         }
+        if (previous == r.status) continue;
         if (r.status == RequestStatus.accepted) {
           showSnack(context, t.notifRequestAccepted(r.driverName));
         } else if (r.status == RequestStatus.rejected) {

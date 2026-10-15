@@ -14,12 +14,12 @@ import '../../widgets/route_track.dart';
 import '../../widgets/snack.dart';
 import '../../widgets/status_chip.dart';
 import '../auth/auth_providers.dart';
-import '../billing/billing_functions.dart';
 import '../billing/billing_providers.dart';
 import '../chat/chat_repository.dart';
 import '../drivers/driver_providers.dart';
 import '../ratings/rating_sheet.dart';
 import '../reports/report_sheet.dart';
+import 'agreement_repository.dart';
 import 'complete_dialog.dart';
 import 'negotiation_panel.dart';
 import 'request_providers.dart';
@@ -50,7 +50,7 @@ class _RequestCardState extends ConsumerState<RequestCard> {
     setState(() => _busy = true);
     try {
       await action();
-    } on BillingException catch (e) {
+    } on AgreementException catch (e) {
       if (mounted) showSnack(context, e.message(t));
     } catch (_) {
       if (mounted) showSnack(context, t.genericError);
@@ -88,13 +88,16 @@ class _RequestCardState extends ConsumerState<RequestCard> {
 
   Future<void> _propose(int price) => _run(() {
         final repo = ref.read(requestRepositoryProvider);
-        return asDriver
-            ? repo.proposeAsDriver(request.id, price)
-            : repo.counterAsClient(request.id, price);
+        if (!asDriver) return repo.counterAsClient(request.id, price);
+        // Premiere proposition : le livreur depose son telephone (lisible par
+        // le client seulement apres l'accord).
+        final phone = request.isPending ? ref.read(userProfileProvider).value?.phone : null;
+        return repo.proposeAsDriver(request.id, price, driverPhone: phone);
       });
 
-  Future<void> _agree() =>
-      _run(() => ref.read(billingFunctionsProvider).agreeDelivery(request.id));
+  Future<void> _agree() => _run(() => ref
+      .read(agreementRepositoryProvider)
+      .agreeDelivery(request.id, asDriver: asDriver));
 
   Future<void> _reject() async {
     final t = AppLocalizations.of(context)!;
@@ -148,7 +151,7 @@ class _RequestCardState extends ConsumerState<RequestCard> {
     // Adresse exacte : le client la voit toujours, le livreur apres l'accord.
     final canSeeExact = !asDriver || request.contactShared;
     final route = canSeeExact
-        ? (ref.watch(deliveryRouteProvider(request.id)).value ?? request.legacyRoute)
+        ? (ref.watch(routeDocProvider(request.routePath)).value ?? request.legacyRoute)
         : null;
 
     // Prix convenu, affiche une fois l'accord conclu.
@@ -158,8 +161,8 @@ class _RequestCardState extends ConsumerState<RequestCard> {
 
     String phone = '';
     if (request.contactShared && request.isOpen) {
-      final contact = ref.watch(requestContactProvider(request.id)).value;
-      phone = (asDriver ? contact?.clientPhone : contact?.driverPhone) ?? '';
+      final path = asDriver ? request.clientContactPath : request.driverContactPath;
+      phone = ref.watch(phoneDocProvider(path)).value ?? '';
     }
 
     return Card(

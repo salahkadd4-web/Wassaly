@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wassaly/core/utils/phone_guard.dart';
+import 'package:wassaly/features/requests/agreement_repository.dart';
 import 'package:wassaly/models/delivery_request.dart';
 import 'package:wassaly/models/driver_billing.dart';
 import 'package:wassaly/models/driver_profile.dart';
@@ -168,5 +170,74 @@ void main() {
     final old = DeliveryRequest.fromMap('r2', {'status': 'accepted'});
     expect(old.price, isNull);
     expect(old.rated, isNull);
+  });
+
+  group('frais a l accord', () {
+    final now = DateTime(2026, 10, 15);
+    DriverProfile d(String status, {int endsInDays = 10, String? plan}) => DriverProfile.fromMap('d', {
+          'subscriptionStatus': status,
+          'subscriptionEnd': Timestamp.fromDate(now.add(Duration(days: endsInDays))),
+          'plan': ?plan,
+        });
+
+    test('50 DA en formule a la livraison', () {
+      expect(agreementFee(d('per_delivery', endsInDays: -30), now), 50);
+    });
+    test('rien pendant l essai ou un mois paye', () {
+      expect(agreementFee(d('trial'), now), 0);
+      expect(agreementFee(d('paid'), now), 0);
+      expect(agreementFee(d('trial', plan: 'per_delivery'), now), 0);
+    });
+    test('essai termine avec "a la livraison" choisi : 50 DA', () {
+      expect(agreementFee(d('trial', endsInDays: -1, plan: 'per_delivery'), now), 50);
+    });
+  });
+
+  test('compteurs anti-fraude recalcules par l admin', () {
+    DeliveryRequest r(String driver, String status, {bool agreed = true}) => DeliveryRequest.fromMap('x', {
+          'driverId': driver,
+          'status': status,
+          if (agreed) 'acceptedAt': Timestamp.fromDate(DateTime(2026, 10, 1)),
+        });
+    final stats = computeDriverStats(
+      requests: [
+        r('d1', 'completed'),
+        r('d1', 'accepted'),
+        r('d1', 'cancelled'),
+        r('d1', 'cancelled', agreed: false),
+        r('d1', 'pending', agreed: false),
+        r('d2', 'completed'),
+      ],
+      conversationDriverIds: ['d1', 'd1', 'd2'],
+      reportsByDriver: {'d1': 2},
+      drivers: [
+        DriverProfile.fromMap('d1', {'ratingCount': 2, 'ratingSum': 5}),
+        DriverProfile.fromMap('d2', {}),
+      ],
+    );
+    final s1 = stats['d1']!;
+    expect(s1.accepted, 3);
+    expect(s1.completed, 1);
+    expect(s1.cancelledAfterAccept, 1);
+    expect(s1.conversations, 2);
+    expect(s1.reports, 2);
+    expect(s1.ratingAverage, 2.5);
+    expect(stats['d2']!.accepted, 1);
+    expect(stats['d2']!.reports, 0);
+  });
+
+  test('documents prives : demande directe ou issue d une demande ouverte', () {
+    final direct = DeliveryRequest.fromMap('r1', {'driverId': 'd1', 'status': 'accepted'});
+    expect(direct.routePath, 'deliveryRequests/r1/private/route');
+    expect(direct.driverContactPath, 'deliveryRequests/r1/private/driverContact');
+    final fromOpen = DeliveryRequest.fromMap('r2', {
+      'driverId': 'd1',
+      'status': 'accepted',
+      'source': 'open',
+      'openRequestId': 'o1',
+    });
+    expect(fromOpen.routePath, 'openRequests/o1/private/route');
+    expect(fromOpen.clientContactPath, 'openRequests/o1/private/clientContact');
+    expect(fromOpen.driverContactPath, 'openRequests/o1/driverContacts/d1');
   });
 }

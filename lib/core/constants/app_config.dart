@@ -47,9 +47,6 @@ class AppConfig {
   /// Rayon de recherche des livreurs autour du client.
   static const double searchRadiusKm = 10;
 
-  /// Region des Cloud Functions (REGION dans functions/index.js).
-  static const String functionsRegion = 'europe-west1';
-
   /// Indicatif pays utilise pour WhatsApp (Algerie).
   static const String countryCode = '213';
 

@@ -1,8 +1,11 @@
 /**
  * Wassaly - Cloud Functions.
  *
- * A. Notifications push aux livreurs et aux clients (Firebase Cloud Messaging).
- * B. Facturation des livreurs : billing_functions.js (exportees en bas).
+ * OPTIONNEL : necessite l'offre Firebase Blaze (carte bancaire). Wassaly
+ * fonctionne sans : la facturation, la negociation, les accords et les notes
+ * sont faits par l'application et verifies par firestore.rules. Ces
+ * fonctions n'ajoutent que les notifications push (application fermee),
+ * aux livreurs et aux clients (Firebase Cloud Messaging).
  *
  * Notifications, declencheurs Firestore :
  *   1. nouveau message dans une conversation  -> notifie le destinataire
@@ -372,7 +375,3 @@ exports.onOfferUpdated = onDocumentUpdated('openRequests/{rid}/offers/{driverId}
     );
   }
 });
-
-// ================================================================ B. Facturation
-
-Object.assign(exports, require('./billing_functions'));

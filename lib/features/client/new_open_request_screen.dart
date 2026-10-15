@@ -35,6 +35,7 @@ class NewOpenRequestScreen extends ConsumerWidget {
           await ref.read(openRequestRepositoryProvider).create(
                 clientId: user.uid,
                 clientName: profile.name,
+                clientPhone: profile.phone,
                 course: course,
               );
           if (!context.mounted) return;

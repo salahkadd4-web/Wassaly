@@ -46,7 +46,15 @@ class DeliveryRequest {
     this.lastBy,
     this.rated,
     this.legacyRoute,
+    this.openRequestId,
+    this.refunded = false,
   });
+
+  /// Demande ouverte d'origine (source == 'open').
+  final String? openRequestId;
+
+  /// Remboursement des 50 DA fait par l'admin (annulation).
+  final bool refunded;
 
   final String id;
   final String clientId;
@@ -105,6 +113,22 @@ class DeliveryRequest {
   /// Les telephones et l'adresse exacte ne sont partages qu'apres l'accord.
   bool get contactShared => isAccepted || isCompleted;
 
+  // Documents prives (adresse exacte, telephones). Pour une course issue
+  // d'une demande ouverte, ils sont restes sur la demande ouverte.
+  bool get _fromOpen => source == 'open' && openRequestId != null;
+
+  String get routePath => _fromOpen
+      ? 'openRequests/$openRequestId/private/route'
+      : 'deliveryRequests/$id/private/route';
+
+  String get clientContactPath => _fromOpen
+      ? 'openRequests/$openRequestId/private/clientContact'
+      : 'deliveryRequests/$id/private/clientContact';
+
+  String get driverContactPath => _fromOpen
+      ? 'openRequests/$openRequestId/driverContacts/$driverId'
+      : 'deliveryRequests/$id/private/driverContact';
+
   /// C'est a [asDriver] (livreur ou client) de repondre a la negociation.
   bool myTurn({required bool asDriver}) {
     if (asDriver) return isPending || (isNegotiating && lastBy == PriceBy.client);
@@ -142,6 +166,8 @@ class DeliveryRequest {
       lastBy: map['lastBy'] as String?,
       rated: (map['rated'] as num?)?.toInt(),
       legacyRoute: legacy,
+      openRequestId: map['openRequestId'] as String?,
+      refunded: (map['refunded'] as bool?) ?? false,
     );
   }
 }

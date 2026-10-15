@@ -75,13 +75,51 @@ final adminCompletedRequestsProvider =
       );
 });
 
-/// Facturation de tous les livreurs (cle = uid) : dette et compteurs anti-fraude.
-final adminBillingProvider = StreamProvider<Map<String, DriverBilling>>((ref) {
+/// Dettes de tous les livreurs (driverBilling).
+final _adminDebtsProvider = StreamProvider<Map<String, DriverBilling>>((ref) {
   return ref.watch(firestoreProvider).collection('driverBilling').snapshots().map(
         (s) => {
           for (final d in s.docs) d.id: DriverBilling.fromMap(d.id, d.data()),
         },
       );
+});
+
+/// Toutes les demandes de livraison (compteurs anti-fraude).
+final _adminAllRequestsProvider = StreamProvider<List<DeliveryRequest>>((ref) {
+  return ref.watch(firestoreProvider).collection('deliveryRequests').snapshots().map(
+        (s) => [for (final d in s.docs) DeliveryRequest.fromMap(d.id, d.data())],
+      );
+});
+
+/// Livreur de chaque conversation (une entree par conversation).
+final _adminConversationDriversProvider = StreamProvider<List<String>>((ref) {
+  return ref.watch(firestoreProvider).collection('conversations').snapshots().map(
+        (s) => [for (final d in s.docs) (d.data()['driverId'] as String?) ?? ''],
+      );
+});
+
+/// Facturation de tous les livreurs (cle = uid) : dette, et compteurs
+/// anti-fraude recalcules a partir des donnees.
+final adminBillingProvider = Provider<AsyncValue<Map<String, DriverBilling>>>((ref) {
+  final debts = ref.watch(_adminDebtsProvider);
+  final requests = ref.watch(_adminAllRequestsProvider);
+  final chats = ref.watch(_adminConversationDriversProvider);
+  final drivers = ref.watch(adminDriversProvider);
+  final reports = ref.watch(adminReportsProvider).value ?? const {};
+  if (!debts.hasValue || !requests.hasValue || !chats.hasValue || !drivers.hasValue) {
+    return const AsyncValue.loading();
+  }
+  final stats = computeDriverStats(
+    requests: requests.value!,
+    conversationDriverIds: chats.value!,
+    reportsByDriver: {for (final e in reports.entries) e.key: e.value.length},
+    drivers: drivers.value!,
+  );
+  return AsyncValue.data({
+    for (final d in drivers.value!)
+      d.uid: (debts.value![d.uid] ?? DriverBilling.empty(d.uid))
+          .withStats(stats[d.uid] ?? const BillingStats()),
+  });
 });
 
 /// Signalement d'un livreur par un client.

@@ -31,6 +31,14 @@ class DriverRepository {
     return _doc(uid).update(_position(position));
   }
 
+  /// Formule pour la suite : monthly | per_delivery (effet a la fin de la
+  /// periode en cours, calcule a la lecture).
+  Future<void> setPlan(String uid, String plan) => _doc(uid).update({'plan': plan});
+
+  /// Le livreur signale qu'il a atteint le plafond de dette : il disparait
+  /// des listes des clients (seul l'admin le debloque, apres paiement).
+  Future<void> markBlocked(String uid) => _doc(uid).update({'billingBlocked': true});
+
   Future<void> setCity(String uid, String city) {
     final value = city.trim();
     return _doc(uid).update({'city': value.isEmpty ? null : value});

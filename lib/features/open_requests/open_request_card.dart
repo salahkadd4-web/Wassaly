@@ -12,11 +12,11 @@ import '../../widgets/route_track.dart';
 import '../../widgets/snack.dart';
 import '../../widgets/status_chip.dart';
 import '../auth/auth_providers.dart';
-import '../billing/billing_functions.dart';
 import '../billing/billing_providers.dart';
 import '../common/home_tab_provider.dart';
 import '../drivers/driver_providers.dart';
 import '../ratings/rating_sheet.dart';
+import '../requests/agreement_repository.dart';
 import '../requests/negotiation_panel.dart';
 import '../requests/price_sheet.dart';
 import 'open_request_providers.dart';
@@ -26,7 +26,7 @@ Future<void> _guard(BuildContext context, Future<void> Function() action) async 
   final t = AppLocalizations.of(context)!;
   try {
     await action();
-  } on BillingException catch (e) {
+  } on AgreementException catch (e) {
     if (context.mounted) showSnack(context, e.message(t));
   } catch (_) {
     if (context.mounted) showSnack(context, t.genericError);
@@ -198,11 +198,13 @@ class _DriverOfferState extends ConsumerState<_DriverOffer> {
       confirmLabel: t.proposeAction,
     );
     if (price == null) return;
-    final name = ref.read(userProfileProvider).value?.name ?? '';
+    final profile = ref.read(userProfileProvider).value;
+    if (profile == null) return;
     await _run(() => ref.read(openRequestRepositoryProvider).makeOffer(
           openId: request.id,
           driverId: uid,
-          driverName: name,
+          driverName: profile.name,
+          driverPhone: profile.phone,
           price: price,
         ));
   }
@@ -255,7 +257,11 @@ class _DriverOfferState extends ConsumerState<_DriverOffer> {
             by: PriceBy.driver,
           )),
       onAccept: () => _run(() async {
-        await ref.read(billingFunctionsProvider).agreeOffer(request.id, uid);
+        await ref.read(agreementRepositoryProvider).agreeOffer(
+              openRequestId: request.id,
+              driverId: uid,
+              asDriver: true,
+            );
         if (!mounted) return;
         showSnack(this.context, t.agreementDone(request.clientName));
         ref.read(homeTabProvider.notifier).select(1);
@@ -364,7 +370,11 @@ class _OfferTileState extends ConsumerState<_OfferTile> {
                 by: PriceBy.client,
               )),
           onAccept: () => _run(() async {
-            await ref.read(billingFunctionsProvider).agreeOffer(openId, o.driverId);
+            await ref.read(agreementRepositoryProvider).agreeOffer(
+                  openRequestId: openId,
+                  driverId: o.driverId,
+                  asDriver: false,
+                );
             if (mounted) showSnack(this.context, t.agreementDone(o.driverName));
           }),
           onRefuse: () => _run(() => repo.refuseOffer(

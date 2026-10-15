@@ -469,13 +469,23 @@ class _RequestsAdminTab extends ConsumerWidget {
   }
 }
 
-class _AdminRequestTile extends StatelessWidget {
+class _AdminRequestTile extends ConsumerWidget {
   const _AdminRequestTile({required this.request});
 
   final DeliveryRequest request;
 
+  Future<void> _refund(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context)!;
+    try {
+      await ref.read(adminRepositoryProvider).refundDelivery(request);
+      if (context.mounted) showSnack(context, t.adminRefunded);
+    } catch (_) {
+      if (context.mounted) showSnack(context, t.genericError);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     String addr(String a) => a.isEmpty ? '-' : a;
@@ -529,6 +539,21 @@ class _AdminRequestTile extends StatelessWidget {
             ],
             const SizedBox(height: 4),
             Text(formatDateTime(request.createdAt), style: theme.textTheme.bodySmall),
+            // Annulation d'une course deja debitee : remboursement manuel.
+            if (request.status == RequestStatus.cancelled && request.charged > 0) ...[
+              const SizedBox(height: 8),
+              if (request.refunded)
+                Text(t.adminRefunded, style: theme.textTheme.bodySmall)
+              else
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40)),
+                    onPressed: () => _refund(context, ref),
+                    child: Text(t.adminRefund('${request.charged}')),
+                  ),
+                ),
+            ],
           ],
         ),
       ),

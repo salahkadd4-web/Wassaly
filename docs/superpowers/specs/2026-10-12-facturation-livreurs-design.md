@@ -5,7 +5,13 @@ Date : 2026-10-12 · Implemente sur `main` (non commite)
 > **Mise a jour du 2026-10-15** : l'acceptation directe (`acceptDelivery`) et le « Je prends » (`takeOpenRequest`)
 > ont ete remplaces par une **negociation du prix** (100 a 300 DA par pas de 10, chacun a son tour) conclue par
 > `agreeDelivery` / `agreeOffer`, avec offres multiples sur les demandes ouvertes et adresse exacte privee jusqu'a
-> l'accord. Le debit de 50 DA a lieu a l'accord. Voir GUIDE.md, section 6 octies. Le reste de ce document reste valable.
+> l'accord. Le debit de 50 DA a lieu a l'accord. Voir GUIDE.md, section 6 octies.
+>
+> **Mise a jour du 2026-10-16** : sans carte bancaire (offre Blaze impossible), le projet tourne sur l'offre gratuite
+> Spark, SANS Cloud Functions. Accords, debits et notes sont ecrits par l'application dans une ecriture groupee et
+> verifies par `firestore.rules` ; remboursements par l'admin ; compteurs anti-fraude recalcules par l'admin ;
+> pas de notification push. Les sections de ce document qui decrivent des Cloud Functions de facturation sont
+> remplacees par GUIDE.md, section 6 septies.
 
 ## 1. Objectif
 

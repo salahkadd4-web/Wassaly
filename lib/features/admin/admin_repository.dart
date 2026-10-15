@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/constants/app_config.dart';
+import '../../models/delivery_request.dart';
 import '../../models/driver_billing.dart';
 import '../../models/driver_profile.dart';
 import '../../models/subscription_claim.dart';
@@ -151,6 +152,32 @@ class AdminRepository {
         'status': 'approved',
         'reviewedAt': FieldValue.serverTimestamp(),
       });
+    });
+  }
+
+  /// Rembourse les frais d'une course annulee (50 DA) : dette diminuee,
+  /// ecriture "refund", livreur debloque s'il repasse sous le plafond.
+  Future<void> refundDelivery(DeliveryRequest request) {
+    final billingRef = _db.collection('driverBilling').doc(request.driverId);
+    return _db.runTransaction((tx) async {
+      final snap = await tx.get(billingRef);
+      final debt = DriverBilling.fromMap(request.driverId, snap.data()).debt;
+      final newDebt = (debt - request.charged).clamp(0, 1 << 30);
+      tx.set(
+        billingRef,
+        {'debt': newDebt, 'updatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+      tx.set(billingRef.collection('ledger').doc('refund_${request.id}'), {
+        'type': 'refund',
+        'amount': request.charged,
+        'requestId': request.id,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      tx.update(_db.collection('deliveryRequests').doc(request.id), {'refunded': true});
+      if (newDebt < AppConfig.debtLimitDa) {
+        tx.update(_driver(request.driverId), {'billingBlocked': false});
+      }
     });
   }
 

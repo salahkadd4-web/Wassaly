@@ -20,8 +20,7 @@ Langues : francais et arabe (avec affichage de droite a gauche). Theme clair par
 | Demandes ouvertes : le client publie, le premier livreur qui la prend obtient la course | Fait |
 | Bouton retour Android : confirmation avant de quitter (connexion et tableaux de bord) | Fait |
 | Notifications dans l'application (bandeaux + pastilles de compteur) | Fait |
-| Notifications push livreur (nouveau message, nouvelle demande) application fermee | Fait (Cloud Functions, voir section 6 quinquies) |
-| Notifications push client (demande acceptee / refusee / terminee, course prise, message) | Fait (voir section 6 octies) |
+| Notifications push (application fermee) | Optionnel : necessite l'offre Firebase Blaze (voir section 6 quinquies). Sans Blaze : alertes dans l'application |
 | Prix de course choisi par le livreur dans une liste, notes 1 a 5 etoiles, recherche a 10 km | Fait (voir section 6 octies) |
 | Chiffre d'affaires du livreur (tableau de bord) et de tous les livreurs (admin) | Fait (voir section 6 sexies) |
 | iOS | Non inclus (Android uniquement) |
@@ -194,44 +193,48 @@ Apres l'**essai gratuit de 2 mois**, le livreur choisit dans **Ma formule** :
 - Pendant l'essai ou un mois paye, le choix prend effet **a la fin de la periode** (une fonction planifiee bascule chaque nuit a 3 h).
 - Un livreur expire qui choisit « a la livraison » peut travailler tout de suite.
 - Un livreur « a la livraison » qui veut passer au mensuel paie **solde + 1 000 DA**.
-- **Remboursement** : si le client annule moins de 2 h apres l'acceptation, les 50 DA sont rendus (3 fois par mois au maximum).
+- **Remboursement** : si un client annule une course deja conclue, l'admin peut rendre les 50 DA (onglet **Demandes**,
+  bouton **Rembourser 50 DA au livreur** sur la demande annulee).
 
-Valeurs modifiables : `lib/core/constants/app_config.dart` **et** `functions/billing.js` (les deux doivent rester identiques ;
-c'est le serveur qui debite, l'application ne fait qu'afficher).
+Valeurs modifiables : `lib/core/constants/app_config.dart` **et** `firestore.rules` (fonctions `perDeliveryMode`,
+`agreementCharged`, plafond `1000`) ; les deux doivent rester identiques.
 
-### Comment les livraisons sont comptees
-Personne ne peut conclure une course directement dans Firestore : l'accord sur le prix passe par la Cloud Function
-`agreeDelivery` (ou `agreeOffer` pour une demande ouverte), qui verifie la formule du livreur, debite 50 DA si besoin et note le mouvement
-dans `driverBilling/{uid}/ledger`. Chaque livraison a un identifiant unique de debit : impossible de payer deux fois.
+### Comment les livraisons sont comptees (offre gratuite, sans serveur)
+Wassaly fonctionne sur l'offre gratuite **Spark**, sans Cloud Functions. L'accord sur un prix est conclu par l'application
+dans **une seule ecriture groupee** : la course passe a « acceptee » et, pour un livreur « a la livraison », sa dette
+augmente de 50 DA avec une ecriture `driverBilling/{uid}/ledger/charge_{course}`. Les regles Firestore refusent le lot
+entier si une seule piece manque ou est fausse : mauvais tour, prix modifie, debit absent ou different de 50 DA, dette deja
+a 1 000 DA... Une dette ne peut augmenter que dans le lot qui conclut une course, une seule fois par course : personne ne
+peut la gonfler ni la baisser (sauf l'admin).
 
 ### Ce qui empeche de contourner l'application
-- **Numeros masques** : le telephone n'est plus dans les profils publics. Client et livreur le voient seulement une fois la
-  livraison acceptee (`deliveryRequests/{id}/private/contact`, ecrit par le serveur).
+- **Numeros masques** : le telephone n'est plus dans les profils publics. Chacun depose le sien (verifie par les regles :
+  c'est forcement le numero de son compte) dans un document prive (`private/clientContact`, `private/driverContact`), que
+  l'autre ne peut lire qu'apres l'accord.
 - **Demandes ouvertes** : plus de numero ni d'adresse exacte avant l'accord ; chaque livreur fait une offre, et seul celui retenu
   l'obtient, et la course devient une livraison suivie.
 - **Chat, notes, noms** : les regles Firestore refusent tout texte contenant un numero (05/06/07, +213, chiffres arabes...).
 - **Signalement** : le client peut signaler un livreur (une fois par livreur, apres un echange).
 - **Onglet admin Suspects** : livreurs avec plus de 30 % d'annulations apres acceptation, plus de 3 conversations par
-  livraison acceptee, 2 signalements ou plus, ou bloques pour dette depuis plus de 7 jours. Bouton Suspendre.
+  livraison acceptee, 2 signalements ou plus, une note moyenne inferieure a 3, ou bloques pour dette depuis plus de 7 jours.
+  Les compteurs sont recalcules par l'application admin a partir des donnees. Bouton Suspendre.
 
 **Limite** : un client et un livreur qui se connaissent deja peuvent toujours s'arranger hors application.
 Le systeme le rend visible (ratios, signalements), il ne peut pas l'empecher.
 
-### Mise en service (une seule fois)
+### Mise en service
 ```
-cd functions
-npm install
-npm test
-cd ..
-firebase deploy --only functions,firestore:rules,firestore:indexes
+firebase deploy --only firestore:rules,firestore:indexes
 ```
+(Fonctionne sur l'offre gratuite Spark ; aucune Cloud Function n'est necessaire.)
 Puis, pour retirer les numeros des donnees de test deja enregistrees (voir l'en-tete du script) :
 ```
 cd tools
 node strip_public_phones.js          # simulation
 node strip_public_phones.js --apply
 ```
-La fonction planifiee `rolloverSubscriptions` utilise Cloud Scheduler (inclus dans le forfait Blaze, 3 taches gratuites).
+La fin d'essai ou de mois est calculee a la lecture (pas de tache planifiee) : un livreur dont l'essai est termine et qui a
+choisi « a la livraison » peut continuer a travailler immediatement.
 
 ## 6 octies. Prix, notes, references de paiement, recherche par zone
 
@@ -250,13 +253,14 @@ ne lui ouvrent qu'apres l'accord.
 chaque livreur), negocie avec qui il veut, et le **premier accord** attribue la course (les autres offres sont closes).
 
 A la fin, **Marquer comme terminee** enregistre le prix convenu (les regles refusent tout autre montant).
-Bornes modifiables : `priceMinDa`, `priceMaxDa`, `priceStepDa` dans `app_config.dart`, **et** `PRICE_MIN_DA`,
-`PRICE_MAX_DA`, `PRICE_STEP_DA` dans `functions/billing.js`, **et** la fonction `validPrice` de `firestore.rules`.
+Bornes modifiables : `priceMinDa`, `priceMaxDa`, `priceStepDa` dans `app_config.dart`, **et** la fonction `validPrice`
+de `firestore.rules`.
 
 ### Notes
 Apres une livraison terminee, le client peut la **noter** (1 a 5 etoiles + commentaire facultatif), une seule fois.
-La moyenne s'affiche sur la carte et la fiche du livreur, et sur son tableau de bord. Elle est calculee par le serveur
-(`onRatingCreated`) : ni le client ni le livreur ne peuvent la modifier. Une moyenne inferieure a 3 sur au moins 3 avis
+La moyenne s'affiche sur la carte et la fiche du livreur, et sur son tableau de bord. Elle est mise a jour dans la meme
+ecriture que la note, et les regles verifient qu'elle augmente exactement du nombre d'etoiles donne : personne ne peut la
+fausser. Une moyenne inferieure a 3 sur au moins 3 avis
 fait apparaitre le livreur dans l'onglet **Suspects**.
 
 ### Reference de paiement unique
@@ -271,18 +275,11 @@ grace au geohash enregistre avec la position du livreur. Il faut l'**index Fires
 Un livreur deja en ligne avant cette version doit se remettre en ligne (ou actualiser sa position) pour apparaitre.
 Sans localisation, le client voit un bandeau et peut toujours publier une course.
 
-### Notifications des clients
-Le telephone du client s'enregistre aussi pour les notifications. Il est prevenu quand sa demande est acceptee (avec le
-prix), refusee ou terminee (invitation a noter), quand un livreur prend sa course, et quand il recoit un message.
-Le livreur est prevenu quand un client annule.
-
-### Mise en service
-```
-cd functions
-npm test
-cd ..
-firebase deploy --only functions,firestore:rules,firestore:indexes
-```
+### Alertes
+Sans l'offre Blaze, pas de notification push quand l'application est fermee. Quand elle est ouverte, client et livreur
+sont prevenus par un bandeau a chaque etape : nouvelle demande, proposition ou contre-proposition, accord, refus,
+annulation, fin de livraison. Si vous passez un jour a Blaze, deployez `functions/` (section 6 quinquies) pour ajouter
+les notifications push : elles n'interferent pas avec la facturation.
 
 ## 7. Utilisation
 
@@ -351,7 +348,7 @@ Utilisez alors `flutter build appbundle --release`.
 |---|---|
 | `ApiException: 10` a la connexion Google | SHA-1 manquante dans Firebase (section 4, etape 2) |
 | `permission-denied` | Regles Firestore non publiees ou ancienne version (section 4, etape 4) |
-| « Accepter » ne fait rien / erreur | Cloud Functions non deployees ou region differente (`REGION` dans `functions/index.js` = `functionsRegion` dans `app_config.dart`) |
+| « Accepter » affiche une erreur | Regles Firestore pas a jour (`firebase deploy --only firestore:rules`), ou livreur bloque / formule expiree |
 | Aucun livreur affiche | Le livreur doit etre **actif**, avec un abonnement valide, et avoir une position enregistree |
 | La liste n'est pas triee par distance | Localisation refusee ou GPS coupe (un bandeau l'indique) |
 | L'icone ou l'ecran de demarrage n'a pas change | Desinstallez l'ancienne version puis relancez `flutter run` |
@@ -370,7 +367,6 @@ lib/
   l10n/        traductions francais / arabe (fichiers .arb)
 assets/branding/   logo et identite visuelle
 firestore.rules    regles de securite a publier
-functions/         Cloud Functions : notifications push, facturation (billing.js = regles de prix, testees)
-functions/         Cloud Functions (notifications push)
+functions/         Cloud Functions OPTIONNELLES (offre Blaze) : notifications push uniquement
 PUBLIER_UNE_VERSION.md   tutoriel de publication d'une nouvelle version
 ```

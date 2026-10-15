@@ -38,14 +38,22 @@ class DriverHomeScreen extends ConsumerWidget {
       final before = prev?.value;
       final after = next.value;
       if (before == null || after == null) return;
-      final old = {for (final r in before) r.id: r.status};
+      // Sans notifications push (offre gratuite), chaque etape de la
+      // negociation est signalee dans l'application.
+      final old = {for (final r in before) r.id: r};
       for (final r in after) {
-        final previous = old[r.id];
-        if (previous == null && r.isPending) {
-          showSnack(context, t.notifNewRequest(r.clientName));
-        } else if (previous != null &&
-            previous != r.status &&
-            r.status == RequestStatus.cancelled) {
+        final p = old[r.id];
+        if (p == null) {
+          if (r.isPending) showSnack(context, t.notifNewRequest(r.clientName));
+          continue;
+        }
+        if (r.isNegotiating &&
+            r.lastBy == 'client' &&
+            (p.lastBy != 'client' || p.price != r.price)) {
+          showSnack(context, t.notifPriceProposed(r.clientName, '${r.price}'));
+        } else if (p.status != r.status && r.isAccepted) {
+          showSnack(context, t.notifOpenRequestTaken(r.clientName));
+        } else if (p.status != r.status && r.status == RequestStatus.cancelled) {
           showSnack(context, t.notifRequestCancelled(r.clientName));
         }
       }

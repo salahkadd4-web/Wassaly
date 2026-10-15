@@ -1,16 +1,7 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/app_config.dart';
 import '../../models/driver_billing.dart';
 import '../auth/auth_providers.dart';
-import 'billing_functions.dart';
-
-final billingFunctionsProvider = Provider<BillingFunctions>(
-  (ref) => BillingFunctions(
-    FirebaseFunctions.instanceFor(region: AppConfig.functionsRegion),
-  ),
-);
 
 /// Facturation d'un livreur (driverBilling/{uid}) : le livreur connecte ou l'admin.
 final driverBillingProvider =

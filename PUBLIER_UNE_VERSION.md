@@ -26,21 +26,16 @@ Trois regles ne doivent jamais etre cassees, sinon les telephones refusent la mi
 
 ## Cas de la version 1.2.0 (facturation des livreurs)
 
-Cette version deplace l'acceptation des livraisons sur le serveur. **L'ordre compte** :
+**L'ordre compte** : les regles Firestore doivent etre a jour avant que l'APK soit installe.
 
 1. **Renseigner vos coordonnees de paiement** dans `lib/core/constants/app_config.dart`
    (`paymentDetails` : numero CCP / RIP BaridiMob et nom du titulaire). Les livreurs les verront dans **Ma formule**.
-2. **Deployer le serveur avant l'APK** (Cloud Functions + regles) :
+2. **Deployer les regles et l'index avant l'APK** (offre gratuite Spark, pas de Cloud Functions) :
    ```
-   cd functions
-   npm install
-   npm test
-   cd ..
-   firebase deploy --only functions,firestore:rules,firestore:indexes
+   firebase deploy --only firestore:rules,firestore:indexes
    ```
-   Le premier deploiement d'une fonction planifiee peut demander d'activer l'API Cloud Scheduler : acceptez.
 3. **Nettoyer les donnees de test** (numeros dans les profils publics) : `tools/strip_public_phones.js` (voir son en-tete).
-4. **Construire et publier l'APK** (etapes ci-dessous). `pubspec.yaml` est deja en `1.2.0+3`.
+4. **Construire et publier l'APK** (etapes ci-dessous).
 
 **Personne n'a encore installe l'application ?** Alors deux options sont possibles, le QR ne change dans aucun cas :
 
@@ -158,7 +153,7 @@ Option `-SkipTests` pour ignorer `flutter test` (deconseille).
 ## Liste de controle rapide
 
 - [ ] `flutter analyze`, `flutter test` et `cd functions && npm test` sans erreur
-- [ ] Cloud Functions et regles deployees **avant** l'APK si elles ont change
+- [ ] Regles et index Firestore deployes **avant** l'APK s'ils ont change
 - [ ] `pubspec.yaml` : build (apres le `+`) augmente
 - [ ] `android\key.properties` present (signature de release)
 - [ ] APK renomme `wassaly.apk`
@@ -173,6 +168,6 @@ Option `-SkipTests` pour ignorer `flutter test` (deconseille).
 | 1.0.0 | 1 | Premiere diffusion |
 | 1.1.0 | 2 | Notifications push (livreurs), chiffre d'affaires (livreur + admin) |
 | 1.2.0 | 3 | Formules livreur (mensuelle ou 50 DA/livraison), anti-fraude, nouveau design. Deployer functions + regles avant. |
-| 1.3.0 | 5 | Negociation du prix (100-300 DA), offres multiples, adresse exacte privee, notes, reference de paiement unique, recherche a 10 km, notifications clients. Deployer functions + regles + index avant. |
+| 1.3.0 | 5 | Negociation du prix (100-300 DA), offres multiples, adresse exacte privee, notes, reference de paiement unique, recherche a 10 km. Fonctionne sans Blaze : deployer regles + index avant. |
 
 (Ajoutez une ligne a chaque publication.)

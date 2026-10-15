@@ -15,11 +15,13 @@ class OpenRequestRepository {
   DocumentReference<Map<String, dynamic>> _offer(String openId, String driverId) =>
       _col.doc(openId).collection('offers').doc(driverId);
 
-  /// Publication : quartiers et distance visibles des livreurs, adresse exacte
-  /// dans private/route (lisible par le client seulement).
+  /// Publication : quartiers et distance visibles des livreurs ; adresse
+  /// exacte et telephone du client prives (lisibles par le livreur retenu
+  /// apres l'accord).
   Future<void> create({
     required String clientId,
     required String clientName,
+    required String clientPhone,
     required CourseDraft course,
   }) {
     final ref = _col.doc();
@@ -32,7 +34,8 @@ class OpenRequestRepository {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       })
-      ..set(ref.collection('private').doc('route'), course.route.toMap());
+      ..set(ref.collection('private').doc('route'), course.route.toMap())
+      ..set(ref.collection('private').doc('clientContact'), {'phone': clientPhone});
     return batch.commit();
   }
 
@@ -44,22 +47,29 @@ class OpenRequestRepository {
     });
   }
 
-  /// Premiere offre d'un livreur.
+  /// Premiere offre d'un livreur, avec son telephone (lisible par le client
+  /// seulement s'il conclut avec lui).
   Future<void> makeOffer({
     required String openId,
     required String driverId,
     required String driverName,
+    required String driverPhone,
     required int price,
   }) {
-    return _offer(openId, driverId).set({
-      'driverId': driverId,
-      'driverName': driverName,
-      'price': price,
-      'lastBy': PriceBy.driver,
-      'status': 'open',
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    final batch = _db.batch()
+      ..set(_offer(openId, driverId), {
+        'driverId': driverId,
+        'driverName': driverName,
+        'price': price,
+        'lastBy': PriceBy.driver,
+        'status': 'open',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      })
+      ..set(_col.doc(openId).collection('driverContacts').doc(driverId), {
+        'phone': driverPhone,
+      });
+    return batch.commit();
   }
 
   /// Contre-proposition, par le livreur ou par le client ([by]).

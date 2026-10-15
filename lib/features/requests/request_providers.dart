@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/course_route.dart';
 import '../../models/delivery_request.dart';
-import '../../models/request_contact.dart';
 import '../auth/auth_providers.dart';
 import 'request_repository.dart';
 
@@ -38,29 +37,23 @@ final driverRequestsProvider = StreamProvider<List<DeliveryRequest>>((ref) {
   return _watch(ref, 'driverId', user.uid);
 });
 
-/// Telephones d'une livraison acceptee (lisibles seulement apres acceptation).
-final requestContactProvider =
-    StreamProvider.family<RequestContact, String>((ref, requestId) {
+/// Telephone depose par une partie (document {phone} : voir
+/// DeliveryRequest.clientContactPath / driverContactPath). Lisible par
+/// l'autre partie seulement apres l'accord.
+final phoneDocProvider = StreamProvider.family<String?, String>((ref, path) {
   return ref
       .watch(firestoreProvider)
-      .collection('deliveryRequests')
-      .doc(requestId)
-      .collection('private')
-      .doc('contact')
+      .doc(path)
       .snapshots()
-      .map((s) => RequestContact.fromMap(s.data()));
+      .map((s) => s.data()?['phone'] as String?);
 });
 
-/// Adresse exacte d'une course : toujours pour le client, pour le livreur
-/// seulement apres l'accord (sinon le flux est en erreur : on renvoie null).
-final deliveryRouteProvider =
-    StreamProvider.family<CourseRoute?, String>((ref, requestId) {
+/// Adresse exacte d'une course (DeliveryRequest.routePath) : toujours pour le
+/// client, pour le livreur seulement apres l'accord.
+final routeDocProvider = StreamProvider.family<CourseRoute?, String>((ref, path) {
   return ref
       .watch(firestoreProvider)
-      .collection('deliveryRequests')
-      .doc(requestId)
-      .collection('private')
-      .doc('route')
+      .doc(path)
       .snapshots()
       .map((s) => CourseRoute.fromMap(s.data()));
 });

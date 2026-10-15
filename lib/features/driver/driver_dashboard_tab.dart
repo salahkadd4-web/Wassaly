@@ -34,6 +34,7 @@ class DriverDashboardTab extends ConsumerStatefulWidget {
 class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
   bool _busy = false;
   bool _autoDeactivated = false;
+  bool _selfBlocked = false;
 
   Future<void> _setActive(DriverProfile d, bool value) async {
     final t = AppLocalizations.of(context)!;
@@ -141,6 +142,16 @@ class _DriverDashboardTabState extends ConsumerState<DriverDashboardTab> {
                 .read(driverRepositoryProvider)
                 .setActive(d.uid, false)
                 .catchError((_) {});
+          });
+        }
+
+        // Plafond de dette atteint (debit fait par un client a l'accord) : le
+        // livreur se retire lui-meme des listes ; l'admin le debloquera apres
+        // paiement. Les regles l'empechent deja de proposer un prix.
+        if (d.isPerDeliveryMode && billing.atLimit && !d.billingBlocked && !_selfBlocked) {
+          _selfBlocked = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(driverRepositoryProvider).markBlocked(d.uid).catchError((_) {});
           });
         }
 

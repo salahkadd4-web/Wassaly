@@ -505,4 +505,7 @@
   ,"@offersCount": {"placeholders": {"count": {"type": "String"}}}
   ,"billingErrorNotYourTurn": "الرد على هذا الاقتراح من حق الطرف الآخر."
   ,"billingErrorDriverUnavailable": "لا يستطيع هذا الموصّل قبول توصيلات حاليًا. اختر موصّلًا آخر."
+  ,"adminRefund": "إرجاع {amount} دج للموصّل"
+  ,"@adminRefund": {"placeholders": {"amount": {"type": "String"}}}
+  ,"adminRefunded": "تم إرجاع الرسوم للموصّل"
 }

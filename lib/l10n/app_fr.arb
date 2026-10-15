@@ -505,4 +505,7 @@
   ,"@offersCount": {"placeholders": {"count": {"type": "String"}}}
   ,"billingErrorNotYourTurn": "C'est à l'autre partie de répondre à cette proposition."
   ,"billingErrorDriverUnavailable": "Ce livreur ne peut plus accepter de course pour le moment. Choisissez un autre livreur."
+  ,"adminRefund": "Rembourser {amount} DA au livreur"
+  ,"@adminRefund": {"placeholders": {"amount": {"type": "String"}}}
+  ,"adminRefunded": "Frais remboursés au livreur"
 }

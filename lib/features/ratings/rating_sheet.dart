@@ -9,8 +9,9 @@ import '../../widgets/snack.dart';
 import '../auth/auth_providers.dart';
 
 /// Note d'une livraison terminee : ratings/{idDeLaLivraison}, une seule par
-/// livraison (creation seule). La moyenne du livreur est calculee par le
-/// serveur (onRatingCreated), qui marque aussi la livraison comme notee.
+/// livraison. Dans la meme ecriture groupee : moyenne du livreur (+1 avis,
+/// +etoiles) et marque "notee" sur la livraison. firestore.rules refusent le
+/// lot si l'une des trois pieces manque ou ne correspond pas.
 class RatingRepository {
   RatingRepository(this._db);
 
@@ -23,13 +24,21 @@ class RatingRepository {
     required int stars,
     required String comment,
   }) {
-    return _db.collection('ratings').doc(requestId).set({
-      'clientId': clientId,
-      'driverId': driverId,
-      'stars': stars,
-      'comment': comment.trim(),
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+    final batch = _db.batch()
+      ..set(_db.collection('ratings').doc(requestId), {
+        'clientId': clientId,
+        'driverId': driverId,
+        'stars': stars,
+        'comment': comment.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      })
+      ..update(_db.collection('drivers').doc(driverId), {
+        'ratingCount': FieldValue.increment(1),
+        'ratingSum': FieldValue.increment(stars),
+        'lastRatingId': requestId,
+      })
+      ..update(_db.collection('deliveryRequests').doc(requestId), {'rated': stars});
+    return batch.commit();
   }
 }
 

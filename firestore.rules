@@ -2,6 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Wassaly fonctionne sur l'offre gratuite Spark, sans Cloud Functions :
+    // toute operation qui touche a l'argent (accord sur un prix, debit de 50 DA,
+    // partage des coordonnees, notes) est faite par l'application dans UNE
+    // ecriture groupee, et ces regles refusent tout lot qui n'est pas
+    // exactement conforme. Le code de l'application est public : on ne lui
+    // fait pas confiance, seules ces regles font foi.
+
     function signedIn() {
       return request.auth != null;
     }
@@ -16,9 +23,10 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Livreur qui peut travailler (meme regle que functions/billing.js) :
-    // piece validee, non suspendu, et essai / mois paye en cours, ou formule
-    // "a la livraison" sans dette bloquante (1 000 DA).
+    // ---------------------------------------------------------------- Livreurs
+
+    // Abonnement du livreur : piece validee, non suspendu, et essai / mois paye
+    // en cours, ou formule "a la livraison" (voir aussi driverCanWork).
     function driverEligible(d) {
       return d.get('verificationStatus', 'approved') == 'approved'
         && d.subscriptionStatus != 'suspended'
@@ -29,22 +37,45 @@ service cloud.firestore {
                         && d.get('plan', '') == 'per_delivery'))));
     }
 
+    // Facture 50 DA par course : formule active, ou essai / mois termine avec
+    // "a la livraison" choisi pour la suite.
+    function perDeliveryMode(d) {
+      return d.subscriptionStatus == 'per_delivery'
+        || (d.subscriptionStatus in ['trial', 'paid']
+            && !(d.subscriptionEnd > request.time)
+            && d.get('plan', '') == 'per_delivery');
+    }
+
+    // Dette actuelle du livreur (formule a la livraison).
+    function debtOf(uid) {
+      return exists(/databases/$(database)/documents/driverBilling/$(uid))
+        ? get(/databases/$(database)/documents/driverBilling/$(uid)).data.get('debt', 0)
+        : 0;
+    }
+
+    // Le livreur peut travailler : abonnement valide et, a la livraison, dette
+    // sous le plafond de 1 000 DA (verifiee sur la dette elle-meme).
+    function driverCanWork(uid) {
+      let d = get(/databases/$(database)/documents/drivers/$(uid)).data;
+      return driverEligible(d) && (!perDeliveryMode(d) || debtOf(uid) < 1000);
+    }
+
     function isSubscribedDriver() {
       return signedIn()
         && exists(/databases/$(database)/documents/drivers/$(request.auth.uid))
-        && driverEligible(get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data);
+        && driverCanWork(request.auth.uid);
     }
 
+    // ---------------------------------------------------------------- Textes
+
     // Numero de mobile algerien dans un texte (05/06/07, +213, 00213 ; espaces,
-    // points, tirets et chiffres arabes acceptes). Les numeros ne s'echangent
-    // qu'apres l'acceptation d'une livraison. Meme motif que phone_guard.dart.
+    // points, tirets et chiffres arabes acceptes). Meme motif que phone_guard.dart.
     function hasPhone(text) {
       return text is string
         && text.matches('(?s).*(0|٠|۰|[+]?213|00213)[ .-]*[5-7٥-٧۵-۷]([ .-]*[0-9٠-٩۰-۹]){8}.*');
     }
 
-    // Prix d'une course negociee : 100 a 300 DA, par pas de 10
-    // (meme regle que isValidPrice dans functions/billing.js).
+    // Prix d'une course negociee : 100 a 300 DA, par pas de 10.
     function validPrice(p) {
       return p is int && p >= 100 && p <= 300 && p % 10 == 0;
     }
@@ -71,6 +102,107 @@ service cloud.firestore {
         && d.pickup is map && d.delivery is map;
     }
 
+    // Telephone depose par une partie : forcement le sien (users/{uid}).
+    function validContact() {
+      return request.resource.data.keys().hasOnly(['phone'])
+        && request.resource.data.phone
+             == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone;
+    }
+
+    // ---------------------------------------------------------------- Accord et debit
+
+    // A l'accord sur une course [rid] avec le livreur [driverId] : en formule a
+    // la livraison, le lot DOIT debiter 50 DA (dette +50 liee a cette course,
+    // ecriture comptable charge_{rid}) et la dette doit etre sous le plafond ;
+    // sinon rien n'est debite.
+    function agreementCharged(driverId, rid, charged) {
+      let d = get(/databases/$(database)/documents/drivers/$(driverId)).data;
+      return driverEligible(d)
+        && (perDeliveryMode(d)
+            ? (charged == 50
+               && debtOf(driverId) < 1000
+               && getAfter(/databases/$(database)/documents/driverBilling/$(driverId)).data.lastChargeRequestId == rid
+               && existsAfter(/databases/$(database)/documents/driverBilling/$(driverId)/ledger/$('charge_' + rid)))
+            : charged == 0);
+    }
+
+    // Une ecriture de dette n'est permise que dans le lot qui conclut la course
+    // [rid] (qui passe a "accepted" maintenant, avec 50 DA debites) : personne
+    // ne peut gonfler la dette d'un livreur en dehors d'un accord.
+    function chargeTied(driverId, rid) {
+      let after = getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data;
+      return signedIn()
+        && after.status == 'accepted'
+        && after.driverId == driverId
+        && after.charged == 50
+        && (request.auth.uid == after.clientId || request.auth.uid == after.driverId)
+        && (!exists(/databases/$(database)/documents/deliveryRequests/$(rid))
+            || get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status == 'negotiating');
+    }
+
+    // Accord sur une demande directe : par celui qui n'a PAS fait la derniere
+    // proposition, au prix en cours (inchange).
+    function directAgreement(rid) {
+      return resource.data.status == 'negotiating'
+        && ((request.auth.uid == resource.data.clientId && resource.data.get('lastBy', '') == 'driver')
+            || (request.auth.uid == resource.data.driverId && resource.data.get('lastBy', '') == 'client'))
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.acceptedAt == request.time
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'acceptedAt', 'updatedAt', 'charged'])
+        && agreementCharged(resource.data.driverId, rid, request.resource.data.charged);
+    }
+
+    // Accord sur l'offre d'un livreur pour une demande ouverte : la livraison
+    // [rid] est creee deja acceptee, identique a la demande et a l'offre, et la
+    // demande ouverte est attribuee dans le meme lot.
+    function openAgreement(rid) {
+      let d = request.resource.data;
+      let oid = d.openRequestId;
+      let open = get(/databases/$(database)/documents/openRequests/$(oid)).data;
+      let offer = get(/databases/$(database)/documents/openRequests/$(oid)/offers/$(d.driverId)).data;
+      let openAfter = getAfter(/databases/$(database)/documents/openRequests/$(oid)).data;
+      return d.keys().hasOnly(
+               ['clientId', 'driverId', 'clientName', 'driverName', 'pickupArea',
+                'deliveryArea', 'distanceKm', 'note', 'status', 'source',
+                'openRequestId', 'price', 'lastBy', 'charged', 'createdAt',
+                'updatedAt', 'acceptedAt'])
+        && d.status == 'accepted'
+        && d.source == 'open'
+        && open.status == 'open'
+        && offer.status == 'open'
+        && d.clientId == open.clientId
+        && d.clientName == open.clientName
+        && d.driverName is string && !hasPhone(d.driverName)
+        && d.pickupArea == open.pickupArea
+        && d.deliveryArea == open.deliveryArea
+        && d.get('distanceKm', null) == open.get('distanceKm', null)
+        && d.note == open.note
+        && d.price == offer.price
+        && d.lastBy == offer.lastBy
+        && ((request.auth.uid == open.clientId && offer.lastBy == 'driver')
+            || (request.auth.uid == d.driverId && offer.lastBy == 'client'))
+        && d.acceptedAt == request.time
+        && d.createdAt == request.time
+        && openAfter.status == 'taken'
+        && openAfter.takenBy == d.driverId
+        && openAfter.deliveryRequestId == rid
+        && agreementCharged(d.driverId, rid, d.charged);
+    }
+
+    // Note : agregee sur le profil du livreur dans le lot qui cree la note.
+    function ratingAggregated(driverId, ratingId) {
+      let r = getAfter(/databases/$(database)/documents/ratings/$(ratingId)).data;
+      return signedIn()
+        && !exists(/databases/$(database)/documents/ratings/$(ratingId))
+        && r.driverId == driverId
+        && r.clientId == request.auth.uid
+        && request.resource.data.ratingCount == resource.data.get('ratingCount', 0) + 1
+        && request.resource.data.ratingSum == resource.data.get('ratingSum', 0) + r.stars;
+    }
+
+    // ---------------------------------------------------------------- Conversations
+
     // Textes libres d'une conversation sans numero de telephone.
     function convTextsClean() {
       return !hasPhone(request.resource.data.get('lastMessage', ''))
@@ -85,6 +217,8 @@ service cloud.firestore {
             || request.auth.uid == cid.split('_')[1]);
     }
 
+    // ================================================================ Collections
+
     // Un admin peut en nommer d'autres (par l'application) et en retirer,
     // sauf lui-meme. Le tout premier admin se cree a la main dans la console.
     match /admins/{uid} {
@@ -97,8 +231,6 @@ service cloud.firestore {
     }
 
     // Unicite des numeros : un document par numero (id = numero normalise).
-    // Creation seulement : si le numero existe deja, l'ecriture est refusee,
-    // donc l'inscription entiere (ecriture groupee) echoue.
     match /phones/{phone} {
       allow read: if false;
       allow create: if signedIn()
@@ -109,7 +241,7 @@ service cloud.firestore {
     }
 
     // Profil prive : visible par son proprietaire et par l'administrateur.
-    // C'est le seul endroit ou le numero de telephone est stocke.
+    // C'est la reference du numero de telephone de chacun.
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
 
@@ -119,10 +251,8 @@ service cloud.firestore {
         && request.resource.data.role in ['client', 'driver']
         && request.resource.data.phone is string
         && request.resource.data.phone.matches('^0[5-7][0-9]{8}$')
-        // Le numero doit etre reserve par ce meme compte dans phones/{numero}.
         && getAfter(/databases/$(database)/documents/phones/$(request.resource.data.phone)).data.uid == uid;
 
-      // Le role, l'email et le numero ne sont jamais modifiables depuis l'application.
       allow update: if isOwner(uid)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['name', 'photo'])
@@ -131,9 +261,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Profil public du livreur : lisible par tout utilisateur connecte.
-    // Il ne contient PAS le numero de telephone (users/{uid}, prive) : client et
-    // livreur ne l'obtiennent qu'apres l'acceptation d'une livraison.
+    // Profil public du livreur (sans numero de telephone).
     match /drivers/{uid} {
       allow read: if signedIn();
 
@@ -145,7 +273,6 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/users/$(uid)).data.role == 'driver'
         && !hasPhone(request.resource.data.name)
         && request.resource.data.active == false
-        // Compte bloque jusqu'a la validation de la piece d'identite par l'admin.
         && request.resource.data.verificationStatus == 'pending'
         && getAfter(/databases/$(database)/documents/driverIdentity/$(uid)).data.idUrl is string
         && request.resource.data.subscriptionStatus == 'trial'
@@ -154,43 +281,71 @@ service cloud.firestore {
              < request.time + duration.value(62, 'd');
 
       allow update: if
-        // Le livreur : disponibilite, position (+ geohash pour la recherche
-        // par zone), ville, identite. Il ne touche ni a son abonnement, ni a sa
-        // formule, ni a sa dette, ni a sa note (Cloud Functions et admin), et ne
-        // s'active que s'il peut travailler.
+        // Le livreur : disponibilite, position (+ geohash), ville, identite ;
+        // il ne passe en ligne que s'il peut travailler.
         (isOwner(uid)
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['active', 'latitude', 'longitude', 'geohash',
                          'lastLocationUpdate', 'city', 'name', 'photo'])
           && !hasPhone(request.resource.data.name)
           && !hasPhone(request.resource.data.get('city', ''))
-          && (request.resource.data.active == false || driverEligible(resource.data)))
-        // Le livreur dont la piece a ete refusee peut la renvoyer (rejected -> pending).
+          && (request.resource.data.active == false || driverCanWork(uid)))
+        // Le livreur choisit sa formule pour la suite.
+        || (isOwner(uid)
+          && resource.data.subscriptionStatus != 'suspended'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plan'])
+          && request.resource.data.plan in ['monthly', 'per_delivery'])
+        // Le livreur signale lui-meme qu'il a atteint le plafond (jamais l'inverse).
+        || (isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['billingBlocked'])
+          && request.resource.data.billingBlocked == true)
+        // Le livreur dont la piece a ete refusee peut la renvoyer.
         || (isOwner(uid)
           && resource.data.get('verificationStatus', 'approved') == 'rejected'
           && request.resource.data.verificationStatus == 'pending'
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['verificationStatus']))
-        // L'administrateur : tout, y compris l'abonnement.
+        // Un client qui note une livraison met a jour la moyenne (meme lot).
+        || (request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['ratingCount', 'ratingSum', 'lastRatingId'])
+          && ratingAggregated(uid, request.resource.data.lastRatingId))
+        // L'administrateur : tout, y compris l'abonnement et le deblocage.
         || isAdmin();
 
       allow delete: if false;
     }
 
-    // Facturation du livreur : dette (formule a la livraison), compteurs
-    // anti-fraude, historique. Ecrite par les Cloud Functions et l'admin.
+    // Facturation du livreur : dette (formule a la livraison) et historique.
+    // Hors admin, la seule ecriture permise est +50 DA dans le lot d'un accord.
     match /driverBilling/{uid} {
       allow read: if isOwner(uid) || isAdmin();
-      allow write: if isAdmin();
+
+      allow create: if isAdmin()
+        || (request.resource.data.keys().hasOnly(['debt', 'lastChargeRequestId', 'updatedAt'])
+          && request.resource.data.debt == 50
+          && chargeTied(uid, request.resource.data.lastChargeRequestId));
+
+      allow update: if isAdmin()
+        || (request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['debt', 'lastChargeRequestId', 'updatedAt'])
+          && request.resource.data.debt == resource.data.get('debt', 0) + 50
+          && chargeTied(uid, request.resource.data.lastChargeRequestId));
+
+      allow delete: if false;
 
       match /ledger/{entry} {
         allow read: if isOwner(uid) || isAdmin();
-        allow write: if isAdmin();
+        allow create: if isAdmin()
+          || (request.resource.data.keys().hasOnly(['type', 'amount', 'requestId', 'createdAt'])
+            && request.resource.data.type == 'charge'
+            && request.resource.data.amount == 50
+            && entry == 'charge_' + request.resource.data.requestId
+            && chargeTied(uid, request.resource.data.requestId));
+        allow update, delete: if isAdmin();
       }
     }
 
-    // Piece d'identite du livreur (URL Cloudinary) : privee, visible par le
-    // livreur et l'administrateur uniquement.
+    // Piece d'identite du livreur (URL Cloudinary) : livreur et admin.
     match /driverIdentity/{uid} {
       allow read: if isOwner(uid) || isAdmin();
 
@@ -203,13 +358,11 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/drivers/$(uid)).data.verificationStatus == 'pending';
 
       allow update:
-        // Le livreur renvoie une photo apres un refus.
         if (isOwner(uid)
             && get(/databases/$(database)/documents/drivers/$(uid)).data.verificationStatus == 'rejected'
             && request.resource.data.idUrl.matches('^https://res\\.cloudinary\\.com/.+')
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['idUrl', 'submittedAt', 'rejectReason']))
-        // L'administrateur : motif de refus uniquement.
         || (isAdmin()
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['rejectReason']));
@@ -217,13 +370,14 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Conversations : id = clientId_driverId. Aucun numero de telephone ne
-    // peut y circuler (messages, apercu, noms).
+    // Conversations : id = clientId_driverId. Aucun numero ne peut y circuler.
+    // L'admin peut lister les conversations (pas les messages) pour l'onglet Suspects.
     match /conversations/{cid} {
-      allow get: if inConv(cid);
-      allow list: if signedIn()
-        && (resource.data.clientId == request.auth.uid
-            || resource.data.driverId == request.auth.uid);
+      allow get: if inConv(cid) || isAdmin();
+      allow list: if isAdmin()
+        || (signedIn()
+            && (resource.data.clientId == request.auth.uid
+                || resource.data.driverId == request.auth.uid));
 
       allow create: if inConv(cid)
         && request.resource.data.clientId == cid.split('_')[0]
@@ -250,26 +404,31 @@ service cloud.firestore {
       }
     }
 
-    // Demandes de livraison (a un livreur choisi).
-    // Le prix se negocie ici, chacun a son tour : le livreur propose
-    // (pending -> negotiating), le client contre-propose, et ainsi de suite.
-    // L'ACCORD passe par la Cloud Function agreeDelivery (debit, telephones,
-    // adresse exacte) : personne ne peut passer lui-meme une demande a "accepted".
+    // Demandes de livraison.
+    //  - directe : creee "pending" par le client (+ adresse et telephone prives),
+    //    puis le prix se negocie chacun a son tour, puis l'un conclut (directAgreement) ;
+    //  - issue d'une demande ouverte : creee deja "accepted" (openAgreement).
     match /deliveryRequests/{rid} {
       allow read: if signedIn()
         && (resource.data.clientId == request.auth.uid
             || resource.data.driverId == request.auth.uid
             || isAdmin());
 
-      allow create: if isOwner(request.resource.data.clientId)
-        && request.resource.data.status == 'pending'
-        && validCourse(request.resource.data)
-        && request.resource.data.keys().hasOnly(
-             ['clientId', 'driverId', 'clientName', 'driverName', 'pickupArea',
-              'deliveryArea', 'distanceKm', 'note', 'status', 'createdAt', 'updatedAt']);
+      allow create: if signedIn() && (
+          (isOwner(request.resource.data.clientId)
+            && request.resource.data.status == 'pending'
+            && validCourse(request.resource.data)
+            && request.resource.data.keys().hasOnly(
+                 ['clientId', 'driverId', 'clientName', 'driverName', 'pickupArea',
+                  'deliveryArea', 'distanceKm', 'note', 'status', 'createdAt', 'updatedAt'])
+            && existsAfter(/databases/$(database)/documents/deliveryRequests/$(rid)/private/route)
+            && existsAfter(/databases/$(database)/documents/deliveryRequests/$(rid)/private/clientContact))
+          || openAgreement(rid)
+        );
 
       allow update: if signedIn() && (
-          // Le livreur propose un prix : la premiere fois, ou en reponse au client.
+          // Le livreur propose un prix : la premiere fois (en deposant son
+          // telephone, lisible apres l'accord), ou en reponse au client.
           (resource.data.driverId == request.auth.uid
             && (resource.data.status == 'pending'
                 || (resource.data.status == 'negotiating'
@@ -278,6 +437,7 @@ service cloud.firestore {
             && request.resource.data.lastBy == 'driver'
             && validPrice(request.resource.data.price)
             && isSubscribedDriver()
+            && existsAfter(/databases/$(database)/documents/deliveryRequests/$(rid)/private/driverContact)
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['status', 'price', 'lastBy', 'updatedAt']))
           // Le client contre-propose en reponse au livreur.
@@ -289,6 +449,8 @@ service cloud.firestore {
             && validPrice(request.resource.data.price)
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['price', 'lastBy', 'updatedAt']))
+          // Accord (avec le debit dans le meme lot).
+          || directAgreement(rid)
           // Le livreur refuse, tant qu'il n'y a pas d'accord.
           || (resource.data.driverId == request.auth.uid
             && resource.data.status in ['pending', 'negotiating']
@@ -301,8 +463,7 @@ service cloud.firestore {
             && request.resource.data.status == 'cancelled'
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['status', 'updatedAt']))
-          // Le livreur termine la course acceptee : le montant est le prix
-          // convenu (saisie libre seulement pour les anciennes demandes sans prix).
+          // Le livreur termine la course : le montant est le prix convenu.
           || (resource.data.driverId == request.auth.uid
             && resource.data.status == 'accepted'
             && request.resource.data.status == 'completed'
@@ -314,38 +475,57 @@ service cloud.firestore {
             && request.resource.data.completedAt == request.time
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['status', 'amount', 'completedAt', 'updatedAt']))
+          // Le client note la livraison terminee (meme lot que la note).
+          || (resource.data.clientId == request.auth.uid
+            && resource.data.status == 'completed'
+            && resource.data.get('rated', null) == null
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rated'])
+            && request.resource.data.rated
+                 == getAfter(/databases/$(database)/documents/ratings/$(rid)).data.stars)
+          // L'admin marque un remboursement.
+          || (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['refunded']))
         );
 
       allow delete: if false;
 
-      // private/route : adresse exacte + GPS, ecrite par le client a la
-      // creation ; le livreur ne la lit qu'apres l'accord.
-      // private/contact : telephones, ecrits par le serveur a l'accord.
+      // private/route : adresse exacte (client) ; private/clientContact et
+      // private/driverContact : telephone depose par chacun. Chacun lit le
+      // sien, et celui de l'autre seulement apres l'accord.
       match /private/{doc} {
         allow read: if signedIn()
           && (isAdmin()
-              || (doc == 'route'
-                  && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid)
-              || ((get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid
-                   || get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.driverId == request.auth.uid)
-                  && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status in ['accepted', 'completed']));
-        allow create: if signedIn()
-          && doc == 'route'
-          && getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid
-          && getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status == 'pending'
-          && validRoute(request.resource.data);
+              || (request.auth.uid == get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId
+                  && (doc != 'driverContact'
+                      || get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status in ['accepted', 'completed']))
+              || (request.auth.uid == get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.driverId
+                  && (doc == 'driverContact'
+                      || get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status in ['accepted', 'completed'])));
+        allow create: if signedIn() && (
+            (doc == 'route'
+              && request.auth.uid == getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId
+              && getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status == 'pending'
+              && validRoute(request.resource.data))
+            || (doc == 'clientContact'
+              && request.auth.uid == getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId
+              && getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status == 'pending'
+              && validContact())
+            || (doc == 'driverContact'
+              && request.auth.uid == get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.driverId
+              && validContact())
+          );
         allow update, delete: if false;
       }
     }
 
-    // Demandes ouvertes : publiees par un client, visibles (quartiers, distance,
-    // note) par les livreurs qui peuvent travailler. Chaque livreur fait une
-    // offre (offers/{sonUid}) ; le premier accord (Cloud Function agreeOffer)
-    // attribue la course et ferme la demande (statut "taken").
+    // Demandes ouvertes : quartiers, distance et note visibles des livreurs qui
+    // peuvent travailler ; chacun fait une offre (offers/{sonUid}) ; le premier
+    // accord attribue la course (statut "taken", openAgreement).
     match /openRequests/{rid} {
       allow read: if signedIn()
         && (resource.data.clientId == request.auth.uid
             || isAdmin()
+            || resource.data.get('takenBy', '') == request.auth.uid
             || (resource.data.status == 'open' && isSubscribedDriver()));
 
       allow create: if isOwner(request.resource.data.clientId)
@@ -354,28 +534,55 @@ service cloud.firestore {
         && validCourse(request.resource.data)
         && request.resource.data.keys().hasOnly(
              ['clientId', 'clientName', 'pickupArea', 'deliveryArea', 'distanceKm',
-              'note', 'status', 'createdAt', 'updatedAt']);
+              'note', 'status', 'createdAt', 'updatedAt'])
+        && existsAfter(/databases/$(database)/documents/openRequests/$(rid)/private/route)
+        && existsAfter(/databases/$(database)/documents/openRequests/$(rid)/private/clientContact);
 
-      // Le client peut seulement la cloturer, tant qu'aucun accord n'est conclu.
-      allow update: if signedIn()
-        && resource.data.clientId == request.auth.uid
-        && resource.data.status == 'open'
-        && request.resource.data.status == 'closed'
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['status', 'updatedAt']);
+      allow update: if signedIn() && resource.data.status == 'open' && (
+          // Le client la cloture, tant qu'aucun accord n'est conclu.
+          (resource.data.clientId == request.auth.uid
+            && request.resource.data.status == 'closed'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'updatedAt']))
+          // Attribution, dans le lot qui cree la livraison acceptee.
+          || (request.resource.data.status == 'taken'
+            && (request.auth.uid == resource.data.clientId
+                || request.auth.uid == request.resource.data.takenBy)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'takenBy', 'takenByName', 'deliveryRequestId', 'updatedAt'])
+            && getAfter(/databases/$(database)/documents/deliveryRequests/$(request.resource.data.deliveryRequestId)).data.openRequestId == rid
+            && getAfter(/databases/$(database)/documents/deliveryRequests/$(request.resource.data.deliveryRequestId)).data.status == 'accepted'
+            && getAfter(/databases/$(database)/documents/deliveryRequests/$(request.resource.data.deliveryRequestId)).data.driverId == request.resource.data.takenBy)
+        );
 
       allow delete: if false;
 
-      // Adresse exacte : le client seulement (copiee dans la livraison a l'accord).
+      // Adresse exacte et telephone du client : le client, et le livreur
+      // retenu apres l'accord.
       match /private/{doc} {
         allow read: if signedIn()
           && (isAdmin()
-              || get(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid);
+              || get(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid
+              || (get(/databases/$(database)/documents/openRequests/$(rid)).data.status == 'taken'
+                  && get(/databases/$(database)/documents/openRequests/$(rid)).data.get('takenBy', '') == request.auth.uid));
         allow create: if signedIn()
-          && doc == 'route'
           && getAfter(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid
           && getAfter(/databases/$(database)/documents/openRequests/$(rid)).data.status == 'open'
-          && validRoute(request.resource.data);
+          && ((doc == 'route' && validRoute(request.resource.data))
+              || (doc == 'clientContact' && validContact()));
+        allow update, delete: if false;
+      }
+
+      // Telephone de chaque livreur qui fait une offre : lisible par le client
+      // seulement s'il conclut avec ce livreur.
+      match /driverContacts/{driverId} {
+        allow read: if signedIn()
+          && (driverId == request.auth.uid
+              || isAdmin()
+              || (get(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid
+                  && get(/databases/$(database)/documents/openRequests/$(rid)).data.status == 'taken'
+                  && get(/databases/$(database)/documents/openRequests/$(rid)).data.get('takenBy', '') == driverId));
+        allow create: if signedIn() && driverId == request.auth.uid && validContact();
         allow update, delete: if false;
       }
 
@@ -397,7 +604,8 @@ service cloud.firestore {
           && !hasPhone(request.resource.data.driverName)
           && request.resource.data.lastBy == 'driver'
           && request.resource.data.status == 'open'
-          && validPrice(request.resource.data.price);
+          && validPrice(request.resource.data.price)
+          && existsAfter(/databases/$(database)/documents/openRequests/$(rid)/driverContacts/$(driverId));
 
         allow update: if signedIn()
           && resource.data.status == 'open'
@@ -425,15 +633,22 @@ service cloud.firestore {
                       && request.resource.data.refusedBy == 'client'))
               && request.resource.data.diff(resource.data).affectedKeys()
                    .hasOnly(['status', 'refusedBy', 'updatedAt']))
+            // Accord sur cette offre (lot qui attribue la demande a ce livreur).
+            || (request.resource.data.status == 'agreed'
+              && (driverId == request.auth.uid
+                  || get(/databases/$(database)/documents/openRequests/$(rid)).data.clientId == request.auth.uid)
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['status', 'updatedAt'])
+              && getAfter(/databases/$(database)/documents/openRequests/$(rid)).data.status == 'taken'
+              && getAfter(/databases/$(database)/documents/openRequests/$(rid)).data.takenBy == driverId)
           );
 
         allow delete: if false;
       }
     }
 
-    // Jetons de notification push (FCM) des appareils d'un livreur.
-    // Ecrits par l'application, lus et utilises par les Cloud Functions
-    // (qui contournent ces regles).
+    // Jetons de notification push (FCM) : utilises si les Cloud Functions
+    // de notification sont deployees un jour (offre Blaze).
     match /deviceTokens/{uid} {
       allow read: if isOwner(uid);
       allow create, update: if isOwner(uid)
@@ -444,8 +659,7 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
-    // Paiements declares par les livreurs (reference BaridiMob / CCP) :
-    // "monthly" = un mois (+ dette eventuelle), "debt" = reglement de la dette.
+    // Paiements declares par les livreurs (reference BaridiMob / CCP).
     match /subscriptionRequests/{sid} {
       allow read: if signedIn()
         && (resource.data.driverId == request.auth.uid || isAdmin());
@@ -459,8 +673,6 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(
              ['driverId', 'driverName', 'driverPhone', 'reference', 'referenceKey',
               'status', 'kind', 'amount', 'createdAt'])
-        // La reference est reservee pour CETTE declaration dans paymentRefs
-        // (meme ecriture groupee) : une reference ne sert qu'une fois.
         && getAfter(/databases/$(database)/documents/paymentRefs/$(request.resource.data.referenceKey)).data.claimId == sid;
 
       allow update: if isAdmin()
@@ -470,10 +682,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Reference de paiement deja utilisee (id = reference normalisee :
-    // majuscules, lettres et chiffres). Creation seulement : si la reference
-    // existe, l'ecriture est refusee, donc la declaration aussi. L'admin peut
-    // supprimer une reservation saisie par erreur (console).
+    // Reference de paiement deja utilisee (id = reference normalisee).
     match /paymentRefs/{key} {
       allow read: if isAdmin();
       allow create: if signedIn()
@@ -487,7 +696,7 @@ service cloud.firestore {
     }
 
     // Note d'une livraison terminee (id = id de la livraison) : une seule, par
-    // le client de cette livraison. La moyenne est calculee par le serveur.
+    // le client, agregee sur le profil du livreur dans le meme lot.
     match /ratings/{rid} {
       allow read: if isAdmin()
         || (signedIn()
@@ -506,14 +715,14 @@ service cloud.firestore {
         && !hasPhone(request.resource.data.comment)
         && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.clientId == request.auth.uid
         && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.driverId == request.resource.data.driverId
-        && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status == 'completed';
+        && get(/databases/$(database)/documents/deliveryRequests/$(rid)).data.status == 'completed'
+        && getAfter(/databases/$(database)/documents/deliveryRequests/$(rid)).data.get('rated', 0) == request.resource.data.stars
+        && getAfter(/databases/$(database)/documents/drivers/$(request.resource.data.driverId)).data.get('lastRatingId', '') == rid;
 
       allow update, delete: if false;
     }
 
-    // Signalement d'un livreur par un client : un seul par couple
-    // (id = clientId_driverId), et seulement apres un echange (conversation ou
-    // demande de livraison entre eux). Lu par l'admin (onglet Suspects).
+    // Signalement d'un livreur par un client : un seul par couple.
     match /reports/{rid} {
       allow read: if isAdmin();
 
